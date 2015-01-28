@@ -1,6 +1,7 @@
 package io.vertx.rabbitmq;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
 import io.vertx.serviceproxy.ProxyHelper;
 
 /**
@@ -10,7 +11,7 @@ public class RabbitMQServiceVerticle extends AbstractVerticle {
   private RabbitMQService service;
 
   @Override
-  public void start() throws Exception {
+  public void start(Future<Void> startFuture) throws Exception {
     // Create the service object
     service = RabbitMQService.create(vertx, config());
 
@@ -22,13 +23,25 @@ public class RabbitMQServiceVerticle extends AbstractVerticle {
     ProxyHelper.registerService(RabbitMQService.class, vertx, service, address);
 
     // Start it
-    service.start();
+    service.start(ar -> {
+      if (ar.succeeded()) {
+        startFuture.complete();
+      } else {
+        startFuture.fail(ar.cause());
+      }
+    });
   }
 
   @Override
-  public void stop() throws Exception {
+  public void stop(Future<Void> stopFuture) throws Exception {
     if (service != null) {
-      service.stop();
+      service.stop(ar -> {
+        if (ar.succeeded()) {
+          stopFuture.complete();
+        } else {
+          stopFuture.fail(ar.cause());
+        }
+      });
     }
   }
 }

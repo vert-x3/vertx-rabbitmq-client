@@ -31,7 +31,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   private final Vertx vertx;
   private final JsonObject config;
   private final Integer retries;
-  private final boolean includeProperites;
+  private final boolean includeProperties;
 
   private Connection connection;
   private Channel channel;
@@ -42,39 +42,38 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
     this.retries = config.getInteger("connectionRetries", null);
     //TODO: includeProperties isn't really intuitive
     //TODO: Think about allowing this at a method level ?
-    this.includeProperites = config.getBoolean("includeProperties", false);
+    this.includeProperties = config.getBoolean("includeProperties", false);
   }
 
   @Override
   public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      channel.basicConsume(queue, new ConsumerHandler(vertx, channel, includeProperites, ar -> {
+      channel.basicConsume(queue, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
         if (ar.succeeded()) {
           vertx.eventBus().send(address, ar.result());
-          resultHandler.handle(Future.succeededFuture());
         } else {
           log.error("Exception occurred inside rabbitmq service consumer.", ar.cause());
-          resultHandler.handle(Future.failedFuture(ar.cause()));
         }
       }));
+      return null;
     });
   }
 
   @Override
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+    forChannel(resultHandler, (channel) -> {
       GetResponse response = channel.basicGet(queue, autoAck);
       if (response == null) {
-        resultHandler.handle(Future.succeededFuture());
+        return null;
       } else {
         JsonObject json = new JsonObject();
         populate(json, response.getEnvelope());
-        if (includeProperites) {
+        if (includeProperties) {
           put("properties", toJson(response.getProps()), json);
         }
         put("body", parse(response.getProps(), response.getBody()), json);
         put("messageCount", response.getMessageCount(), json);
-        resultHandler.handle(Future.succeededFuture(json));
+        return json;
       }
     });
   }
@@ -104,7 +103,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
       }
 
       channel.basicPublish(exchange, routingKey, fromJson(properties), body);
-      resultHandler.handle(Future.succeededFuture());
+      return null;
     });
   }
 
@@ -112,7 +111,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeDeclare(exchange, type, durable, autoDelete, null);
-      resultHandler.handle(Future.succeededFuture());
+      return null;
     });
   }
 
@@ -120,7 +119,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeDelete(exchange);
-      resultHandler.handle(Future.succeededFuture());
+      return null;
     });
   }
 
@@ -128,7 +127,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeBind(destination, source, routingKey);
-      resultHandler.handle(Future.succeededFuture());
+      return null;
     });
   }
 
@@ -136,7 +135,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeUnbind(destination, source, routingKey);
-      resultHandler.handle(Future.succeededFuture());
+      return null;
     });
   }
 
@@ -144,7 +143,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void queueDeclareAuto(Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, channel -> {
       AMQP.Queue.DeclareOk result = channel.queueDeclare();
-      resultHandler.handle(Future.succeededFuture(toJson(result)));
+      return toJson(result);
     });
   }
 
@@ -152,7 +151,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, channel -> {
       AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, null);
-      resultHandler.handle(Future.succeededFuture(toJson(result)));
+      return toJson(result);
     });
   }
 
@@ -160,7 +159,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void queueDelete(String queue, Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, channel -> {
       AMQP.Queue.DeleteOk result = channel.queueDelete(queue);
-      resultHandler.handle(Future.succeededFuture(toJson(result)));
+      return toJson(result);
     });
   }
 
@@ -168,7 +167,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, channel -> {
       AMQP.Queue.DeleteOk result = channel.queueDelete(queue, ifUnused, ifEmpty);
-      resultHandler.handle(Future.succeededFuture(toJson(result)));
+      return toJson(result);
     });
   }
 
@@ -176,40 +175,47 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.queueBind(queue, exchange, routingKey);
-      resultHandler.handle(Future.succeededFuture());
+      return null;
     });
   }
 
   @Override
-  public void start() {
+  public void start(Handler<AsyncResult<Void>> resultHandler) {
     log.info("Starting rabbitmq service");
-    try {
-      connect();
-    } catch (IOException e) {
-      log.error("Could not connect to rabbitmq", e);
-      if (retries != null) {
-        try {
-          reconnect();
-        } catch (IOException ioex) {
-          throw new RuntimeException(ioex);
+
+    vertx.executeBlocking(future -> {
+      try {
+        connect();
+        future.complete();
+      } catch (IOException e) {
+        log.error("Could not connect to rabbitmq", e);
+        if (retries != null && retries > 0) {
+          try {
+            reconnect();
+          } catch (IOException ioex) {
+            future.fail(ioex);
+          }
+        } else {
+          future.fail(e);
         }
-      } else {
-        throw new RuntimeException(e);
       }
-    }
+    }, resultHandler);
   }
 
   @Override
-  public void stop() {
+  public void stop(Handler<AsyncResult<Void>> resultHandler) {
     log.info("Stopping rabbitmq service");
-    try {
-      disconnect();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    vertx.executeBlocking(future -> {
+      try {
+        disconnect();
+        future.complete();
+      } catch (IOException e) {
+        future.fail(e);
+      }
+    }, resultHandler);
   }
 
-  private <T> void forChannel(Handler<AsyncResult<T>> resultHandler, ChannelHandler channelHandler) {
+  private <T> void forChannel(Handler<AsyncResult<T>> resultHandler, ChannelHandler<T> channelHandler) {
     if (connection == null || channel == null) {
       resultHandler.handle(Future.failedFuture("Not connected"));
       return;
@@ -222,11 +228,15 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
         resultHandler.handle(Future.failedFuture(e));
       }
     }
-    try {
-      channelHandler.handle(channel);
-    } catch (Throwable t) {
-      resultHandler.handle(Future.failedFuture(t));
-    }
+
+    vertx.executeBlocking(future -> {
+      try {
+        T t = channelHandler.handle(channel);
+        future.complete(t);
+      } catch (Throwable t) {
+        future.fail(t);
+      }
+    }, resultHandler);
   }
 
   private void connect() throws IOException {
@@ -250,7 +260,8 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   }
 
   private void reconnect() throws IOException {
-    if (retries == null) return;
+    if (retries == null || retries < 1) return;
+
     log.info("Attempting to reconnect to rabbitmq...");
     AtomicInteger attempts = new AtomicInteger(0);
     int retries = this.retries;
@@ -275,12 +286,18 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
 
   @Override
   public void shutdownCompleted(ShutdownSignalException cause) {
+    if (cause.isInitiatedByApplication()) return;
+
     log.info("RabbitMQ connection shutdown !", cause);
-    try {
-      reconnect();
-    } catch (IOException e) {
-      log.error("IOException during reconnect.", e);
-    }
+    vertx.runOnContext(v -> {
+      try {
+        connection = null;
+        channel = null;
+        reconnect();
+      } catch (IOException e) {
+        log.error("IOException during reconnect.", e);
+      }
+    });
   }
 
   private static Connection newConnection(JsonObject config) throws IOException {
@@ -323,6 +340,6 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   }
 
   private static interface ChannelHandler<T> {
-    void handle(Channel channel) throws Exception;
+    T handle(Channel channel) throws Exception;
   }
 }

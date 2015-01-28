@@ -152,11 +152,11 @@ public class RabbitMQService {
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     this.delegate.queueBind(queue, exchange, routingKey, resultHandler);
   }
-  public void start() {
-    this.delegate.start();
+  public void start(Handler<AsyncResult<Void>> resultHandler) {
+    this.delegate.start(resultHandler);
   }
-  public void stop() {
-    this.delegate.stop();
+  public void stop(Handler<AsyncResult<Void>> resultHandler) {
+    this.delegate.stop(resultHandler);
   }
 
   static final java.util.function.Function<io.vertx.rabbitmq.RabbitMQService, RabbitMQService> FACTORY = io.vertx.lang.groovy.Factories.createFactory() {

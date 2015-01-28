@@ -1,7 +1,6 @@
 {
   "main": "io.vertx.rabbitmq.RabbitMQServiceVerticle",
   "options": {
-    "worker": true,
     "config": {
       "address": "vertx.rabbitmq",
       "connectionRetries": 5,

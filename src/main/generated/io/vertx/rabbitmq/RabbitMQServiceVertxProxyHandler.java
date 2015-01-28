@@ -108,11 +108,11 @@ public class RabbitMQServiceVertxProxyHandler extends ProxyHandler {
         break;
       }
       case "start": {
-        service.start();
+        service.start(createHandler(msg));
         break;
       }
       case "stop": {
-        service.stop();
+        service.stop(createHandler(msg));
         break;
       }
       default: {

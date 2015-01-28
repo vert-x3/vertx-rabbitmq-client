@@ -79,8 +79,8 @@ public interface RabbitMQService {
   void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
   @ProxyIgnore
-  void start();
+  void start(Handler<AsyncResult<Void>> resultHandler);
 
   @ProxyIgnore
-  void stop();
+  void stop(Handler<AsyncResult<Void>> resultHandler);
 }

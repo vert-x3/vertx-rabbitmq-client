@@ -283,24 +283,36 @@ var RabbitMQService = function(j_val) {
   /**
 
    @public
-
+   @param resultHandler {function} 
    */
-  this.start = function() {
+  this.start = function(resultHandler) {
     var __args = arguments;
-    if (__args.length === 0) {
-      j_rabbitMQService.start();
+    if (__args.length === 1 && typeof __args[0] === 'function') {
+      j_rabbitMQService.start(function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(null, null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
     } else utils.invalidArgs();
   };
 
   /**
 
    @public
-
+   @param resultHandler {function} 
    */
-  this.stop = function() {
+  this.stop = function(resultHandler) {
     var __args = arguments;
-    if (__args.length === 0) {
-      j_rabbitMQService.stop();
+    if (__args.length === 1 && typeof __args[0] === 'function') {
+      j_rabbitMQService.stop(function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(null, null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
     } else utils.invalidArgs();
   };
 

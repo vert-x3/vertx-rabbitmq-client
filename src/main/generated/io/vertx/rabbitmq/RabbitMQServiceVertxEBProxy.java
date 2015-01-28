@@ -277,10 +277,10 @@ public class RabbitMQServiceVertxEBProxy implements RabbitMQService {
     });
   }
 
-  public void start() {
+  public void start(Handler<AsyncResult<Void>> resultHandler) {
   }
 
-  public void stop() {
+  public void stop(Handler<AsyncResult<Void>> resultHandler) {
   }
 
 

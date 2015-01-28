@@ -28,8 +28,14 @@ public abstract class RabbitMQServiceTestBase extends VertxTestBase {
     channel = new ConnectionFactory().newConnection().createChannel();
   }
 
+  @Override
+  protected void tearDown() throws Exception {
+    channel.close();
+    super.tearDown();
+  }
+
   public JsonObject config() {
-    return new JsonObject();
+    return new JsonObject().put("connectionRetries", 0);
   }
 
   @Test
