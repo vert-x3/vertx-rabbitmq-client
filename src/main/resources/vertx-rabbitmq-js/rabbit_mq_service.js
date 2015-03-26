@@ -40,7 +40,7 @@ var RabbitMQService = function(j_val) {
   this.basicGet = function(queue, autoAck, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] ==='boolean' && typeof __args[2] === 'function') {
-      j_rabbitMQService.basicGet(queue, autoAck, function(ar) {
+      j_rabbitMQService["basicGet(java.lang.String,boolean,io.vertx.core.Handler)"](queue, autoAck, function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -60,7 +60,7 @@ var RabbitMQService = function(j_val) {
   this.basicConsume = function(queue, address, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'function') {
-      j_rabbitMQService.basicConsume(queue, address, function(ar) {
+      j_rabbitMQService["basicConsume(java.lang.String,java.lang.String,io.vertx.core.Handler)"](queue, address, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -81,7 +81,7 @@ var RabbitMQService = function(j_val) {
   this.basicPublish = function(exchange, routingKey, message, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && typeof __args[3] === 'function') {
-      j_rabbitMQService.basicPublish(exchange, routingKey, utils.convParamJsonObject(message), function(ar) {
+      j_rabbitMQService["basicPublish(java.lang.String,java.lang.String,io.vertx.core.json.JsonObject,io.vertx.core.Handler)"](exchange, routingKey, utils.convParamJsonObject(message), function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -103,7 +103,7 @@ var RabbitMQService = function(j_val) {
   this.exchangeDeclare = function(exchange, type, durable, autoDelete, resultHandler) {
     var __args = arguments;
     if (__args.length === 5 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] ==='boolean' && typeof __args[3] ==='boolean' && typeof __args[4] === 'function') {
-      j_rabbitMQService.exchangeDeclare(exchange, type, durable, autoDelete, function(ar) {
+      j_rabbitMQService["exchangeDeclare(java.lang.String,java.lang.String,boolean,boolean,io.vertx.core.Handler)"](exchange, type, durable, autoDelete, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -122,7 +122,7 @@ var RabbitMQService = function(j_val) {
   this.exchangeDelete = function(exchange, resultHandler) {
     var __args = arguments;
     if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
-      j_rabbitMQService.exchangeDelete(exchange, function(ar) {
+      j_rabbitMQService["exchangeDelete(java.lang.String,io.vertx.core.Handler)"](exchange, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -143,7 +143,7 @@ var RabbitMQService = function(j_val) {
   this.exchangeBind = function(destination, source, routingKey, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'string' && typeof __args[3] === 'function') {
-      j_rabbitMQService.exchangeBind(destination, source, routingKey, function(ar) {
+      j_rabbitMQService["exchangeBind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](destination, source, routingKey, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -164,7 +164,7 @@ var RabbitMQService = function(j_val) {
   this.exchangeUnbind = function(destination, source, routingKey, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'string' && typeof __args[3] === 'function') {
-      j_rabbitMQService.exchangeUnbind(destination, source, routingKey, function(ar) {
+      j_rabbitMQService["exchangeUnbind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](destination, source, routingKey, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -183,7 +183,7 @@ var RabbitMQService = function(j_val) {
   this.queueDeclareAuto = function(resultHandler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_rabbitMQService.queueDeclareAuto(function(ar) {
+      j_rabbitMQService["queueDeclareAuto(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -206,7 +206,7 @@ var RabbitMQService = function(j_val) {
   this.queueDeclare = function(queue, durable, exclusive, autoDelete, resultHandler) {
     var __args = arguments;
     if (__args.length === 5 && typeof __args[0] === 'string' && typeof __args[1] ==='boolean' && typeof __args[2] ==='boolean' && typeof __args[3] ==='boolean' && typeof __args[4] === 'function') {
-      j_rabbitMQService.queueDeclare(queue, durable, exclusive, autoDelete, function(ar) {
+      j_rabbitMQService["queueDeclare(java.lang.String,boolean,boolean,boolean,io.vertx.core.Handler)"](queue, durable, exclusive, autoDelete, function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -226,7 +226,7 @@ var RabbitMQService = function(j_val) {
   this.queueDelete = function(queue, resultHandler) {
     var __args = arguments;
     if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
-      j_rabbitMQService.queueDelete(queue, function(ar) {
+      j_rabbitMQService["queueDelete(java.lang.String,io.vertx.core.Handler)"](queue, function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -248,7 +248,7 @@ var RabbitMQService = function(j_val) {
   this.queueDeleteIf = function(queue, ifUnused, ifEmpty, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] ==='boolean' && typeof __args[2] ==='boolean' && typeof __args[3] === 'function') {
-      j_rabbitMQService.queueDeleteIf(queue, ifUnused, ifEmpty, function(ar) {
+      j_rabbitMQService["queueDeleteIf(java.lang.String,boolean,boolean,io.vertx.core.Handler)"](queue, ifUnused, ifEmpty, function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -270,7 +270,7 @@ var RabbitMQService = function(j_val) {
   this.queueBind = function(queue, exchange, routingKey, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'string' && typeof __args[3] === 'function') {
-      j_rabbitMQService.queueBind(queue, exchange, routingKey, function(ar) {
+      j_rabbitMQService["queueBind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](queue, exchange, routingKey, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -288,7 +288,7 @@ var RabbitMQService = function(j_val) {
   this.start = function(resultHandler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_rabbitMQService.start(function(ar) {
+      j_rabbitMQService["start(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -306,7 +306,7 @@ var RabbitMQService = function(j_val) {
   this.stop = function(resultHandler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_rabbitMQService.stop(function(ar) {
+      j_rabbitMQService["stop(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -332,7 +332,7 @@ var RabbitMQService = function(j_val) {
 RabbitMQService.create = function(vertx, config) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
-    return new RabbitMQService(JRabbitMQService.create(vertx._jdel, utils.convParamJsonObject(config)));
+    return new RabbitMQService(JRabbitMQService["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
   } else utils.invalidArgs();
 };
 
@@ -346,7 +346,7 @@ RabbitMQService.create = function(vertx, config) {
 RabbitMQService.createEventBusProxy = function(vertx, address) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'string') {
-    return new RabbitMQService(JRabbitMQService.createEventBusProxy(vertx._jdel, address));
+    return new RabbitMQService(JRabbitMQService["createEventBusProxy(io.vertx.core.Vertx,java.lang.String)"](vertx._jdel, address));
   } else utils.invalidArgs();
 };
 

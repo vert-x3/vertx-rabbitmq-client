@@ -23,7 +23,7 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
- */
+*/
 @CompileStatic
 public class RabbitMQService {
   final def io.vertx.rabbitmq.RabbitMQService delegate;
@@ -34,11 +34,11 @@ public class RabbitMQService {
     return delegate;
   }
   public static RabbitMQService create(Vertx vertx, Map<String, Object> config) {
-    def ret= RabbitMQService.FACTORY.apply(io.vertx.rabbitmq.RabbitMQService.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null));
+    def ret= new io.vertx.groovy.rabbitmq.RabbitMQService(io.vertx.rabbitmq.RabbitMQService.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null));
     return ret;
   }
   public static RabbitMQService createEventBusProxy(Vertx vertx, String address) {
-    def ret= RabbitMQService.FACTORY.apply(io.vertx.rabbitmq.RabbitMQService.createEventBusProxy((io.vertx.core.Vertx)vertx.getDelegate(), address));
+    def ret= new io.vertx.groovy.rabbitmq.RabbitMQService(io.vertx.rabbitmq.RabbitMQService.createEventBusProxy((io.vertx.core.Vertx)vertx.getDelegate(), address));
     return ret;
   }
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
@@ -74,8 +74,7 @@ public class RabbitMQService {
   }
   /**
    * Actively declare a server-named exclusive, autodelete, non-durable queue.
-   *
-   * @see com.rabbitmq.client.Channel#queueDeclare()
+   * @param resultHandler 
    */
   public void queueDeclareAuto(Handler<AsyncResult<Map<String, Object>>> resultHandler) {
     this.delegate.queueDeclareAuto(new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
@@ -92,8 +91,11 @@ public class RabbitMQService {
   }
   /**
    * Declare a queue
-   *
-   * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
+   * @param queue 
+   * @param durable 
+   * @param exclusive 
+   * @param autoDelete 
+   * @param resultHandler 
    */
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
     this.delegate.queueDeclare(queue, durable, exclusive, autoDelete, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
@@ -110,8 +112,8 @@ public class RabbitMQService {
   }
   /**
    * Delete a queue, without regard for whether it is in use or has messages on it
-   *
-   * @see com.rabbitmq.client.Channel#queueDelete(String)
+   * @param queue 
+   * @param resultHandler 
    */
   public void queueDelete(String queue, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
     this.delegate.queueDelete(queue, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
@@ -128,8 +130,10 @@ public class RabbitMQService {
   }
   /**
    * Delete a queue
-   *
-   * @see com.rabbitmq.client.Channel#queueDelete(String, boolean, boolean)
+   * @param queue 
+   * @param ifUnused 
+   * @param ifEmpty 
+   * @param resultHandler 
    */
   public void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
     this.delegate.queueDeleteIf(queue, ifUnused, ifEmpty, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
@@ -146,8 +150,10 @@ public class RabbitMQService {
   }
   /**
    * Bind a queue to an exchange
-   *
-   * @see com.rabbitmq.client.Channel#queueBind(String, String, String)
+   * @param queue 
+   * @param exchange 
+   * @param routingKey 
+   * @param resultHandler 
    */
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     this.delegate.queueBind(queue, exchange, routingKey, resultHandler);
@@ -158,8 +164,4 @@ public class RabbitMQService {
   public void stop(Handler<AsyncResult<Void>> resultHandler) {
     this.delegate.stop(resultHandler);
   }
-
-  static final java.util.function.Function<io.vertx.rabbitmq.RabbitMQService, RabbitMQService> FACTORY = io.vertx.lang.groovy.Factories.createFactory() {
-    io.vertx.rabbitmq.RabbitMQService arg -> new RabbitMQService(arg);
-  };
 }

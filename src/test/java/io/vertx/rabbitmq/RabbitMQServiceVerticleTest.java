@@ -13,7 +13,7 @@ public class RabbitMQServiceVerticleTest extends RabbitMQServiceTestBase {
     super.setUp();
     DeploymentOptions options = new DeploymentOptions().setConfig(config());
     CountDownLatch latch = new CountDownLatch(1);
-    vertx.deployVerticle("service:io.vertx:rabbitmq-service", options, onSuccess(id -> {
+    vertx.deployVerticle("service:io.vertx.rabbitmq-service", options, onSuccess(id -> {
       service = RabbitMQService.createEventBusProxy(vertx, "vertx.rabbitmq");
       latch.countDown();
     }));
