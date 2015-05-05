@@ -1,28 +1,20 @@
 package io.vertx.rabbitmq;
 
-import io.vertx.codegen.annotations.ProxyGen;
-import io.vertx.codegen.annotations.ProxyIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rabbitmq.impl.RabbitMQServiceImpl;
-import io.vertx.serviceproxy.ProxyHelper;
+import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 @VertxGen
-@ProxyGen
-public interface RabbitMQService {
+public interface RabbitMQClient {
 
-  static RabbitMQService create(Vertx vertx, JsonObject config) {
-    return new RabbitMQServiceImpl(vertx, config);
-  }
-
-  static RabbitMQService createEventBusProxy(Vertx vertx, String address) {
-    return ProxyHelper.createProxy(RabbitMQService.class, vertx, address);
+  static RabbitMQClient create(Vertx vertx, JsonObject config) {
+    return new RabbitMQClientImpl(vertx, config);
   }
 
   //TODO: Think about splitting this out into different API's with specific roles (admin, pub, sub)
@@ -78,9 +70,7 @@ public interface RabbitMQService {
    */
   void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
-  @ProxyIgnore
   void start(Handler<AsyncResult<Void>> resultHandler);
 
-  @ProxyIgnore
   void stop(Handler<AsyncResult<Void>> resultHandler);
 }

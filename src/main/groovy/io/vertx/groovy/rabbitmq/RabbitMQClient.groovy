@@ -25,20 +25,16 @@ import io.vertx.core.Handler
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
 */
 @CompileStatic
-public class RabbitMQService {
-  final def io.vertx.rabbitmq.RabbitMQService delegate;
-  public RabbitMQService(io.vertx.rabbitmq.RabbitMQService delegate) {
+public class RabbitMQClient {
+  final def io.vertx.rabbitmq.RabbitMQClient delegate;
+  public RabbitMQClient(io.vertx.rabbitmq.RabbitMQClient delegate) {
     this.delegate = delegate;
   }
   public Object getDelegate() {
     return delegate;
   }
-  public static RabbitMQService create(Vertx vertx, Map<String, Object> config) {
-    def ret= new io.vertx.groovy.rabbitmq.RabbitMQService(io.vertx.rabbitmq.RabbitMQService.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null));
-    return ret;
-  }
-  public static RabbitMQService createEventBusProxy(Vertx vertx, String address) {
-    def ret= new io.vertx.groovy.rabbitmq.RabbitMQService(io.vertx.rabbitmq.RabbitMQService.createEventBusProxy((io.vertx.core.Vertx)vertx.getDelegate(), address));
+  public static RabbitMQClient create(Vertx vertx, Map<String, Object> config) {
+    def ret= new io.vertx.groovy.rabbitmq.RabbitMQClient(io.vertx.rabbitmq.RabbitMQClient.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null));
     return ret;
   }
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<Map<String, Object>>> resultHandler) {

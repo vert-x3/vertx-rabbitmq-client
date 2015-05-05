@@ -14,20 +14,20 @@
  * under the License.
  */
 
-/** @module vertx-rabbitmq-js/rabbit_mq_service */
+/** @module vertx-rabbitmq-js/rabbit_mq_client */
 var utils = require('vertx-js/util/utils');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
-var JRabbitMQService = io.vertx.rabbitmq.RabbitMQService;
+var JRabbitMQClient = io.vertx.rabbitmq.RabbitMQClient;
 
 /**
 
  @class
 */
-var RabbitMQService = function(j_val) {
+var RabbitMQClient = function(j_val) {
 
-  var j_rabbitMQService = j_val;
+  var j_rabbitMQClient = j_val;
   var that = this;
 
   /**
@@ -40,7 +40,7 @@ var RabbitMQService = function(j_val) {
   this.basicGet = function(queue, autoAck, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] ==='boolean' && typeof __args[2] === 'function') {
-      j_rabbitMQService["basicGet(java.lang.String,boolean,io.vertx.core.Handler)"](queue, autoAck, function(ar) {
+      j_rabbitMQClient["basicGet(java.lang.String,boolean,io.vertx.core.Handler)"](queue, autoAck, function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -60,7 +60,7 @@ var RabbitMQService = function(j_val) {
   this.basicConsume = function(queue, address, resultHandler) {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'function') {
-      j_rabbitMQService["basicConsume(java.lang.String,java.lang.String,io.vertx.core.Handler)"](queue, address, function(ar) {
+      j_rabbitMQClient["basicConsume(java.lang.String,java.lang.String,io.vertx.core.Handler)"](queue, address, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -81,7 +81,7 @@ var RabbitMQService = function(j_val) {
   this.basicPublish = function(exchange, routingKey, message, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && typeof __args[3] === 'function') {
-      j_rabbitMQService["basicPublish(java.lang.String,java.lang.String,io.vertx.core.json.JsonObject,io.vertx.core.Handler)"](exchange, routingKey, utils.convParamJsonObject(message), function(ar) {
+      j_rabbitMQClient["basicPublish(java.lang.String,java.lang.String,io.vertx.core.json.JsonObject,io.vertx.core.Handler)"](exchange, routingKey, utils.convParamJsonObject(message), function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -103,7 +103,7 @@ var RabbitMQService = function(j_val) {
   this.exchangeDeclare = function(exchange, type, durable, autoDelete, resultHandler) {
     var __args = arguments;
     if (__args.length === 5 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] ==='boolean' && typeof __args[3] ==='boolean' && typeof __args[4] === 'function') {
-      j_rabbitMQService["exchangeDeclare(java.lang.String,java.lang.String,boolean,boolean,io.vertx.core.Handler)"](exchange, type, durable, autoDelete, function(ar) {
+      j_rabbitMQClient["exchangeDeclare(java.lang.String,java.lang.String,boolean,boolean,io.vertx.core.Handler)"](exchange, type, durable, autoDelete, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -122,7 +122,7 @@ var RabbitMQService = function(j_val) {
   this.exchangeDelete = function(exchange, resultHandler) {
     var __args = arguments;
     if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
-      j_rabbitMQService["exchangeDelete(java.lang.String,io.vertx.core.Handler)"](exchange, function(ar) {
+      j_rabbitMQClient["exchangeDelete(java.lang.String,io.vertx.core.Handler)"](exchange, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -143,7 +143,7 @@ var RabbitMQService = function(j_val) {
   this.exchangeBind = function(destination, source, routingKey, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'string' && typeof __args[3] === 'function') {
-      j_rabbitMQService["exchangeBind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](destination, source, routingKey, function(ar) {
+      j_rabbitMQClient["exchangeBind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](destination, source, routingKey, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -164,7 +164,7 @@ var RabbitMQService = function(j_val) {
   this.exchangeUnbind = function(destination, source, routingKey, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'string' && typeof __args[3] === 'function') {
-      j_rabbitMQService["exchangeUnbind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](destination, source, routingKey, function(ar) {
+      j_rabbitMQClient["exchangeUnbind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](destination, source, routingKey, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -183,7 +183,7 @@ var RabbitMQService = function(j_val) {
   this.queueDeclareAuto = function(resultHandler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_rabbitMQService["queueDeclareAuto(io.vertx.core.Handler)"](function(ar) {
+      j_rabbitMQClient["queueDeclareAuto(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -206,7 +206,7 @@ var RabbitMQService = function(j_val) {
   this.queueDeclare = function(queue, durable, exclusive, autoDelete, resultHandler) {
     var __args = arguments;
     if (__args.length === 5 && typeof __args[0] === 'string' && typeof __args[1] ==='boolean' && typeof __args[2] ==='boolean' && typeof __args[3] ==='boolean' && typeof __args[4] === 'function') {
-      j_rabbitMQService["queueDeclare(java.lang.String,boolean,boolean,boolean,io.vertx.core.Handler)"](queue, durable, exclusive, autoDelete, function(ar) {
+      j_rabbitMQClient["queueDeclare(java.lang.String,boolean,boolean,boolean,io.vertx.core.Handler)"](queue, durable, exclusive, autoDelete, function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -226,7 +226,7 @@ var RabbitMQService = function(j_val) {
   this.queueDelete = function(queue, resultHandler) {
     var __args = arguments;
     if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
-      j_rabbitMQService["queueDelete(java.lang.String,io.vertx.core.Handler)"](queue, function(ar) {
+      j_rabbitMQClient["queueDelete(java.lang.String,io.vertx.core.Handler)"](queue, function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -248,7 +248,7 @@ var RabbitMQService = function(j_val) {
   this.queueDeleteIf = function(queue, ifUnused, ifEmpty, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] ==='boolean' && typeof __args[2] ==='boolean' && typeof __args[3] === 'function') {
-      j_rabbitMQService["queueDeleteIf(java.lang.String,boolean,boolean,io.vertx.core.Handler)"](queue, ifUnused, ifEmpty, function(ar) {
+      j_rabbitMQClient["queueDeleteIf(java.lang.String,boolean,boolean,io.vertx.core.Handler)"](queue, ifUnused, ifEmpty, function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -270,7 +270,7 @@ var RabbitMQService = function(j_val) {
   this.queueBind = function(queue, exchange, routingKey, resultHandler) {
     var __args = arguments;
     if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'string' && typeof __args[3] === 'function') {
-      j_rabbitMQService["queueBind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](queue, exchange, routingKey, function(ar) {
+      j_rabbitMQClient["queueBind(java.lang.String,java.lang.String,java.lang.String,io.vertx.core.Handler)"](queue, exchange, routingKey, function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -288,7 +288,7 @@ var RabbitMQService = function(j_val) {
   this.start = function(resultHandler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_rabbitMQService["start(io.vertx.core.Handler)"](function(ar) {
+      j_rabbitMQClient["start(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -306,7 +306,7 @@ var RabbitMQService = function(j_val) {
   this.stop = function(resultHandler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_rabbitMQService["stop(io.vertx.core.Handler)"](function(ar) {
+      j_rabbitMQClient["stop(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {
@@ -319,36 +319,22 @@ var RabbitMQService = function(j_val) {
   // A reference to the underlying Java delegate
   // NOTE! This is an internal API and must not be used in user code.
   // If you rely on this property your code is likely to break if we change it / remove it without warning.
-  this._jdel = j_rabbitMQService;
+  this._jdel = j_rabbitMQClient;
 };
 
 /**
 
- @memberof module:vertx-rabbitmq-js/rabbit_mq_service
+ @memberof module:vertx-rabbitmq-js/rabbit_mq_client
  @param vertx {Vertx} 
  @param config {Object} 
- @return {RabbitMQService}
+ @return {RabbitMQClient}
  */
-RabbitMQService.create = function(vertx, config) {
+RabbitMQClient.create = function(vertx, config) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
-    return new RabbitMQService(JRabbitMQService["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
-  } else utils.invalidArgs();
-};
-
-/**
-
- @memberof module:vertx-rabbitmq-js/rabbit_mq_service
- @param vertx {Vertx} 
- @param address {string} 
- @return {RabbitMQService}
- */
-RabbitMQService.createEventBusProxy = function(vertx, address) {
-  var __args = arguments;
-  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'string') {
-    return new RabbitMQService(JRabbitMQService["createEventBusProxy(io.vertx.core.Vertx,java.lang.String)"](vertx._jdel, address));
+    return new RabbitMQClient(JRabbitMQClient["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
   } else utils.invalidArgs();
 };
 
 // We export the Constructor function
-module.exports = RabbitMQService;
+module.exports = RabbitMQClient;

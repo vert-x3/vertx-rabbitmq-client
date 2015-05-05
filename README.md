@@ -1,6 +1,6 @@
-# RabbitMQ Service for Vert.x
+# RabbitMQ Client for Vert.x
 
-A Vert.x service allowing applications to seamlessly interact with a RabbitMQ broker (amqp 0.9)
+A Vert.x client allowing applications to interact with a RabbitMQ broker (AMQP 0.9.1)
 
 # Getting Started
 
@@ -12,7 +12,7 @@ Add the following dependency to your maven project
 <dependencies>
   <dependency>
     <groupId>io.vertx</groupId>
-    <artifactId>vertx-rabbitmq-service</artifactId>
+    <artifactId>vertx-rabbitmq-client</artifactId>
     <version>$version</version>
   </dependency>
 </dependencies>
@@ -24,37 +24,17 @@ Add the following dependency to your gradle project
 
 ```groovy
 dependencies {
-  compile("io.vertx:vertx-rabbitmq-service:$version")
+  compile("io.vertx:vertx-rabbitmq-client:$version")
 }
 ```
 
-## Deploy as a service
+## Create a client
 
-The easiest way to get started is to deploy it as a service
-
-```java
-Vertx vertx = Vertx.vertx();
-vertx.deployVerticle("service:io.vertx:rabbitmq-service");
-```
-
-This will make the RabbitMQService available as a [Service Proxy](#service-proxy) to be used throughout your application.
-
-## Service Proxy
-
-Assuming you already have the service deployed, to retrieve the RabbitMQService (from inside a Verticle for example)
+You can create a client instance as follows:
 
 ```java
-public class MyVerticle extends AbstractVerticle {
-
-  @Override
-  public void start() {
-    RabbitMQService service = RabbitMQService.createEventBusProxy(vertx, "vertx.rabbitmq");
-    ...
-  }
+RabbitMQClient client = RabbitMQClient.create(vertx, config);
 ```
-
-This will create the service proxy allowing you to call the RabbitMQService API methods instead of having to send
-messages over the event bus. See [Service Proxy](https://github.com/vert-x3/service-proxy) for more information.
 
 # Operations
 
@@ -67,7 +47,7 @@ Publish a message to a queue
 
 ```java
 JsonObject message = new JsonObject().put("body", "Hello RabbitMQ, from Vert.x !");
-service.basicPublish("", "my.queue", message, pubResult -> {
+client.basicPublish("", "my.queue", message, pubResult -> {
   if (pubResult.succeeded() {
     System.out.println("Message published !");
   } else {
@@ -88,7 +68,7 @@ vertx.eventBus().consumer("my.address", msg -> {
 });
 
 // Setup the link between rabbitmq consumer and event bus address
-service.basicConsume("my.queue", "my.address", consumeResult -> {
+client.basicConsume("my.queue", "my.address", consumeResult -> {
   if (consumeResult.succeeded()) {
     System.out.println("RabbitMQ consumer created !");
   } else {
@@ -102,7 +82,7 @@ service.basicConsume("my.queue", "my.address", consumeResult -> {
 Will get a message from a queue
 
 ```java
-service.basicGet("my.queue", true, getResult -> {
+client.basicGet("my.queue", true, getResult -> {
   if (getResult.succeeded()) {
     JsonObject msg = getResult.result();
     System.out.println("Got message: " + msg.getString("body"));
@@ -111,3 +91,7 @@ service.basicGet("my.queue", true, getResult -> {
   }
 });
 ```
+
+# Running the tests
+
+You will need to have RabbitMQ installed and running with default ports on localhost for this to work.

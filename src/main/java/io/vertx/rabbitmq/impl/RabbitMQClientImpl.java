@@ -14,7 +14,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
-import io.vertx.rabbitmq.RabbitMQService;
+import io.vertx.rabbitmq.RabbitMQClient;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,9 +24,9 @@ import static io.vertx.rabbitmq.impl.Utils.*;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
+public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
-  private static final Logger log = LoggerFactory.getLogger(RabbitMQServiceImpl.class);
+  private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
 
   private final Vertx vertx;
   private final JsonObject config;
@@ -36,7 +36,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
   private Connection connection;
   private Channel channel;
 
-  public RabbitMQServiceImpl(Vertx vertx, JsonObject config) {
+  public RabbitMQClientImpl(Vertx vertx, JsonObject config) {
     this.vertx = vertx;
     this.config = config;
     this.retries = config.getInteger("connectionRetries", null);
@@ -181,7 +181,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
 
   @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
-    log.info("Starting rabbitmq service");
+    log.info("Starting rabbitmq client");
 
     vertx.executeBlocking(future -> {
       try {
@@ -204,7 +204,7 @@ public class RabbitMQServiceImpl implements RabbitMQService, ShutdownListener {
 
   @Override
   public void stop(Handler<AsyncResult<Void>> resultHandler) {
-    log.info("Stopping rabbitmq service");
+    log.info("Stopping rabbitmq client");
     vertx.executeBlocking(future -> {
       try {
         disconnect();
