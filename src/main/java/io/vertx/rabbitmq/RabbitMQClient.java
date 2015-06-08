@@ -20,9 +20,13 @@ public interface RabbitMQClient {
   //TODO: Think about splitting this out into different API's with specific roles (admin, pub, sub)
   //TODO: Simplify/Change name of API methods to match more vert.x type verbiage ?
 
+  void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<JsonObject>> resultHandler);
+
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
   void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
+
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
 
   void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler);
 

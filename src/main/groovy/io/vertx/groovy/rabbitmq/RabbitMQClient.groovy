@@ -37,6 +37,19 @@ public class RabbitMQClient {
     def ret= new io.vertx.groovy.rabbitmq.RabbitMQClient(io.vertx.rabbitmq.RabbitMQClient.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null));
     return ret;
   }
+  public void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
+    this.delegate.basicAck(deliveryTag, multiple, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
+        AsyncResult<Map<String, Object>> f
+        if (event.succeeded()) {
+          f = InternalHelper.<Map<String, Object>>result(event.result()?.getMap())
+        } else {
+          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+        }
+        resultHandler.handle(f)
+      }
+    });
+  }
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
     this.delegate.basicGet(queue, autoAck, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
       public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
@@ -52,6 +65,9 @@ public class RabbitMQClient {
   }
   public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) {
     this.delegate.basicConsume(queue, address, resultHandler);
+  }
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
+    this.delegate.basicConsume(queue, address, autoAck, resultHandler);
   }
   public void basicPublish(String exchange, String routingKey, Map<String, Object> message, Handler<AsyncResult<Void>> resultHandler) {
     this.delegate.basicPublish(exchange, routingKey, message != null ? new io.vertx.core.json.JsonObject(message) : null, resultHandler);
