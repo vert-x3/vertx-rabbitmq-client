@@ -33,6 +33,26 @@ var RabbitMQClient = function(j_val) {
   /**
 
    @public
+   @param deliveryTag {number} 
+   @param multiple {boolean} 
+   @param resultHandler {function} 
+   */
+  this.basicAck = function(deliveryTag, multiple, resultHandler) {
+    var __args = arguments;
+    if (__args.length === 3 && typeof __args[0] ==='number' && typeof __args[1] ==='boolean' && typeof __args[2] === 'function') {
+      j_rabbitMQClient["basicAck(long,boolean,io.vertx.core.Handler)"](deliveryTag, multiple, function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(utils.convReturnJson(ar.result()), null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
+    } else utils.invalidArgs();
+  };
+
+  /**
+
+   @public
    @param queue {string} 
    @param autoAck {boolean} 
    @param resultHandler {function} 
@@ -55,16 +75,25 @@ var RabbitMQClient = function(j_val) {
    @public
    @param queue {string} 
    @param address {string} 
+   @param autoAck {boolean} 
    @param resultHandler {function} 
    */
-  this.basicConsume = function(queue, address, resultHandler) {
+  this.basicConsume = function() {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'function') {
-      j_rabbitMQClient["basicConsume(java.lang.String,java.lang.String,io.vertx.core.Handler)"](queue, address, function(ar) {
+      j_rabbitMQClient["basicConsume(java.lang.String,java.lang.String,io.vertx.core.Handler)"](__args[0], __args[1], function(ar) {
       if (ar.succeeded()) {
-        resultHandler(null, null);
+        __args[2](null, null);
       } else {
-        resultHandler(null, ar.cause());
+        __args[2](null, ar.cause());
+      }
+    });
+    }  else if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] ==='boolean' && typeof __args[3] === 'function') {
+      j_rabbitMQClient["basicConsume(java.lang.String,java.lang.String,boolean,io.vertx.core.Handler)"](__args[0], __args[1], __args[2], function(ar) {
+      if (ar.succeeded()) {
+        __args[3](null, null);
+      } else {
+        __args[3](null, ar.cause());
       }
     });
     } else utils.invalidArgs();
