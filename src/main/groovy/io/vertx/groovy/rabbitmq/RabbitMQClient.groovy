@@ -34,7 +34,7 @@ public class RabbitMQClient {
     return delegate;
   }
   public static RabbitMQClient create(Vertx vertx, Map<String, Object> config) {
-    def ret= new io.vertx.groovy.rabbitmq.RabbitMQClient(io.vertx.rabbitmq.RabbitMQClient.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null));
+    def ret= InternalHelper.safeCreate(io.vertx.rabbitmq.RabbitMQClient.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.rabbitmq.RabbitMQClient.class, io.vertx.groovy.rabbitmq.RabbitMQClient.class);
     return ret;
   }
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<Map<String, Object>>> resultHandler) {

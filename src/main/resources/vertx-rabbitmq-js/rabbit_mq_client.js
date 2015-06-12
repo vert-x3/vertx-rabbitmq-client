@@ -332,7 +332,7 @@ var RabbitMQClient = function(j_val) {
 RabbitMQClient.create = function(vertx, config) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
-    return new RabbitMQClient(JRabbitMQClient["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
+    return utils.convReturnVertxGen(JRabbitMQClient["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)), RabbitMQClient);
   } else utils.invalidArgs();
 };
 
