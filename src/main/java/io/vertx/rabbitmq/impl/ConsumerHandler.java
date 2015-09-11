@@ -53,15 +53,15 @@ class ConsumerHandler extends DefaultConsumer {
     // Parse the body
     try {
       msg.put("body", parse(properties, body));
-      vertx.runOnContext(v -> {
-        handler.handle(Future.succeededFuture(msg));
-      });
 
       if(autoAck) {
         getChannel().basicAck(envelope.getDeliveryTag(), false);
       } else {
         msg.put("deliveryTag", envelope.getDeliveryTag());
       }
+      vertx.runOnContext(v -> {
+        handler.handle(Future.succeededFuture(msg));
+      });
     } catch (UnsupportedEncodingException e) {
       vertx.runOnContext(v -> {
         handler.handle(Future.failedFuture(e));
