@@ -1,19 +1,13 @@
 package io.vertx.rabbitmq.impl;
 
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.GetResponse;
-import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
+import com.rabbitmq.client.*;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.impl.LoggerFactory;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.RabbitMQClient;
 
 import java.io.IOException;
@@ -46,9 +40,22 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<JsonObject>> resultHandler) {
+    forChannel(resultHandler, (channel) -> {
+      channel.basicAck(deliveryTag, multiple);
+      return null;
+    });
+  }
+
+  @Override
   public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) {
+    basicConsume(queue, address, true, resultHandler);
+  }
+
+  @Override
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      channel.basicConsume(queue, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
+      channel.basicConsume(queue, new ConsumerHandler(vertx, channel, includeProperties, autoAck, ar -> {
         if (ar.succeeded()) {
           vertx.eventBus().send(address, ar.result());
         } else {

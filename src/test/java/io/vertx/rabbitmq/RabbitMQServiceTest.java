@@ -125,6 +125,35 @@ public class RabbitMQServiceTest extends VertxTestBase {
     testComplete();
   }
 
+  @Test
+  public void testBasicConsumeNoAutoAck() throws Exception {
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages);
+
+    CountDownLatch latch = new CountDownLatch(count);
+
+    vertx.eventBus().consumer("my.address", msg -> {
+      JsonObject json = (JsonObject) msg.body();
+      assertNotNull(json);
+      String body = json.getString("body");
+      assertNotNull(body);
+      assertTrue(messages.contains(body));
+      if (latch.getCount() > 1) {
+        long deliveryTag = json.getLong("deliveryTag");
+        client.basicAck(deliveryTag, false, onSuccess(v -> {
+        }));
+      }
+      latch.countDown();
+    });
+
+    client.basicConsume(q, "my.address", false, onSuccess(v -> {
+    }));
+
+    awaitLatch(latch);
+    testComplete();
+  }
+
   //TODO More tests
 
   private String setupQueue(Set<String> messages) throws Exception {
