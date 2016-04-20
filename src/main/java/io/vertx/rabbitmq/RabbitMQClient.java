@@ -1,10 +1,14 @@
 package io.vertx.rabbitmq;
 
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Consumer;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rabbitmq.impl.RabbitMQClientImpl;import java.lang.String;import java.lang.Void;
+import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
+import java.lang.String;
+import java.lang.Void;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -18,16 +22,42 @@ public interface RabbitMQClient {
   //TODO: Think about splitting this out into different API's with specific roles (admin, pub, sub)
   //TODO: Simplify/Change name of API methods to match more vert.x type verbiage ?
 
+  /**
+   * Acknowledge one or several received messages. Supply the deliveryTag from the AMQP.Basic.GetOk or AMQP.Basic.Deliver
+   * method containing the received message being acknowledged.
+   * @see com.rabbitmq.client.Channel#basicAck(long, boolean)
+   */
   void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<JsonObject>> resultHandler);
 
+  /**
+   * Reject one or several received messages.
+   * @see com.rabbitmq.client.Channel#basicNack(long, boolean, boolean)
+   */
   void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<JsonObject>> resultHandler);
 
+  /**
+   * Retrieve a message from a queue using AMQP.Basic.Get
+   * @see com.rabbitmq.client.Channel#basicGet(String, boolean)
+   */
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
+  /**
+   * Start a non-nolocal, non-exclusive consumer, with explicit acknowledgement and a server-generated consumerTag.
+   * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
+   */
   void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
+   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
+   */
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
+   * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
+   * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
+   */
   void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler);
 
   /**
