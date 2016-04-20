@@ -1,16 +1,14 @@
 package io.vertx.rabbitmq;
 
-import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
+import io.vertx.rabbitmq.impl.RabbitMQClientImpl;import java.lang.String;import java.lang.Void;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-@VertxGen
 public interface RabbitMQClient {
 
   static RabbitMQClient create(Vertx vertx, JsonObject config) {
@@ -20,11 +18,25 @@ public interface RabbitMQClient {
   //TODO: Think about splitting this out into different API's with specific roles (admin, pub, sub)
   //TODO: Simplify/Change name of API methods to match more vert.x type verbiage ?
 
+  void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<JsonObject>> resultHandler);
+
+  void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<JsonObject>> resultHandler);
+
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
   void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
 
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
+
   void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Request specific "quality of service" settings, Limiting the number of unacknowledged messages on
+   * a channel (or connection). This limit is applied separately to each new consumer on the channel.
+   *
+   * @see com.rabbitmq.client.Channel#basicQos(int)
+   */
+  void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler);
 
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler);
 
@@ -73,4 +85,18 @@ public interface RabbitMQClient {
   void start(Handler<AsyncResult<Void>> resultHandler);
 
   void stop(Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Check if a connection is open
+   * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
+   * @return true when the connection is open, false otherwise
+   */
+  boolean isConnected();
+
+  /**
+   * Check if a channel is open
+   * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
+   * @return true when the connection is open, false otherwise
+   */
+  boolean isOpenChannel();
 }

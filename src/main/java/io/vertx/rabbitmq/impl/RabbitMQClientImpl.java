@@ -1,12 +1,6 @@
 package io.vertx.rabbitmq.impl;
 
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.GetResponse;
-import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
+import com.rabbitmq.client.*;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -46,9 +40,46 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public boolean isConnected() {
+    boolean connected = false;
+    if (connection != null) {
+      if (connection.isOpen()) {
+        connected = true;
+      }
+    }
+    return connected;
+  }
+
+  @Override
+  public boolean isOpenChannel() {
+      return channel.isOpen();
+  }
+
+  @Override
+  public void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<JsonObject>> resultHandler) {
+    forChannel(resultHandler, (channel) -> {
+      channel.basicAck(deliveryTag, multiple);
+      return null;
+    });
+  }
+
+  @Override
+  public void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<JsonObject>> resultHandler) {
+    forChannel(resultHandler, (channel) -> {
+      channel.basicNack(deliveryTag, multiple, requeue);
+      return null;
+    });
+  }
+
+  @Override
   public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) {
+    basicConsume(queue, address, true, resultHandler);
+  }
+
+  @Override
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      channel.basicConsume(queue, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
+      channel.basicConsume(queue, new ConsumerHandler(vertx, channel, includeProperties, autoAck, ar -> {
         if (ar.succeeded()) {
           vertx.eventBus().send(address, ar.result());
         } else {
@@ -69,10 +100,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         JsonObject json = new JsonObject();
         populate(json, response.getEnvelope());
         if (includeProperties) {
-          put("properties", toJson(response.getProps()), json);
+          put("properties", Utils.toJson(response.getProps()), json);
         }
         put("body", parse(response.getProps(), response.getBody()), json);
-        put("messageCount", response.getMessageCount(), json);
+        Utils.put("messageCount", response.getMessageCount(), json);
         return json;
       }
     });
@@ -103,6 +134,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       }
 
       channel.basicPublish(exchange, routingKey, fromJson(properties), body);
+      return null;
+    });
+  }
+
+  @Override
+  public void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler)
+  {
+    forChannel(resultHandler, channel -> {
+      channel.basicQos(prefetchCount);
       return null;
     });
   }
@@ -223,8 +263,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     if (!channel.isOpen()) {
       try {
         //TODO: Is this the best thing ?
+
+          // change
+          log.debug("channel is close, try create Channel");
+
         channel = connection.createChannel();
       } catch (IOException e) {
+          log.debug("create channel error");
         resultHandler.handle(Future.failedFuture(e));
       }
     }
