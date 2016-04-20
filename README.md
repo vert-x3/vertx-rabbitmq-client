@@ -94,6 +94,28 @@ client.basicGet("my.queue", true, getResult -> {
 });
 ```
 
+## Consume messages without auto-ack
+
+```java
+// Create the event bus handler which messages will be sent to
+vertx.eventBus().consumer("my.address", msg -> {
+  JsonObject json = (JsonObject) msg.body();
+  System.out.println("Got message: " + json.getString("body"));
+  // ack
+  client.basicAck(json.getLong("deliveryTag"), false, asyncResult -> {
+  });
+});
+
+// Setup the link between rabbitmq consumer and event bus address
+client.basicConsume("my.queue", "my.address", false, consumeResult -> {
+  if (consumeResult.succeeded()) {
+    System.out.println("RabbitMQ consumer created !");
+  } else {
+    consumeResult.cause().printStackTrace();
+  }
+});
+```
+
 # Running the tests
 
 You will need to have RabbitMQ installed and running with default ports on localhost for this to work.
