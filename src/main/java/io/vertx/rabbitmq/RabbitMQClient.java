@@ -42,7 +42,7 @@ public interface RabbitMQClient {
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
-   * Start a non-nolocal, non-exclusive consumer, with explicit acknowledgement and a server-generated consumerTag.
+   * Start a non-nolocal, non-exclusive consumer, with auto acknowledgement and a server-generated consumerTag.
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
   void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
