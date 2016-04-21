@@ -79,7 +79,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      channel.basicConsume(queue, new ConsumerHandler(vertx, channel, includeProperties, autoAck, ar -> {
+      channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
         if (ar.succeeded()) {
           vertx.eventBus().send(address, ar.result());
         } else {

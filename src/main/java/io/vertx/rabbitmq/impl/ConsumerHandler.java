@@ -23,13 +23,11 @@ class ConsumerHandler extends DefaultConsumer {
   private final Vertx vertx;
   private final Handler<AsyncResult<JsonObject>> handler;
   private final boolean includeProperties;
-  private final boolean autoAck;
 
-  public ConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, boolean autoAck, Handler<AsyncResult<JsonObject>> handler) {
+  public ConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, Handler<AsyncResult<JsonObject>> handler) {
     super(channel);
     this.vertx = vertx;
     this.includeProperties = includeProperties;
-    this.autoAck = autoAck;
     this.handler = handler;
   }
 
@@ -57,11 +55,8 @@ class ConsumerHandler extends DefaultConsumer {
         handler.handle(Future.succeededFuture(msg));
       });
 
-      if(autoAck) {
-        getChannel().basicAck(envelope.getDeliveryTag(), false);
-      } else {
-        msg.put("deliveryTag", envelope.getDeliveryTag());
-      }
+      msg.put("deliveryTag", envelope.getDeliveryTag());
+
     } catch (UnsupportedEncodingException e) {
       vertx.runOnContext(v -> {
         handler.handle(Future.failedFuture(e));
