@@ -2,6 +2,7 @@ package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Consumer;
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -14,6 +15,7 @@ import java.util.Map;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
+@VertxGen
 public interface RabbitMQClient {
 
   static RabbitMQClient create(Vertx vertx, JsonObject config) {
