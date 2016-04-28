@@ -9,6 +9,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 import java.lang.String;
 import java.lang.Void;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -68,12 +69,32 @@ public interface RabbitMQClient {
    */
   void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   * Declare an exchange.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
+   */
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   * Delete an exchange, without regard for whether it is in use or not.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeDelete(String)
+   */
   void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   *  Bind an exchange to an exchange.
+   *
+   *  @see com.rabbitmq.client.Channel#exchangeBind(String, String, String)
+   */
   void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   * Unbind an exchange from an exchange.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeUnbind(String, String, String)
+   */
   void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
   /**
@@ -112,8 +133,18 @@ public interface RabbitMQClient {
    */
   void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   * Start the rabbitMQ client. Create the connection and the chanel.
+   *
+   * @see com.rabbitmq.client.Connection#createChannel()
+   */
   void start(Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   * Stop the rabbitMQ client. Close the connection and its chanel.
+   *
+   * @see com.rabbitmq.client.Connection#close()
+   */
   void stop(Handler<AsyncResult<Void>> resultHandler);
 
   /**
