@@ -16,7 +16,7 @@
 
   <properties>
     <stack.version>3.2.1</stack.version>
-    <rabbitmq.client.version>3.4.3</rabbitmq.client.version>
+    <rabbitmq.client.version>3.6.1</rabbitmq.client.version>
   </properties>
 
   <dependencyManagement>
