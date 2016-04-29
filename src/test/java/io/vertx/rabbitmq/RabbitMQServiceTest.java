@@ -126,6 +126,44 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
+  public void testBasicConsumeNoAutoAck() throws Exception{
+
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages);
+
+    CountDownLatch latch = new CountDownLatch(count);
+
+    vertx.eventBus().consumer("my.address", msg -> {
+      JsonObject json = (JsonObject) msg.body();
+      String body = json.getString("body");
+      assertTrue(messages.contains(body));
+
+      Long deliveryTag = json.getLong("deliveryTag");
+
+      if (json.getBoolean("isRedeliver")) {
+        client.basicAck(deliveryTag, false, onSuccess(v -> {
+          // remove the message if is redeliver (unacked)
+          messages.remove(body);
+          latch.countDown();
+        }));
+      } else {
+        // send and Nack for every ready message
+        client.basicNack(deliveryTag, false, true, onSuccess(v-> {}));
+      }
+
+    });
+
+    client.basicConsume(q, "my.address", false, onSuccess(v -> {
+    }));
+
+    awaitLatch(latch);
+    //assert all messages should be consumed.
+    assertTrue(messages.isEmpty());
+    testComplete();
+  }
+
+  @Test
   public void testQueueDeclareAndDelete(){
     String queueName = randomAlphaString(10);
 
