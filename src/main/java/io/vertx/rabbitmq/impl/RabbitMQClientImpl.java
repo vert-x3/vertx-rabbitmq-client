@@ -52,7 +52,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public boolean isOpenChannel() {
-      return channel.isOpen();
+      return channel != null && channel.isOpen();
   }
 
   @Override
