@@ -125,6 +125,54 @@ public class RabbitMQServiceTest extends VertxTestBase {
     testComplete();
   }
 
+  @Test
+  public void testQueueDeclareAndDelete(){
+    String queueName = randomAlphaString(10);
+
+    client.queueDeclare(queueName, false, false, true, asyncResult -> {
+      assertTrue(asyncResult.succeeded());
+      JsonObject result = asyncResult.result();
+      assertEquals(result.getString("queue"), queueName);
+
+      client.queueDelete(queueName, deleteAsyncResult -> {
+        assertTrue(deleteAsyncResult.succeeded());
+        testComplete();
+      });
+    });
+
+    await();
+  }
+
+  @Test
+  public void testIsOpenChannel() {
+
+    boolean result = client.isOpenChannel();
+
+    assertTrue(result);
+
+    client.stop(voidAsyncResult -> {
+      assertFalse(client.isOpenChannel());
+      testComplete();
+    });
+
+    await();
+  }
+
+  @Test
+  public void testIsConnected() {
+
+    boolean result = client.isConnected();
+
+    assertTrue(result);
+
+    client.stop(voidAsyncResult -> {
+      assertFalse(client.isConnected());
+      testComplete();
+    });
+
+    await();
+  }
+
   //TODO More tests
 
   private String setupQueue(Set<String> messages) throws Exception {

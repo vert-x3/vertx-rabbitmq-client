@@ -11,6 +11,7 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.RabbitMQClient;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.vertx.rabbitmq.impl.Utils.*;
@@ -52,7 +53,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public boolean isOpenChannel() {
-      return channel.isOpen();
+      return channel != null && channel.isOpen();
   }
 
   @Override
@@ -227,7 +228,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       try {
         connect();
         future.complete();
-      } catch (IOException e) {
+      } catch (IOException | TimeoutException e) {
         log.error("Could not connect to rabbitmq", e);
         if (retries != null && retries > 0) {
           try {
@@ -284,7 +285,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     }, resultHandler);
   }
 
-  private void connect() throws IOException {
+  private void connect() throws IOException, TimeoutException {
     log.debug("Connecting to rabbitmq...");
     connection = newConnection(config);
     connection.addShutdownListener(this);
@@ -322,7 +323,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
           connect();
           vertx.cancelTimer(id);
           log.info("Successfully reconnected to rabbitmq (attempt # " + attempt + ")");
-        } catch (IOException e) {
+        } catch (IOException | TimeoutException e) {
           log.debug("Failed to connect attempt # " + attempt, e);
         }
       }
@@ -345,7 +346,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     });
   }
 
-  private static Connection newConnection(JsonObject config) throws IOException {
+  private static Connection newConnection(JsonObject config) throws IOException, TimeoutException {
     ConnectionFactory cf = new ConnectionFactory();
     String uri = config.getString("uri");
     // Use uri if set, otherwise support individual connection parameters
@@ -384,7 +385,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     return cf.newConnection();
   }
 
-  private static interface ChannelHandler<T> {
+  private interface ChannelHandler<T> {
     T handle(Channel channel) throws Exception;
   }
 }
