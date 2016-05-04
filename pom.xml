@@ -6,16 +6,16 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-ext-parent</artifactId>
-    <version>14</version>
+    <version>20</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>vertx-rabbitmq-client</artifactId>
-  <version>3.0.0-SNAPSHOT</version>
+  <version>3.2.1-SNAPSHOT</version>
 
   <properties>
-    <stack.version>3.0.0-SNAPSHOT</stack.version>
+    <stack.version>3.2.1</stack.version>
     <rabbitmq.client.version>3.4.3</rabbitmq.client.version>
   </properties>
 
@@ -43,15 +43,29 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-js</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
       <artifactId>vertx-lang-groovy</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-lang-js</artifactId>
+      <artifactId>vertx-lang-ruby</artifactId>
       <optional>true</optional>
     </dependency>
-
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-ceylon</artifactId>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java</artifactId>
+      <optional>true</optional>
+    </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-docgen</artifactId>
