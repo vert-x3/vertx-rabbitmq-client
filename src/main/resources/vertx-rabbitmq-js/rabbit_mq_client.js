@@ -16,6 +16,7 @@
 
 /** @module vertx-rabbitmq-js/rabbit_mq_client */
 var utils = require('vertx-js/util/utils');
+var Vertx = require('vertx-js/vertx');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
@@ -31,6 +32,51 @@ var RabbitMQClient = function(j_val) {
   var that = this;
 
   /**
+   Acknowledge one or several received messages. Supply the deliveryTag from the AMQP.Basic.GetOk or AMQP.Basic.Deliver
+   method containing the received message being acknowledged.
+
+   @public
+   @param deliveryTag {number} 
+   @param multiple {boolean} 
+   @param resultHandler {function} 
+   */
+  this.basicAck = function(deliveryTag, multiple, resultHandler) {
+    var __args = arguments;
+    if (__args.length === 3 && typeof __args[0] ==='number' && typeof __args[1] ==='boolean' && typeof __args[2] === 'function') {
+      j_rabbitMQClient["basicAck(long,boolean,io.vertx.core.Handler)"](deliveryTag, multiple, function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(utils.convReturnJson(ar.result()), null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
+    } else throw new TypeError('function invoked with invalid arguments');
+  };
+
+  /**
+   Reject one or several received messages.
+
+   @public
+   @param deliveryTag {number} 
+   @param multiple {boolean} 
+   @param requeue {boolean} 
+   @param resultHandler {function} 
+   */
+  this.basicNack = function(deliveryTag, multiple, requeue, resultHandler) {
+    var __args = arguments;
+    if (__args.length === 4 && typeof __args[0] ==='number' && typeof __args[1] ==='boolean' && typeof __args[2] ==='boolean' && typeof __args[3] === 'function') {
+      j_rabbitMQClient["basicNack(long,boolean,boolean,io.vertx.core.Handler)"](deliveryTag, multiple, requeue, function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(utils.convReturnJson(ar.result()), null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
+    } else throw new TypeError('function invoked with invalid arguments');
+  };
+
+  /**
+   Retrieve a message from a queue using AMQP.Basic.Get
 
    @public
    @param queue {string} 
@@ -47,30 +93,42 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
+   Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
 
    @public
    @param queue {string} 
    @param address {string} 
+   @param autoAck {boolean} 
    @param resultHandler {function} 
    */
-  this.basicConsume = function(queue, address, resultHandler) {
+  this.basicConsume = function() {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'function') {
-      j_rabbitMQClient["basicConsume(java.lang.String,java.lang.String,io.vertx.core.Handler)"](queue, address, function(ar) {
+      j_rabbitMQClient["basicConsume(java.lang.String,java.lang.String,io.vertx.core.Handler)"](__args[0], __args[1], function(ar) {
       if (ar.succeeded()) {
-        resultHandler(null, null);
+        __args[2](null, null);
       } else {
-        resultHandler(null, ar.cause());
+        __args[2](null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    }  else if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] ==='boolean' && typeof __args[3] === 'function') {
+      j_rabbitMQClient["basicConsume(java.lang.String,java.lang.String,boolean,io.vertx.core.Handler)"](__args[0], __args[1], __args[2], function(ar) {
+      if (ar.succeeded()) {
+        __args[3](null, null);
+      } else {
+        __args[3](null, ar.cause());
+      }
+    });
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
+   Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
+   which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
 
    @public
    @param exchange {string} 
@@ -80,7 +138,7 @@ var RabbitMQClient = function(j_val) {
    */
   this.basicPublish = function(exchange, routingKey, message, resultHandler) {
     var __args = arguments;
-    if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] === 'object' && typeof __args[3] === 'function') {
+    if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && (typeof __args[2] === 'object' && __args[2] != null) && typeof __args[3] === 'function') {
       j_rabbitMQClient["basicPublish(java.lang.String,java.lang.String,io.vertx.core.json.JsonObject,io.vertx.core.Handler)"](exchange, routingKey, utils.convParamJsonObject(message), function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
@@ -88,10 +146,32 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
+   Request specific "quality of service" settings, Limiting the number of unacknowledged messages on
+   a channel (or connection). This limit is applied separately to each new consumer on the channel.
+
+   @public
+   @param prefetchCount {number} 
+   @param resultHandler {function} 
+   */
+  this.basicQos = function(prefetchCount, resultHandler) {
+    var __args = arguments;
+    if (__args.length === 2 && typeof __args[0] ==='number' && typeof __args[1] === 'function') {
+      j_rabbitMQClient["basicQos(int,io.vertx.core.Handler)"](prefetchCount, function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(null, null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
+    } else throw new TypeError('function invoked with invalid arguments');
+  };
+
+  /**
+   Declare an exchange.
 
    @public
    @param exchange {string} 
@@ -110,10 +190,11 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
+   Delete an exchange, without regard for whether it is in use or not.
 
    @public
    @param exchange {string} 
@@ -129,10 +210,11 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
+    Bind an exchange to an exchange.
 
    @public
    @param destination {string} 
@@ -150,10 +232,11 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
+   Unbind an exchange from an exchange.
 
    @public
    @param destination {string} 
@@ -171,7 +254,7 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
@@ -190,7 +273,7 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
@@ -213,7 +296,7 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
@@ -233,7 +316,7 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
@@ -255,7 +338,7 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
@@ -277,10 +360,11 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
+   Start the rabbitMQ client. Create the connection and the chanel.
 
    @public
    @param resultHandler {function} 
@@ -295,10 +379,11 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
+   Stop the rabbitMQ client. Close the connection and its chanel.
 
    @public
    @param resultHandler {function} 
@@ -313,7 +398,35 @@ var RabbitMQClient = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-    } else utils.invalidArgs();
+    } else throw new TypeError('function invoked with invalid arguments');
+  };
+
+  /**
+   Check if a connection is open
+
+   @public
+
+   @return {boolean} true when the connection is open, false otherwise
+   */
+  this.isConnected = function() {
+    var __args = arguments;
+    if (__args.length === 0) {
+      return j_rabbitMQClient["isConnected()"]();
+    } else throw new TypeError('function invoked with invalid arguments');
+  };
+
+  /**
+   Check if a channel is open
+
+   @public
+
+   @return {boolean} true when the connection is open, false otherwise
+   */
+  this.isOpenChannel = function() {
+    var __args = arguments;
+    if (__args.length === 0) {
+      return j_rabbitMQClient["isOpenChannel()"]();
+    } else throw new TypeError('function invoked with invalid arguments');
   };
 
   // A reference to the underlying Java delegate
@@ -331,9 +444,9 @@ var RabbitMQClient = function(j_val) {
  */
 RabbitMQClient.create = function(vertx, config) {
   var __args = arguments;
-  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && typeof __args[1] === 'object') {
+  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null)) {
     return utils.convReturnVertxGen(JRabbitMQClient["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)), RabbitMQClient);
-  } else utils.invalidArgs();
+  } else throw new TypeError('function invoked with invalid arguments');
 };
 
 // We export the Constructor function

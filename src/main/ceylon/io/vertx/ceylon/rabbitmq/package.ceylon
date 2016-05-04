@@ -1,0 +1,1 @@
+shared package io.vertx.ceylon.rabbitmq;
