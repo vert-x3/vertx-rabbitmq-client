@@ -53,7 +53,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public boolean isOpenChannel() {
-      return channel != null && channel.isOpen();
+    return channel != null && channel.isOpen();
   }
 
   @Override
@@ -140,8 +140,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler)
-  {
+  public void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.basicQos(prefetchCount);
       return null;
@@ -265,8 +264,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       try {
         //TODO: Is this the best thing ?
 
-          // change
-          log.debug("channel is close, try create Channel");
+        // change
+        log.debug("channel is close, try create Channel");
 
         channel = connection.createChannel();
       } catch (IOException e) {
@@ -334,16 +333,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public void shutdownCompleted(ShutdownSignalException cause) {
     if (cause.isInitiatedByApplication()) return;
 
-    log.info("RabbitMQ connection shutdown !", cause);
-    vertx.runOnContext(v -> {
-      try {
-        connection = null;
-        channel = null;
-        reconnect();
-      } catch (IOException e) {
-        log.error("IOException during reconnect.", e);
-      }
-    });
+    log.info("RabbitMQ connection shutdown! The client will attempt to reconnect automatically", cause);
   }
 
   private static Connection newConnection(JsonObject config) throws IOException, TimeoutException {
@@ -381,6 +371,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       cf.setConnectionTimeout(connectionTimeout);
     }
     //TODO: Support other configurations
+
+    // Automatic recovery of connections/channels/etc.
+    boolean automaticRecoveryEnabled = config.getBoolean("automaticRecoveryEnabled", true);
+    cf.setAutomaticRecoveryEnabled(automaticRecoveryEnabled);
 
     return cf.newConnection();
   }
