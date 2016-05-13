@@ -9,6 +9,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -23,6 +25,8 @@ class ConsumerHandler extends DefaultConsumer {
   private final Vertx vertx;
   private final Handler<AsyncResult<JsonObject>> handler;
   private final boolean includeProperties;
+
+  private static final Logger log = LoggerFactory.getLogger(ConsumerHandler.class);
 
   public ConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, Handler<AsyncResult<JsonObject>> handler) {
     super(channel);
@@ -62,5 +66,10 @@ class ConsumerHandler extends DefaultConsumer {
         handler.handle(Future.failedFuture(e));
       });
     }
+  }
+
+  @Override
+  public void handleCancel(String consumerTag) throws IOException {
+    log.debug("consumer has been cancelled unexpectedly");
   }
 }
