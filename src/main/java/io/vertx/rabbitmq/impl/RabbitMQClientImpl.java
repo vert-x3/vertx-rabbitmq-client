@@ -220,6 +220,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public void messageCount(String queue, Handler<AsyncResult<JsonObject>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      Long result = channel.messageCount(queue);
+
+      return new JsonObject().put("messageCount", result);
+    });
+  }
+
+  @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
     log.info("Starting rabbitmq client");
 

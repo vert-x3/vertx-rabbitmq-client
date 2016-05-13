@@ -211,6 +211,26 @@ public class RabbitMQServiceTest extends VertxTestBase {
     await();
   }
 
+  @Test
+  public void testGetMessageCount() throws Exception{
+    int count = 3;
+    Set<String> messages = createMessages(count);
+
+    String queue = setupQueue(messages);
+
+    client.messageCount(queue, onSuccess(json -> {
+      long messageCount = json.getLong("messageCount");
+      assertEquals(count, messageCount);
+
+      // remove the queue
+      client.queueDelete(queue, deleteAsyncResult -> {
+        testComplete();
+      });
+    }));
+
+    await();
+  }
+
   //TODO More tests
 
   private String setupQueue(Set<String> messages) throws Exception {
