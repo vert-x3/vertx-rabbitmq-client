@@ -323,6 +323,20 @@ public class RabbitMQClient implements ReifiedType {
     delegate.queueBind(arg_0, arg_1, arg_2, arg_3);
   }
 
+  @DocAnnotation$annotation$(description = " Returns the number of messages in a queue ready to be delivered.\n")
+  @TypeInfo("ceylon.language::Anything")
+  public void messageCount(
+    final @TypeInfo("ceylon.language::String") @Name("queue")  ceylon.language.String queue, 
+    final @TypeInfo("ceylon.language::Anything(ceylon.language::Throwable|ceylon.json::Object)") @Name("resultHandler")  Callable<?> resultHandler) {
+    java.lang.String arg_0 = io.vertx.lang.ceylon.ToJava.String.safeConvert(queue);
+    io.vertx.core.Handler<io.vertx.core.AsyncResult<io.vertx.core.json.JsonObject>> arg_1 = resultHandler == null ? null : new io.vertx.lang.ceylon.CallableAsyncResultHandler<io.vertx.core.json.JsonObject>(resultHandler) {
+      public Object toCeylon(io.vertx.core.json.JsonObject event) {
+        return io.vertx.lang.ceylon.ToCeylon.JsonObject.safeConvert(event);
+      }
+    };
+    delegate.messageCount(arg_0, arg_1);
+  }
+
   @DocAnnotation$annotation$(description = " Start the rabbitMQ client. Create the connection and the chanel.\n")
   @TypeInfo("ceylon.language::Anything")
   public void start(

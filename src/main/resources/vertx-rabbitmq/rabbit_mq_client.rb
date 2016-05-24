@@ -199,6 +199,16 @@ module VertxRabbitmq
       end
       raise ArgumentError, "Invalid arguments when calling queue_bind(queue,exchange,routingKey)"
     end
+    #  Returns the number of messages in a queue ready to be delivered.
+    # @param [String] queue 
+    # @yield 
+    # @return [void]
+    def message_count(queue=nil)
+      if queue.class == String && block_given?
+        return @j_del.java_method(:messageCount, [Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(queue,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ar.result != nil ? JSON.parse(ar.result.encode) : nil : nil) }))
+      end
+      raise ArgumentError, "Invalid arguments when calling message_count(queue)"
+    end
     #  Start the rabbitMQ client. Create the connection and the chanel.
     # @yield 
     # @return [void]

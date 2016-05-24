@@ -262,6 +262,24 @@ public class RabbitMQClient {
     this.delegate.queueBind(queue, exchange, routingKey, resultHandler);
   }
   /**
+   * Returns the number of messages in a queue ready to be delivered.
+   * @param queue 
+   * @param resultHandler 
+   */
+  public void messageCount(String queue, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
+    this.delegate.messageCount(queue, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
+        AsyncResult<Map<String, Object>> f
+        if (event.succeeded()) {
+          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+        } else {
+          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+        }
+        resultHandler.handle(f)
+      }
+    });
+  }
+  /**
    * Start the rabbitMQ client. Create the connection and the chanel.
    * @param resultHandler 
    */

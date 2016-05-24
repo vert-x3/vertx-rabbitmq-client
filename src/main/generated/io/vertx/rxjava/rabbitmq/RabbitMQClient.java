@@ -419,6 +419,26 @@ public class RabbitMQClient {
   }
 
   /**
+   * Returns the number of messages in a queue ready to be delivered.
+   * @param queue 
+   * @param resultHandler 
+   */
+  public void messageCount(String queue, Handler<AsyncResult<JsonObject>> resultHandler) { 
+    this.delegate.messageCount(queue, resultHandler);
+  }
+
+  /**
+   * Returns the number of messages in a queue ready to be delivered.
+   * @param queue 
+   * @return 
+   */
+  public Observable<JsonObject> messageCountObservable(String queue) { 
+    io.vertx.rx.java.ObservableFuture<JsonObject> resultHandler = io.vertx.rx.java.RxHelper.observableFuture();
+    messageCount(queue, resultHandler.toHandler());
+    return resultHandler;
+  }
+
+  /**
    * Start the rabbitMQ client. Create the connection and the chanel.
    * @param resultHandler 
    */

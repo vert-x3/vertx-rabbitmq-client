@@ -364,6 +364,26 @@ var RabbitMQClient = function(j_val) {
   };
 
   /**
+   Returns the number of messages in a queue ready to be delivered.
+
+   @public
+   @param queue {string} 
+   @param resultHandler {function} 
+   */
+  this.messageCount = function(queue, resultHandler) {
+    var __args = arguments;
+    if (__args.length === 2 && typeof __args[0] === 'string' && typeof __args[1] === 'function') {
+      j_rabbitMQClient["messageCount(java.lang.String,io.vertx.core.Handler)"](queue, function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(utils.convReturnJson(ar.result()), null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
+    } else throw new TypeError('function invoked with invalid arguments');
+  };
+
+  /**
    Start the rabbitMQ client. Create the connection and the chanel.
 
    @public
