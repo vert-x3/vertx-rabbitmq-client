@@ -1,2 +1,139 @@
-Todo.
+= RabbitMQ Client for Vert.x
+
+A Vert.x client allowing applications to interact with a RabbitMQ broker (AMQP 0.9.1)
+
+**This service is experimental and the APIs are likely to change before settling down.**
+
+== Getting Started
+
+=== Maven
+
+Add the following dependency to your maven project
+
+[source,xml,subs="+attributes"]
+----
+<dependencies>
+  <dependency>
+    <groupId>io.vertx</groupId>
+    <artifactId>vertx-rabbitmq-client</artifactId>
+    <version>$version</version>
+  </dependency>
+</dependencies>
+----
+
+=== Gradle
+
+Add the following dependency to your gradle project
+
+[source,groovy,subs="+attributes"]
+----
+dependencies {
+  compile("io.vertx:vertx-rabbitmq-client:$version")
+}
+----
+
+=== Create a client
+
+You can create a client instance as follows:
+
+[source,groovy]
+----
+import io.vertx.groovy.rabbitmq.RabbitMQClient
+def client = RabbitMQClient.create(vertx, config)
+
+----
+
+== Operations
+
+The following are some examples of the operations supported by the RabbitMQService API.
+
+Consult the javadoc/documentation for detailed information on all API methods.
+
+=== Publish
+
+Publish a message to a queue
+
+[source,groovy]
+----
+def message = [
+  body:"Hello RabbitMQ, from Vert.x !"
+]
+client.basicPublish("", "my.queue", message, { pubResult ->
+  if (pubResult.succeeded()) {
+    println("Message published !")
+  } else {
+    pubResult.cause().printStackTrace()
+  }
+})
+
+----
+
+=== Consume
+
+Consume messages from a queue
+
+[source,groovy]
+----
+// Create the event bus handler which messages will be sent to
+// Create the event bus handler which messages will be sent to
+vertx.eventBus().consumer("my.address", { msg ->
+  def json = msg.body()
+  println("Got message: ${json.body}")
+})
+
+// Setup the link between rabbitmq consumer and event bus address
+client.basicConsume("my.queue", "my.address", { consumeResult ->
+  if (consumeResult.succeeded()) {
+    println("RabbitMQ consumer created !")
+  } else {
+    consumeResult.cause().printStackTrace()
+  }
+})
+
+----
+
+=== Get
+
+Will get a message from a queue
+
+[source,groovy]
+----
+client.basicGet("my.queue", true, { getResult ->
+  if (getResult.succeeded()) {
+    def msg = getResult.result()
+    println("Got message: ${msg.body}")
+  } else {
+    getResult.cause().printStackTrace()
+  }
+})
+
+----
+
+=== Consume messages without auto-ack
+
+[source,groovy]
+----
+// Create the event bus handler which messages will be sent to
+vertx.eventBus().consumer("my.address", { msg ->
+  def json = msg.body()
+  println("Got message: ${json.body}")
+  // ack
+  client.basicAck(json.deliveryTag, false, { asyncResult ->
+  })
+})
+
+// Setup the link between rabbitmq consumer and event bus address
+client.basicConsume("my.queue", "my.address", false, { consumeResult ->
+  if (consumeResult.succeeded()) {
+    println("RabbitMQ consumer created !")
+  } else {
+    consumeResult.cause().printStackTrace()
+  }
+})
+
+----
+
+== Running the tests
+
+You will need to have RabbitMQ installed and running with default ports on localhost for this to work.
 <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
