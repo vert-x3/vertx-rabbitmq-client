@@ -19,6 +19,7 @@ import static io.vertx.test.core.TestUtils.randomInt;
  */
 public class RabbitMQServiceTest extends VertxTestBase {
 
+  public static final String CLOUD_AMQP_URI = "amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc";
   protected RabbitMQClient client;
 
   private Channel channel;
@@ -26,13 +27,29 @@ public class RabbitMQServiceTest extends VertxTestBase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    client = RabbitMQClient.create(vertx, config());
-    CountDownLatch latch = new CountDownLatch(1);
-    client.start(onSuccess(v -> {
-      latch.countDown();
-    }));
-    awaitLatch(latch);
-    channel = new ConnectionFactory().newConnection().createChannel();
+
+    if ("true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
+      client = RabbitMQClient.create(vertx, config());
+      CountDownLatch latch = new CountDownLatch(1);
+      client.start(onSuccess(v -> {
+        latch.countDown();
+      }));
+      awaitLatch(latch);
+      channel = new ConnectionFactory().newConnection().createChannel();
+    } else {
+      // Use CloudAMQP
+      JsonObject config = config()
+          .put("uri", CLOUD_AMQP_URI);
+      client = RabbitMQClient.create(vertx, config);
+      CountDownLatch latch = new CountDownLatch(1);
+      client.start(onSuccess(v -> {
+        latch.countDown();
+      }));
+      awaitLatch(latch);
+      ConnectionFactory factory = new ConnectionFactory();
+      factory.setUri(CLOUD_AMQP_URI);
+      channel = factory.newConnection().createChannel();
+    }
   }
 
 

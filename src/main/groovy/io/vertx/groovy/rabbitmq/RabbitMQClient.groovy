@@ -35,7 +35,7 @@ public class RabbitMQClient {
     return delegate;
   }
   public static RabbitMQClient create(Vertx vertx, Map<String, Object> config) {
-    def ret= InternalHelper.safeCreate(io.vertx.rabbitmq.RabbitMQClient.create((io.vertx.core.Vertx)vertx.getDelegate(), config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.groovy.rabbitmq.RabbitMQClient.class);
+    def ret = InternalHelper.safeCreate(io.vertx.rabbitmq.RabbitMQClient.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, config != null ? new io.vertx.core.json.JsonObject(config) : null), io.vertx.groovy.rabbitmq.RabbitMQClient.class);
     return ret;
   }
   /**
@@ -46,17 +46,15 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
-    this.delegate.basicAck(deliveryTag, multiple, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
-      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
-        AsyncResult<Map<String, Object>> f
-        if (event.succeeded()) {
-          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+    delegate.basicAck(deliveryTag, multiple, resultHandler != null ? new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture((Map<String, Object>)InternalHelper.wrapObject(ar.result())));
         } else {
-          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        resultHandler.handle(f)
       }
-    });
+    } : null);
   }
   /**
    * Reject one or several received messages.
@@ -66,17 +64,15 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
-    this.delegate.basicNack(deliveryTag, multiple, requeue, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
-      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
-        AsyncResult<Map<String, Object>> f
-        if (event.succeeded()) {
-          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+    delegate.basicNack(deliveryTag, multiple, requeue, resultHandler != null ? new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture((Map<String, Object>)InternalHelper.wrapObject(ar.result())));
         } else {
-          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        resultHandler.handle(f)
       }
-    });
+    } : null);
   }
   /**
    * Retrieve a message from a queue using AMQP.Basic.Get
@@ -85,17 +81,15 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
-    this.delegate.basicGet(queue, autoAck, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
-      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
-        AsyncResult<Map<String, Object>> f
-        if (event.succeeded()) {
-          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+    delegate.basicGet(queue, autoAck, resultHandler != null ? new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture((Map<String, Object>)InternalHelper.wrapObject(ar.result())));
         } else {
-          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        resultHandler.handle(f)
       }
-    });
+    } : null);
   }
   /**
    * Start a non-nolocal, non-exclusive consumer, with auto acknowledgement and a server-generated consumerTag.
@@ -104,7 +98,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.basicConsume(queue, address, resultHandler);
+    delegate.basicConsume(queue, address, resultHandler);
   }
   /**
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
@@ -114,7 +108,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.basicConsume(queue, address, autoAck, resultHandler);
+    delegate.basicConsume(queue, address, autoAck, resultHandler);
   }
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
@@ -125,7 +119,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicPublish(String exchange, String routingKey, Map<String, Object> message, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.basicPublish(exchange, routingKey, message != null ? new io.vertx.core.json.JsonObject(message) : null, resultHandler);
+    delegate.basicPublish(exchange, routingKey, message != null ? new io.vertx.core.json.JsonObject(message) : null, resultHandler);
   }
   /**
    * Request specific "quality of service" settings, Limiting the number of unacknowledged messages on
@@ -134,7 +128,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.basicQos(prefetchCount, resultHandler);
+    delegate.basicQos(prefetchCount, resultHandler);
   }
   /**
    * Declare an exchange.
@@ -145,7 +139,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.exchangeDeclare(exchange, type, durable, autoDelete, resultHandler);
+    delegate.exchangeDeclare(exchange, type, durable, autoDelete, resultHandler);
   }
   /**
    * Delete an exchange, without regard for whether it is in use or not.
@@ -153,7 +147,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.exchangeDelete(exchange, resultHandler);
+    delegate.exchangeDelete(exchange, resultHandler);
   }
   /**
    *  Bind an exchange to an exchange.
@@ -163,7 +157,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.exchangeBind(destination, source, routingKey, resultHandler);
+    delegate.exchangeBind(destination, source, routingKey, resultHandler);
   }
   /**
    * Unbind an exchange from an exchange.
@@ -173,24 +167,22 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.exchangeUnbind(destination, source, routingKey, resultHandler);
+    delegate.exchangeUnbind(destination, source, routingKey, resultHandler);
   }
   /**
    * Actively declare a server-named exclusive, autodelete, non-durable queue.
    * @param resultHandler 
    */
   public void queueDeclareAuto(Handler<AsyncResult<Map<String, Object>>> resultHandler) {
-    this.delegate.queueDeclareAuto(new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
-      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
-        AsyncResult<Map<String, Object>> f
-        if (event.succeeded()) {
-          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+    delegate.queueDeclareAuto(resultHandler != null ? new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture((Map<String, Object>)InternalHelper.wrapObject(ar.result())));
         } else {
-          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        resultHandler.handle(f)
       }
-    });
+    } : null);
   }
   /**
    * Declare a queue
@@ -201,17 +193,15 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
-    this.delegate.queueDeclare(queue, durable, exclusive, autoDelete, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
-      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
-        AsyncResult<Map<String, Object>> f
-        if (event.succeeded()) {
-          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+    delegate.queueDeclare(queue, durable, exclusive, autoDelete, resultHandler != null ? new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture((Map<String, Object>)InternalHelper.wrapObject(ar.result())));
         } else {
-          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        resultHandler.handle(f)
       }
-    });
+    } : null);
   }
   /**
    * Delete a queue, without regard for whether it is in use or has messages on it
@@ -219,17 +209,15 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void queueDelete(String queue, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
-    this.delegate.queueDelete(queue, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
-      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
-        AsyncResult<Map<String, Object>> f
-        if (event.succeeded()) {
-          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+    delegate.queueDelete(queue, resultHandler != null ? new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture((Map<String, Object>)InternalHelper.wrapObject(ar.result())));
         } else {
-          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        resultHandler.handle(f)
       }
-    });
+    } : null);
   }
   /**
    * Delete a queue
@@ -239,17 +227,15 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
-    this.delegate.queueDeleteIf(queue, ifUnused, ifEmpty, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
-      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
-        AsyncResult<Map<String, Object>> f
-        if (event.succeeded()) {
-          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+    delegate.queueDeleteIf(queue, ifUnused, ifEmpty, resultHandler != null ? new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture((Map<String, Object>)InternalHelper.wrapObject(ar.result())));
         } else {
-          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        resultHandler.handle(f)
       }
-    });
+    } : null);
   }
   /**
    * Bind a queue to an exchange
@@ -259,7 +245,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.queueBind(queue, exchange, routingKey, resultHandler);
+    delegate.queueBind(queue, exchange, routingKey, resultHandler);
   }
   /**
    * Returns the number of messages in a queue ready to be delivered.
@@ -267,38 +253,36 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void messageCount(String queue, Handler<AsyncResult<Map<String, Object>>> resultHandler) {
-    this.delegate.messageCount(queue, new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
-      public void handle(AsyncResult<io.vertx.core.json.JsonObject> event) {
-        AsyncResult<Map<String, Object>> f
-        if (event.succeeded()) {
-          f = InternalHelper.<Map<String, Object>>result((Map<String, Object>)InternalHelper.wrapObject(event.result()))
+    delegate.messageCount(queue, resultHandler != null ? new Handler<AsyncResult<io.vertx.core.json.JsonObject>>() {
+      public void handle(AsyncResult<io.vertx.core.json.JsonObject> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture((Map<String, Object>)InternalHelper.wrapObject(ar.result())));
         } else {
-          f = InternalHelper.<Map<String, Object>>failure(event.cause())
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
-        resultHandler.handle(f)
       }
-    });
+    } : null);
   }
   /**
    * Start the rabbitMQ client. Create the connection and the chanel.
    * @param resultHandler 
    */
   public void start(Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.start(resultHandler);
+    delegate.start(resultHandler);
   }
   /**
    * Stop the rabbitMQ client. Close the connection and its chanel.
    * @param resultHandler 
    */
   public void stop(Handler<AsyncResult<Void>> resultHandler) {
-    this.delegate.stop(resultHandler);
+    delegate.stop(resultHandler);
   }
   /**
    * Check if a connection is open
    * @return true when the connection is open, false otherwise
    */
   public boolean isConnected() {
-    def ret = this.delegate.isConnected();
+    def ret = delegate.isConnected();
     return ret;
   }
   /**
@@ -306,7 +290,7 @@ public class RabbitMQClient {
    * @return true when the connection is open, false otherwise
    */
   public boolean isOpenChannel() {
-    def ret = this.delegate.isOpenChannel();
+    def ret = delegate.isOpenChannel();
     return ret;
   }
 }
