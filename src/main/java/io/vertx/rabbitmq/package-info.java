@@ -14,13 +14,11 @@
  *
  * [source,xml,subs="+attributes"]
  * ----
- * <dependencies>
- *   <dependency>
- *     <groupId>io.vertx</groupId>
- *     <artifactId>vertx-rabbitmq-client</artifactId>
- *     <version>$version</version>
- *   </dependency>
- * </dependencies>
+ * <dependency>
+ *   <groupId>${maven.groupId}</groupId>
+ *   <artifactId>${maven.artifactId}</artifactId>
+ *   <version>${maven.version}</version>
+ * </dependency>
  * ----
  *
  * === Gradle
@@ -30,7 +28,7 @@
  * [source,groovy,subs="+attributes"]
  * ----
  * dependencies {
- *   compile("io.vertx:vertx-rabbitmq-client:$version")
+ *   compile '${maven.groupId}:${maven.artifactId}:${maven.version}'
  * }
  * ----
  *
