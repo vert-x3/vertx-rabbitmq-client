@@ -124,15 +124,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.basicConsume(queue, address, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.basicConsume(queue, address, resultHandler);
   }
 
   /**
@@ -155,15 +147,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.basicConsume(queue, address, autoAck, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.basicConsume(queue, address, autoAck, resultHandler);
   }
 
   /**
@@ -188,15 +172,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.basicPublish(exchange, routingKey, message, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.basicPublish(exchange, routingKey, message, resultHandler);
   }
 
   /**
@@ -220,15 +196,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.basicQos(prefetchCount, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.basicQos(prefetchCount, resultHandler);
   }
 
   /**
@@ -252,15 +220,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.exchangeDeclare(exchange, type, durable, autoDelete, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.exchangeDeclare(exchange, type, durable, autoDelete, resultHandler);
   }
 
   /**
@@ -283,15 +243,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.exchangeDelete(exchange, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.exchangeDelete(exchange, resultHandler);
   }
 
   /**
@@ -313,15 +265,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.exchangeBind(destination, source, routingKey, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.exchangeBind(destination, source, routingKey, resultHandler);
   }
 
   /**
@@ -345,15 +289,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.exchangeUnbind(destination, source, routingKey, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.exchangeUnbind(destination, source, routingKey, resultHandler);
   }
 
   /**
@@ -465,15 +401,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.queueBind(queue, exchange, routingKey, new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.queueBind(queue, exchange, routingKey, resultHandler);
   }
 
   /**
@@ -514,15 +442,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void start(Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.start(new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.start(resultHandler);
   }
 
   /**
@@ -540,15 +460,7 @@ public class RabbitMQClient {
    * @param resultHandler 
    */
   public void stop(Handler<AsyncResult<Void>> resultHandler) { 
-    delegate.stop(new Handler<AsyncResult<java.lang.Void>>() {
-      public void handle(AsyncResult<java.lang.Void> ar) {
-        if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(ar.result()));
-        } else {
-          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
-        }
-      }
-    });
+    delegate.stop(resultHandler);
   }
 
   /**
