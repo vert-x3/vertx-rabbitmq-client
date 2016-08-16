@@ -278,7 +278,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
         channel = connection.createChannel();
       } catch (IOException e) {
-          log.debug("create channel error");
+        log.debug("create channel error");
         resultHandler.handle(Future.failedFuture(e));
       }
     }
@@ -345,6 +345,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     log.info("RabbitMQ connection shutdown! The client will attempt to reconnect automatically", cause);
   }
 
+
   private static Connection newConnection(JsonObject config) throws IOException, TimeoutException {
     ConnectionFactory cf = new ConnectionFactory();
     String uri = config.getString("uri");
@@ -372,6 +373,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       if (port != null) {
         cf.setPort(port);
       }
+
+      String virtualHost = config.getString("virtualHost");
+      if (virtualHost != null) {
+        cf.setVirtualHost(virtualHost);
+      }
     }
 
     // Connection timeout
@@ -379,6 +385,28 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     if (connectionTimeout != null) {
       cf.setConnectionTimeout(connectionTimeout);
     }
+
+    Integer requestedHeartbeat = config.getInteger("requestedHeartbeat");
+    if (requestedHeartbeat != null) {
+      cf.setRequestedHeartbeat(requestedHeartbeat);
+    }
+
+    Integer handshakeTimeout = config.getInteger("handshakeTimeout");
+    if (handshakeTimeout != null) {
+      cf.setHandshakeTimeout(handshakeTimeout);
+    }
+
+
+    Integer requestedChannelMax = config.getInteger("requestedChannelMax");
+    if (requestedChannelMax != null) {
+      cf.setRequestedChannelMax(requestedChannelMax);
+    }
+
+    Integer networkRecoveryInterval = config.getInteger("networkRecoveryInterval");
+    if (networkRecoveryInterval != null) {
+      cf.setNetworkRecoveryInterval(networkRecoveryInterval);
+    }
+
     //TODO: Support other configurations
 
     // Automatic recovery of connections/channels/etc.
