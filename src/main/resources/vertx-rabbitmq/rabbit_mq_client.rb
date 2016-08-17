@@ -2,7 +2,6 @@ require 'vertx/vertx'
 require 'vertx/util/utils.rb'
 # Generated from io.vertx.rabbitmq.RabbitMQClient
 module VertxRabbitmq
-  #  @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
   class RabbitMQClient
     # @private
     # @param j_del [::VertxRabbitmq::RabbitMQClient] the java delegate

@@ -34,11 +34,18 @@
  *
  * === Create a client
  *
- * You can create a client instance as follows:
+ * You can create a client instance as follows using a full amqp uri:
  *
  * [source,$lang]
  * ----
- * {@link examples.Examples#createClient}
+ * {@link examples.Examples#createClientWithUri}
+ * ----
+ *
+ * Or you can also specify individual parameters manually:
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.Examples#createClientWithManualParams}
  * ----
  *
  * == Operations

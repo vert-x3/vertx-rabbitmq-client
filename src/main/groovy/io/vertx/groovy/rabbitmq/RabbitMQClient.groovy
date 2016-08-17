@@ -23,7 +23,6 @@ import io.vertx.core.json.JsonObject
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 /**
- * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
 */
 @CompileStatic
 public class RabbitMQClient {

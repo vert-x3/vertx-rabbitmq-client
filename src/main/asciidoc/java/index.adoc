@@ -15,7 +15,7 @@ Add the following dependency to your maven project
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-rabbitmq-client</artifactId>
-  <version>3.3.2</version>
+  <version>3.4.0-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -26,16 +26,41 @@ Add the following dependency to your gradle project
 [source,groovy,subs="+attributes"]
 ----
 dependencies {
-  compile 'io.vertx:vertx-rabbitmq-client:3.3.2'
+  compile 'io.vertx:vertx-rabbitmq-client:3.4.0-SNAPSHOT'
 }
 ----
 
 === Create a client
 
-You can create a client instance as follows:
+You can create a client instance as follows using a full amqp uri:
 
 [source,java]
 ----
+JsonObject config = new JsonObject();
+// full amqp uri
+config.put("uri", "amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc");
+RabbitMQClient client = RabbitMQClient.create(vertx, config);
+----
+
+Or you can also specify individual parameters manually:
+
+[source,java]
+----
+JsonObject config = new JsonObject();
+// Each parameter is optional
+// The default parameter with be used if the parameter is not set
+config.put("user", "user1");
+config.put("password", "password1");
+config.put("host", "localhost");
+config.put("port", 5672);
+config.put("virtualHost", "vhost1");
+config.put("connectionTimeout", 60); // in seconds
+config.put("requestedHeartbeat", 60); // in seconds
+config.put("handshakeTimeout", 60); // in seconds
+config.put("requestedChannelMax", 5);
+config.put("networkRecoveryInterval", 5); // in seconds
+config.put("automaticRecoveryEnabled", true);
+
 RabbitMQClient client = RabbitMQClient.create(vertx, config);
 ----
 

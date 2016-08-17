@@ -17,7 +17,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 
 @Ceylon(major = 8)
-@DocAnnotation$annotation$(description = " @author <a href=\"mailto:nscavell@redhat.com\">Nick Scavelli</a>\n")
+@DocAnnotation$annotation$(description = "")
 public class RabbitMQClient implements ReifiedType {
 
   @Ignore

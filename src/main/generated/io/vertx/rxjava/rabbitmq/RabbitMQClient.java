@@ -24,7 +24,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 
 /**
- * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  *
  * <p/>
  * NOTE: This class has been automatically generated from the {@link io.vertx.rabbitmq.RabbitMQClient original} non RX-ified interface using Vert.x codegen.

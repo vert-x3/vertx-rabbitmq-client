@@ -6,7 +6,29 @@ import io.vertx.rabbitmq.RabbitMQClient;
 
 public class Examples {
 
-  public void createClient(Vertx vertx, JsonObject config) {
+  public void createClientWithUri(Vertx vertx) {
+    JsonObject config = new JsonObject();
+    // full amqp uri
+    config.put("uri", "amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc");
+    RabbitMQClient client = RabbitMQClient.create(vertx, config);
+  }
+
+  public void createClientWithManualParams(Vertx vertx) {
+    JsonObject config = new JsonObject();
+    // Each parameter is optional
+    // The default parameter with be used if the parameter is not set
+    config.put("user", "user1");
+    config.put("password", "password1");
+    config.put("host", "localhost");
+    config.put("port", 5672);
+    config.put("virtualHost", "vhost1");
+    config.put("connectionTimeout", 60); // in seconds
+    config.put("requestedHeartbeat", 60); // in seconds
+    config.put("handshakeTimeout", 60); // in seconds
+    config.put("requestedChannelMax", 5);
+    config.put("networkRecoveryInterval", 5); // in seconds
+    config.put("automaticRecoveryEnabled", true);
+
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
   }
 
