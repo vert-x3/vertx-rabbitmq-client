@@ -9,10 +9,10 @@ A Vert.x client allowing applications to interact with a RabbitMQ broker (AMQP 0
 Please see the in source asciidoc documentation or the main documentation on the web-site for a full description:
 
 * Web-site docs
-* link:src/main/asciidoc/java/index.adoc[Java in-source docs]
-* link:src/main/asciidoc/js/index.adoc[JavaScript in-source docs]
-* link:src/main/asciidoc/groovy/index.adoc[Groovy in-source docs]
-* link:src/main/asciidoc/ruby/index.adoc[Ruby in-source docs]
+* Java in-source docs(../src/main/asciidoc/java/index.adoc)
+* JavaScript in-source docs(../src/main/asciidoc/js/index.adoc)
+* Groovy in-source docs(../src/main/asciidoc/groovy/index.adoc)
+* Ruby in-source docs(../src/main/asciidoc/ruby/index.adoc)
 
 # Running the tests
 
