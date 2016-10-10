@@ -16,12 +16,13 @@
 
 package io.vertx.rxjava.rabbitmq;
 
-import java.util.Map;
-import rx.Observable;
-import io.vertx.rxjava.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.core.json.JsonObject;
+import io.vertx.rxjava.core.Vertx;
+import rx.Observable;
+
+import java.util.Map;
 
 /**
  *
@@ -237,6 +238,34 @@ public class RabbitMQClient {
   }
 
   /**
+   * Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.
+   * @param exchange 
+   * @param type 
+   * @param durable 
+   * @param autoDelete 
+   * @param config 
+   * @param resultHandler 
+   */
+  public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String,String> config, Handler<AsyncResult<Void>> resultHandler) { 
+    delegate.exchangeDeclare(exchange, type, durable, autoDelete, config, resultHandler);
+  }
+
+  /**
+   * Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.
+   * @param exchange 
+   * @param type 
+   * @param durable 
+   * @param autoDelete 
+   * @param config 
+   * @return 
+   */
+  public Observable<Void> exchangeDeclareObservable(String exchange, String type, boolean durable, boolean autoDelete, Map<String,String> config) { 
+    io.vertx.rx.java.ObservableFuture<Void> resultHandler = io.vertx.rx.java.RxHelper.observableFuture();
+    exchangeDeclare(exchange, type, durable, autoDelete, config, resultHandler.toHandler());
+    return resultHandler;
+  }
+
+  /**
    * Delete an exchange, without regard for whether it is in use or not.
    * @param exchange 
    * @param resultHandler 
@@ -257,7 +286,7 @@ public class RabbitMQClient {
   }
 
   /**
-   *  Bind an exchange to an exchange.
+   * Bind an exchange to an exchange.
    * @param destination 
    * @param source 
    * @param routingKey 
@@ -268,7 +297,7 @@ public class RabbitMQClient {
   }
 
   /**
-   *  Bind an exchange to an exchange.
+   * Bind an exchange to an exchange.
    * @param destination 
    * @param source 
    * @param routingKey 

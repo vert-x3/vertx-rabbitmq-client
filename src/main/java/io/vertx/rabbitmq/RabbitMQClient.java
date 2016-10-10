@@ -8,8 +8,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
-import java.lang.String;
-import java.lang.Void;
+
 import java.util.Map;
 
 /**
@@ -28,30 +27,35 @@ public interface RabbitMQClient {
   /**
    * Acknowledge one or several received messages. Supply the deliveryTag from the AMQP.Basic.GetOk or AMQP.Basic.Deliver
    * method containing the received message being acknowledged.
+   *
    * @see com.rabbitmq.client.Channel#basicAck(long, boolean)
    */
   void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
    * Reject one or several received messages.
+   *
    * @see com.rabbitmq.client.Channel#basicNack(long, boolean, boolean)
    */
   void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
    * Retrieve a message from a queue using AMQP.Basic.Get
+   *
    * @see com.rabbitmq.client.Channel#basicGet(String, boolean)
    */
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
    * Start a non-nolocal, non-exclusive consumer, with auto acknowledgement and a server-generated consumerTag.
+   *
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
   void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
+   *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
@@ -59,6 +63,7 @@ public interface RabbitMQClient {
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
    * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
+   *
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler);
@@ -79,6 +84,13 @@ public interface RabbitMQClient {
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
+   */
+  void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
    * Delete an exchange, without regard for whether it is in use or not.
    *
    * @see com.rabbitmq.client.Channel#exchangeDelete(String)
@@ -86,9 +98,9 @@ public interface RabbitMQClient {
   void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler);
 
   /**
-   *  Bind an exchange to an exchange.
+   * Bind an exchange to an exchange.
    *
-   *  @see com.rabbitmq.client.Channel#exchangeBind(String, String, String)
+   * @see com.rabbitmq.client.Channel#exchangeBind(String, String, String)
    */
   void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
@@ -158,15 +170,17 @@ public interface RabbitMQClient {
 
   /**
    * Check if a connection is open
-   * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
+   *
    * @return true when the connection is open, false otherwise
+   * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
    */
   boolean isConnected();
 
   /**
    * Check if a channel is open
-   * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
+   *
    * @return true when the connection is open, false otherwise
+   * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
    */
   boolean isOpenChannel();
 }

@@ -1,5 +1,8 @@
 package io.vertx.rabbitmq;
 
+import static io.vertx.test.core.TestUtils.randomAlphaString;
+import static io.vertx.test.core.TestUtils.randomInt;
+
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -7,12 +10,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-
-import static io.vertx.test.core.TestUtils.randomAlphaString;
-import static io.vertx.test.core.TestUtils.randomInt;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -38,8 +40,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
       channel = new ConnectionFactory().newConnection().createChannel();
     } else {
       // Use CloudAMQP
-      JsonObject config = config()
-          .put("uri", CLOUD_AMQP_URI);
+      JsonObject config = config().put("uri", CLOUD_AMQP_URI);
       client = RabbitMQClient.create(vertx, config);
       CountDownLatch latch = new CountDownLatch(1);
       client.start(onSuccess(v -> {
@@ -143,7 +144,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
-  public void testBasicConsumeNoAutoAck() throws Exception{
+  public void testBasicConsumeNoAutoAck() throws Exception {
 
     int count = 3;
     Set<String> messages = createMessages(count);
@@ -166,7 +167,8 @@ public class RabbitMQServiceTest extends VertxTestBase {
         }));
       } else {
         // send and Nack for every ready message
-        client.basicNack(deliveryTag, false, true, onSuccess(v-> {}));
+        client.basicNack(deliveryTag, false, true, onSuccess(v -> {
+        }));
       }
 
     });
@@ -181,7 +183,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
-  public void testQueueDeclareAndDelete(){
+  public void testQueueDeclareAndDelete() {
     String queueName = randomAlphaString(10);
 
     client.queueDeclare(queueName, false, false, true, asyncResult -> {
@@ -196,6 +198,31 @@ public class RabbitMQServiceTest extends VertxTestBase {
     });
 
     await();
+  }
+
+  //TODO: create an integration test with a test scenario
+  @Test
+  public void testDeclareExchangeWithAlternateExchange() throws Exception {
+    String exName = randomAlphaString(10);
+    Map<String, String> params = new HashMap<>();
+    params.put("alternate-exchange", "alt.ex");
+    client.exchangeDeclare(exName, "direct", false, true, params, createResult -> {
+      assertTrue(createResult.succeeded());
+      testComplete();
+    });
+
+  }
+
+  //TODO: create an integration test with a test scenario
+  @Test
+  public void testDeclareExchangeWithDLX() throws Exception {
+    String exName = randomAlphaString(10);
+    Map<String, String> params = new HashMap<>();
+    params.put("x-dead-letter-exchange", "dlx.exchange");
+    client.exchangeDeclare(exName, "direct", false, true, params, createResult -> {
+      assertTrue(createResult.succeeded());
+      testComplete();
+    });
   }
 
   @Test
@@ -229,7 +256,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
-  public void testGetMessageCount() throws Exception{
+  public void testGetMessageCount() throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
 

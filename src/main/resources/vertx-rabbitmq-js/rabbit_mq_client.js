@@ -171,23 +171,32 @@ var RabbitMQClient = function(j_val) {
   };
 
   /**
-   Declare an exchange.
+   Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.
 
    @public
    @param exchange {string} 
    @param type {string} 
    @param durable {boolean} 
    @param autoDelete {boolean} 
+   @param config {Array.<string>} 
    @param resultHandler {function} 
    */
-  this.exchangeDeclare = function(exchange, type, durable, autoDelete, resultHandler) {
+  this.exchangeDeclare = function() {
     var __args = arguments;
     if (__args.length === 5 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] ==='boolean' && typeof __args[3] ==='boolean' && typeof __args[4] === 'function') {
-      j_rabbitMQClient["exchangeDeclare(java.lang.String,java.lang.String,boolean,boolean,io.vertx.core.Handler)"](exchange, type, durable, autoDelete, function(ar) {
+      j_rabbitMQClient["exchangeDeclare(java.lang.String,java.lang.String,boolean,boolean,io.vertx.core.Handler)"](__args[0], __args[1], __args[2], __args[3], function(ar) {
       if (ar.succeeded()) {
-        resultHandler(null, null);
+        __args[4](null, null);
       } else {
-        resultHandler(null, ar.cause());
+        __args[4](null, ar.cause());
+      }
+    });
+    }  else if (__args.length === 6 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && typeof __args[2] ==='boolean' && typeof __args[3] ==='boolean' && (typeof __args[4] === 'object' && __args[4] != null) && typeof __args[5] === 'function') {
+      j_rabbitMQClient["exchangeDeclare(java.lang.String,java.lang.String,boolean,boolean,java.util.Map,io.vertx.core.Handler)"](__args[0], __args[1], __args[2], __args[3], __args[4], function(ar) {
+      if (ar.succeeded()) {
+        __args[5](null, null);
+      } else {
+        __args[5](null, ar.cause());
       }
     });
     } else throw new TypeError('function invoked with invalid arguments');
@@ -214,7 +223,7 @@ var RabbitMQClient = function(j_val) {
   };
 
   /**
-    Bind an exchange to an exchange.
+   Bind an exchange to an exchange.
 
    @public
    @param destination {string} 
