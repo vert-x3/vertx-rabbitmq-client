@@ -1,6 +1,19 @@
 package io.vertx.rabbitmq.impl;
 
-import com.rabbitmq.client.*;
+import static io.vertx.rabbitmq.impl.Utils.encode;
+import static io.vertx.rabbitmq.impl.Utils.fromJson;
+import static io.vertx.rabbitmq.impl.Utils.parse;
+import static io.vertx.rabbitmq.impl.Utils.populate;
+import static io.vertx.rabbitmq.impl.Utils.put;
+import static io.vertx.rabbitmq.impl.Utils.toJson;
+
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.GetResponse;
+import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -11,10 +24,10 @@ import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.RabbitMQClient;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static io.vertx.rabbitmq.impl.Utils.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -38,6 +51,76 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     //TODO: includeProperties isn't really intuitive
     //TODO: Think about allowing this at a method level ?
     this.includeProperties = config.getBoolean("includeProperties", false);
+  }
+
+  private static Connection newConnection(JsonObject config) throws IOException, TimeoutException {
+    ConnectionFactory cf = new ConnectionFactory();
+    String uri = config.getString("uri");
+    // Use uri if set, otherwise support individual connection parameters
+    if (uri != null) {
+      try {
+        cf.setUri(uri);
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Invalid rabbitmq connection uri " + uri);
+      }
+    } else {
+      String user = config.getString("user");
+      if (user != null) {
+        cf.setUsername(user);
+      }
+      String password = config.getString("password");
+      if (password != null) {
+        cf.setPassword(password);
+      }
+      String host = config.getString("host");
+      if (host != null) {
+        cf.setHost(host);
+      }
+      Integer port = config.getInteger("port");
+      if (port != null) {
+        cf.setPort(port);
+      }
+
+      String virtualHost = config.getString("virtualHost");
+      if (virtualHost != null) {
+        cf.setVirtualHost(virtualHost);
+      }
+    }
+
+    // Connection timeout
+    Integer connectionTimeout = config.getInteger("connectionTimeout");
+    if (connectionTimeout != null) {
+      cf.setConnectionTimeout(connectionTimeout);
+    }
+
+    Integer requestedHeartbeat = config.getInteger("requestedHeartbeat");
+    if (requestedHeartbeat != null) {
+      cf.setRequestedHeartbeat(requestedHeartbeat);
+    }
+
+    Integer handshakeTimeout = config.getInteger("handshakeTimeout");
+    if (handshakeTimeout != null) {
+      cf.setHandshakeTimeout(handshakeTimeout);
+    }
+
+
+    Integer requestedChannelMax = config.getInteger("requestedChannelMax");
+    if (requestedChannelMax != null) {
+      cf.setRequestedChannelMax(requestedChannelMax);
+    }
+
+    Integer networkRecoveryInterval = config.getInteger("networkRecoveryInterval");
+    if (networkRecoveryInterval != null) {
+      cf.setNetworkRecoveryInterval(networkRecoveryInterval);
+    }
+
+    //TODO: Support other configurations
+
+    // Automatic recovery of connections/channels/etc.
+    boolean automaticRecoveryEnabled = config.getBoolean("automaticRecoveryEnabled", true);
+    cf.setAutomaticRecoveryEnabled(automaticRecoveryEnabled);
+
+    return cf.newConnection();
   }
 
   @Override
@@ -151,6 +234,19 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeDeclare(exchange, type, durable, autoDelete, null);
+      return null;
+    });
+  }
+
+  @Override
+  public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config,
+                              Handler<AsyncResult<Void>> resultHandler) {
+    //convert map
+    Map<String, Object> transformedMap = new HashMap<>();
+    config.forEach(transformedMap::put);
+
+    forChannel(resultHandler, channel -> {
+      channel.exchangeDeclare(exchange, type, durable, autoDelete, transformedMap);
       return null;
     });
   }
@@ -314,7 +410,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   private void reconnect() throws IOException {
-    if (retries == null || retries < 1) return;
+    if (retries == null || retries < 1) {
+      return;
+    }
 
     log.info("Attempting to reconnect to rabbitmq...");
     AtomicInteger attempts = new AtomicInteger(0);
@@ -340,83 +438,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void shutdownCompleted(ShutdownSignalException cause) {
-    if (cause.isInitiatedByApplication()) return;
+    if (cause.isInitiatedByApplication()) {
+      return;
+    }
 
     log.info("RabbitMQ connection shutdown! The client will attempt to reconnect automatically", cause);
   }
 
-
-  private static Connection newConnection(JsonObject config) throws IOException, TimeoutException {
-    ConnectionFactory cf = new ConnectionFactory();
-    String uri = config.getString("uri");
-    // Use uri if set, otherwise support individual connection parameters
-    if (uri != null) {
-      try {
-        cf.setUri(uri);
-      } catch (Exception e) {
-        throw new IllegalArgumentException("Invalid rabbitmq connection uri " + uri);
-      }
-    } else {
-      String user = config.getString("user");
-      if (user != null) {
-        cf.setUsername(user);
-      }
-      String password = config.getString("password");
-      if (password != null) {
-        cf.setPassword(password);
-      }
-      String host = config.getString("host");
-      if (host != null) {
-        cf.setHost(host);
-      }
-      Integer port = config.getInteger("port");
-      if (port != null) {
-        cf.setPort(port);
-      }
-
-      String virtualHost = config.getString("virtualHost");
-      if (virtualHost != null) {
-        cf.setVirtualHost(virtualHost);
-      }
-    }
-
-    // Connection timeout
-    Integer connectionTimeout = config.getInteger("connectionTimeout");
-    if (connectionTimeout != null) {
-      cf.setConnectionTimeout(connectionTimeout);
-    }
-
-    Integer requestedHeartbeat = config.getInteger("requestedHeartbeat");
-    if (requestedHeartbeat != null) {
-      cf.setRequestedHeartbeat(requestedHeartbeat);
-    }
-
-    Integer handshakeTimeout = config.getInteger("handshakeTimeout");
-    if (handshakeTimeout != null) {
-      cf.setHandshakeTimeout(handshakeTimeout);
-    }
-
-
-    Integer requestedChannelMax = config.getInteger("requestedChannelMax");
-    if (requestedChannelMax != null) {
-      cf.setRequestedChannelMax(requestedChannelMax);
-    }
-
-    Integer networkRecoveryInterval = config.getInteger("networkRecoveryInterval");
-    if (networkRecoveryInterval != null) {
-      cf.setNetworkRecoveryInterval(networkRecoveryInterval);
-    }
-
-    //TODO: Support other configurations
-
-    // Automatic recovery of connections/channels/etc.
-    boolean automaticRecoveryEnabled = config.getBoolean("automaticRecoveryEnabled", true);
-    cf.setAutomaticRecoveryEnabled(automaticRecoveryEnabled);
-
-    return cf.newConnection();
-  }
-
   private interface ChannelHandler<T> {
+
     T handle(Channel channel) throws Exception;
   }
 }

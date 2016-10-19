@@ -11,6 +11,7 @@ import com.redhat.ceylon.compiler.java.runtime.model.TypeDescriptor;
 import com.redhat.ceylon.compiler.java.runtime.model.ReifiedType;
 import ceylon.language.Callable;
 import ceylon.language.DocAnnotation$annotation$;
+import java.util.Map;
 import io.vertx.ceylon.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
@@ -191,6 +192,28 @@ public class RabbitMQClient implements ReifiedType {
     delegate.exchangeDeclare(arg_0, arg_1, arg_2, arg_3, arg_4);
   }
 
+  @DocAnnotation$annotation$(description = " Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.\n")
+  @TypeInfo("ceylon.language::Anything")
+  public void exchangeDeclare(
+    final @TypeInfo("ceylon.language::String") @Name("exchange")  ceylon.language.String exchange, 
+    final @TypeInfo("ceylon.language::String") @Name("type")  ceylon.language.String type, 
+    final @TypeInfo("ceylon.language::Boolean") @Name("durable")  boolean durable, 
+    final @TypeInfo("ceylon.language::Boolean") @Name("autoDelete")  boolean autoDelete, 
+    final @TypeInfo("ceylon.language::Map<ceylon.language::String,ceylon.language::String>") @Name("config")  ceylon.language.Map<ceylon.language.String,ceylon.language.String> config, 
+    final @TypeInfo("ceylon.language::Anything(ceylon.language::Throwable?)") @Name("resultHandler")  Callable<?> resultHandler) {
+    java.lang.String arg_0 = io.vertx.lang.ceylon.ToJava.String.safeConvert(exchange);
+    java.lang.String arg_1 = io.vertx.lang.ceylon.ToJava.String.safeConvert(type);
+    boolean arg_2 = durable;
+    boolean arg_3 = autoDelete;
+    java.util.Map<java.lang.String,java.lang.String> arg_4 = io.vertx.lang.ceylon.ToJava.convertMap(config, io.vertx.lang.ceylon.ToJava.String, io.vertx.lang.ceylon.ToJava.String);
+    io.vertx.core.Handler<io.vertx.core.AsyncResult<java.lang.Void>> arg_5 = resultHandler == null ? null : new io.vertx.lang.ceylon.CallableAsyncResultHandler<java.lang.Void>(resultHandler) {
+      public Object toCeylon(java.lang.Void event) {
+        return null;
+      }
+    };
+    delegate.exchangeDeclare(arg_0, arg_1, arg_2, arg_3, arg_4, arg_5);
+  }
+
   @DocAnnotation$annotation$(description = " Delete an exchange, without regard for whether it is in use or not.\n")
   @TypeInfo("ceylon.language::Anything")
   public void exchangeDelete(
@@ -205,7 +228,7 @@ public class RabbitMQClient implements ReifiedType {
     delegate.exchangeDelete(arg_0, arg_1);
   }
 
-  @DocAnnotation$annotation$(description = "  Bind an exchange to an exchange.\n")
+  @DocAnnotation$annotation$(description = " Bind an exchange to an exchange.\n")
   @TypeInfo("ceylon.language::Anything")
   public void exchangeBind(
     final @TypeInfo("ceylon.language::String") @Name("destination")  ceylon.language.String destination, 

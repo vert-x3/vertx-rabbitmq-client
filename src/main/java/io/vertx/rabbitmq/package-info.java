@@ -48,6 +48,15 @@
  * {@link examples.Examples#createClientWithManualParams}
  * ----
  *
+ * === Declare exchange with additional config
+ *
+ * You can pass additional config parameters to RabbitMQ's exchangeDeclare method
+ *
+ * [source, $lang]
+ * ----
+ * {@link examples.Examples#exchangeDeclareWithConfig(io.vertx.rabbitmq.RabbitMQClient)}
+ * ----
+ *
  * == Operations
  *
  * The following are some examples of the operations supported by the RabbitMQService API.

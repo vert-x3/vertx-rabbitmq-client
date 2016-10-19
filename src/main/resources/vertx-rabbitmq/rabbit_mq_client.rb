@@ -95,18 +95,21 @@ module VertxRabbitmq
       end
       raise ArgumentError, "Invalid arguments when calling basic_qos(prefetchCount)"
     end
-    #  Declare an exchange.
+    #  Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.
     # @param [String] exchange 
     # @param [String] type 
     # @param [true,false] durable 
     # @param [true,false] autoDelete 
+    # @param [Hash{String => String}] config 
     # @yield 
     # @return [void]
-    def exchange_declare(exchange=nil,type=nil,durable=nil,autoDelete=nil)
-      if exchange.class == String && type.class == String && (durable.class == TrueClass || durable.class == FalseClass) && (autoDelete.class == TrueClass || autoDelete.class == FalseClass) && block_given?
+    def exchange_declare(exchange=nil,type=nil,durable=nil,autoDelete=nil,config=nil)
+      if exchange.class == String && type.class == String && (durable.class == TrueClass || durable.class == FalseClass) && (autoDelete.class == TrueClass || autoDelete.class == FalseClass) && block_given? && config == nil
         return @j_del.java_method(:exchangeDeclare, [Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::boolean.java_class,Java::boolean.java_class,Java::IoVertxCore::Handler.java_class]).call(exchange,type,durable,autoDelete,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
+      elsif exchange.class == String && type.class == String && (durable.class == TrueClass || durable.class == FalseClass) && (autoDelete.class == TrueClass || autoDelete.class == FalseClass) && config.class == Hash && block_given?
+        return @j_del.java_method(:exchangeDeclare, [Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::boolean.java_class,Java::boolean.java_class,Java::JavaUtil::Map.java_class,Java::IoVertxCore::Handler.java_class]).call(exchange,type,durable,autoDelete,Hash[config.map { |k,v| [k,v] }],(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling exchange_declare(exchange,type,durable,autoDelete)"
+      raise ArgumentError, "Invalid arguments when calling exchange_declare(exchange,type,durable,autoDelete,config)"
     end
     #  Delete an exchange, without regard for whether it is in use or not.
     # @param [String] exchange 
@@ -118,7 +121,7 @@ module VertxRabbitmq
       end
       raise ArgumentError, "Invalid arguments when calling exchange_delete(exchange)"
     end
-    #   Bind an exchange to an exchange.
+    #  Bind an exchange to an exchange.
     # @param [String] destination 
     # @param [String] source 
     # @param [String] routingKey 

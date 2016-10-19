@@ -4,6 +4,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.RabbitMQClient;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Examples {
 
   public void createClientWithUri(Vertx vertx) {
@@ -71,6 +74,23 @@ public class Examples {
     });
   }
 
+  //pass the additional config for the exchange as map, check RabbitMQ documentation for specific config parameters
+  public void exchangeDeclareWithConfig(RabbitMQClient client) {
+
+    Map<String, String> config = new HashMap<>();
+
+    config.put("x-dead-letter-exchange", "my.deadletter.exchange");
+    config.put("alternate-exchange", "my.alternate.exchange");
+    // ...
+    client.exchangeDeclare("my.exchange", "fanout", true, false, config, onResult -> {
+      if (onResult.succeeded()) {
+        System.out.println("Exchange successfully declared with config");
+      } else {
+        onResult.cause().printStackTrace();
+      }
+    });
+  }
+
   public void consumeWithManualAck(Vertx vertx, RabbitMQClient client) {
     // Create the event bus handler which messages will be sent to
     vertx.eventBus().consumer("my.address", msg -> {
@@ -90,4 +110,5 @@ public class Examples {
       }
     });
   }
+
 }
