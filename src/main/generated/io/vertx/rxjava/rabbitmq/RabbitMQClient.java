@@ -16,13 +16,13 @@
 
 package io.vertx.rxjava.rabbitmq;
 
+import java.util.Map;
+import rx.Observable;
+import java.util.Map;
+import io.vertx.rxjava.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
-import io.vertx.rxjava.core.Vertx;
-import rx.Observable;
-
-import java.util.Map;
 
 /**
  *

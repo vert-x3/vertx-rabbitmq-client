@@ -64,6 +64,26 @@ config.put("automaticRecoveryEnabled", true);
 RabbitMQClient client = RabbitMQClient.create(vertx, config);
 ----
 
+=== Declare exchange with additional config
+
+You can pass additional config parameters to RabbitMQ's exchangeDeclare method
+
+[source, java]
+----
+Map<String, String> config = new HashMap<>();
+
+config.put("x-dead-letter-exchange", "my.deadletter.exchange");
+config.put("alternate-exchange", "my.alternate.exchange");
+// ...
+client.exchangeDeclare("my.exchange", "fanout", true, false, config, onResult -> {
+  if (onResult.succeeded()) {
+    System.out.println("Exchange successfully declared with config");
+  } else {
+    onResult.cause().printStackTrace();
+  }
+});
+----
+
 == Operations
 
 The following are some examples of the operations supported by the RabbitMQService API.

@@ -70,6 +70,28 @@ var client = RabbitMQClient.create(vertx, config);
 
 ----
 
+=== Declare exchange with additional config
+
+You can pass additional config parameters to RabbitMQ's exchangeDeclare method
+
+[source, js]
+----
+
+var config = {};
+
+config["x-dead-letter-exchange"] = "my.deadletter.exchange";
+config["alternate-exchange"] = "my.alternate.exchange";
+// ...
+client.exchangeDeclare("my.exchange", "fanout", true, false, config, function (onResult, onResult_err) {
+  if (onResult_err == null) {
+    console.log("Exchange successfully declared with config");
+  } else {
+    onResult_err.printStackTrace();
+  }
+});
+
+----
+
 == Operations
 
 The following are some examples of the operations supported by the RabbitMQService API.

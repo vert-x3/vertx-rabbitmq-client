@@ -36,7 +36,7 @@ You can create a client instance as follows using a full amqp uri:
 
 [source,groovy]
 ----
-import io.vertx.groovy.rabbitmq.RabbitMQClient
+import io.vertx.rabbitmq.RabbitMQClient
 def config = [:]
 // full amqp uri
 config.uri = "amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc"
@@ -48,7 +48,7 @@ Or you can also specify individual parameters manually:
 
 [source,groovy]
 ----
-import io.vertx.groovy.rabbitmq.RabbitMQClient
+import io.vertx.rabbitmq.RabbitMQClient
 def config = [:]
 // Each parameter is optional
 // The default parameter with be used if the parameter is not set
@@ -65,6 +65,28 @@ config.networkRecoveryInterval = 5
 config.automaticRecoveryEnabled = true
 
 def client = RabbitMQClient.create(vertx, config)
+
+----
+
+=== Declare exchange with additional config
+
+You can pass additional config parameters to RabbitMQ's exchangeDeclare method
+
+[source, groovy]
+----
+
+def config = [:]
+
+config["x-dead-letter-exchange"] = "my.deadletter.exchange"
+config["alternate-exchange"] = "my.alternate.exchange"
+// ...
+client.exchangeDeclare("my.exchange", "fanout", true, false, config, { onResult ->
+  if (onResult.succeeded()) {
+    println("Exchange successfully declared with config")
+  } else {
+    onResult.cause().printStackTrace()
+  }
+})
 
 ----
 
