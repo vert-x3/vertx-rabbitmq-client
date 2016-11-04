@@ -1,4 +1,4 @@
-moduleName = vertx-unit-module
+moduleName = vertx-rabbitmq-module
 moduleVersion = 1.0
 extensionClasses = io.vertx.groovy.rabbitmq.GroovyExtension
-staticExtensionClasses = io.vertx.groovy.rabbitmq.GroovyExtension
+staticExtensionClasses = io.vertx.groovy.rabbitmq.GroovyStaticExtension
