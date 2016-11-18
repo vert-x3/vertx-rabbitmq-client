@@ -464,6 +464,25 @@ var RabbitMQClient = function(j_val) {
   this._jdel = j_rabbitMQClient;
 };
 
+RabbitMQClient._jclass = utils.getJavaClass("io.vertx.rabbitmq.RabbitMQClient");
+RabbitMQClient._jtype = {
+  accept: function(obj) {
+    return RabbitMQClient._jclass.isInstance(obj._jdel);
+  },
+  wrap: function(jdel) {
+    var obj = Object.create(RabbitMQClient.prototype, {});
+    RabbitMQClient.apply(obj, arguments);
+    return obj;
+  },
+  unwrap: function(obj) {
+    return obj._jdel;
+  }
+};
+RabbitMQClient._create = function(jdel) {
+  var obj = Object.create(RabbitMQClient.prototype, {});
+  RabbitMQClient.apply(obj, arguments);
+  return obj;
+}
 /**
 
  @memberof module:vertx-rabbitmq-js/rabbit_mq_client
@@ -474,9 +493,8 @@ var RabbitMQClient = function(j_val) {
 RabbitMQClient.create = function(vertx, config) {
   var __args = arguments;
   if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null)) {
-    return utils.convReturnVertxGen(JRabbitMQClient["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)), RabbitMQClient);
+    return utils.convReturnVertxGen(RabbitMQClient, JRabbitMQClient["create(io.vertx.core.Vertx,io.vertx.core.json.JsonObject)"](vertx._jdel, utils.convParamJsonObject(config)));
   } else throw new TypeError('function invoked with invalid arguments');
 };
 
-// We export the Constructor function
 module.exports = RabbitMQClient;

@@ -39,8 +39,8 @@ public class rabbitMQClient_ implements ReifiedType {
 
   @TypeInfo("io.vertx.ceylon.rabbitmq::RabbitMQClient")
   public RabbitMQClient create(
-    final @TypeInfo("io.vertx.ceylon.core::Vertx") @Name("vertx")  Vertx vertx, 
-    final @TypeInfo("ceylon.json::Object") @Name("config")  ceylon.json.Object config) {
+    final @TypeInfo("io.vertx.ceylon.core::Vertx") @Name("vertx") Vertx vertx, 
+    final @TypeInfo("ceylon.json::Object") @Name("config") ceylon.json.Object config) {
     io.vertx.core.Vertx arg_0 = io.vertx.ceylon.core.Vertx.TO_JAVA.safeConvert(vertx);
     io.vertx.core.json.JsonObject arg_1 = io.vertx.lang.ceylon.ToJava.JsonObject.safeConvert(config);
     RabbitMQClient ret = io.vertx.ceylon.rabbitmq.RabbitMQClient.TO_CEYLON.converter().safeConvert(io.vertx.rabbitmq.RabbitMQClient.create(arg_0, arg_1));

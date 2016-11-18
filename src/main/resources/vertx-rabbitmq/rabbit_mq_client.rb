@@ -13,6 +13,22 @@ module VertxRabbitmq
     def j_del
       @j_del
     end
+    @@j_api_type = Object.new
+    def @@j_api_type.accept?(obj)
+      obj.class == RabbitMQClient
+    end
+    def @@j_api_type.wrap(obj)
+      RabbitMQClient.new(obj)
+    end
+    def @@j_api_type.unwrap(obj)
+      obj.j_del
+    end
+    def self.j_api_type
+      @@j_api_type
+    end
+    def self.j_class
+      Java::IoVertxRabbitmq::RabbitMQClient.java_class
+    end
     # @param [::Vertx::Vertx] vertx 
     # @param [Hash{String => Object}] config 
     # @return [::VertxRabbitmq::RabbitMQClient]
@@ -20,7 +36,7 @@ module VertxRabbitmq
       if vertx.class.method_defined?(:j_del) && config.class == Hash && !block_given?
         return ::Vertx::Util::Utils.safe_create(Java::IoVertxRabbitmq::RabbitMQClient.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxCoreJson::JsonObject.java_class]).call(vertx.j_del,::Vertx::Util::Utils.to_json_object(config)),::VertxRabbitmq::RabbitMQClient)
       end
-      raise ArgumentError, "Invalid arguments when calling create(vertx,config)"
+      raise ArgumentError, "Invalid arguments when calling create(#{vertx},#{config})"
     end
     #  Acknowledge one or several received messages. Supply the deliveryTag from the AMQP.Basic.GetOk or AMQP.Basic.Deliver
     #  method containing the received message being acknowledged.
@@ -32,7 +48,7 @@ module VertxRabbitmq
       if deliveryTag.class == Fixnum && (multiple.class == TrueClass || multiple.class == FalseClass) && block_given?
         return @j_del.java_method(:basicAck, [Java::long.java_class,Java::boolean.java_class,Java::IoVertxCore::Handler.java_class]).call(deliveryTag,multiple,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ar.result != nil ? JSON.parse(ar.result.encode) : nil : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling basic_ack(deliveryTag,multiple)"
+      raise ArgumentError, "Invalid arguments when calling basic_ack(#{deliveryTag},#{multiple})"
     end
     #  Reject one or several received messages.
     # @param [Fixnum] deliveryTag 
@@ -44,7 +60,7 @@ module VertxRabbitmq
       if deliveryTag.class == Fixnum && (multiple.class == TrueClass || multiple.class == FalseClass) && (requeue.class == TrueClass || requeue.class == FalseClass) && block_given?
         return @j_del.java_method(:basicNack, [Java::long.java_class,Java::boolean.java_class,Java::boolean.java_class,Java::IoVertxCore::Handler.java_class]).call(deliveryTag,multiple,requeue,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ar.result != nil ? JSON.parse(ar.result.encode) : nil : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling basic_nack(deliveryTag,multiple,requeue)"
+      raise ArgumentError, "Invalid arguments when calling basic_nack(#{deliveryTag},#{multiple},#{requeue})"
     end
     #  Retrieve a message from a queue using AMQP.Basic.Get
     # @param [String] queue 
@@ -55,7 +71,7 @@ module VertxRabbitmq
       if queue.class == String && (autoAck.class == TrueClass || autoAck.class == FalseClass) && block_given?
         return @j_del.java_method(:basicGet, [Java::java.lang.String.java_class,Java::boolean.java_class,Java::IoVertxCore::Handler.java_class]).call(queue,autoAck,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ar.result != nil ? JSON.parse(ar.result.encode) : nil : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling basic_get(queue,autoAck)"
+      raise ArgumentError, "Invalid arguments when calling basic_get(#{queue},#{autoAck})"
     end
     #  Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
     # @param [String] queue 
@@ -69,7 +85,7 @@ module VertxRabbitmq
       elsif queue.class == String && address.class == String && (autoAck.class == TrueClass || autoAck.class == FalseClass) && block_given?
         return @j_del.java_method(:basicConsume, [Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::boolean.java_class,Java::IoVertxCore::Handler.java_class]).call(queue,address,autoAck,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling basic_consume(queue,address,autoAck)"
+      raise ArgumentError, "Invalid arguments when calling basic_consume(#{queue},#{address},#{autoAck})"
     end
     #  Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
     #  which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
@@ -82,7 +98,7 @@ module VertxRabbitmq
       if exchange.class == String && routingKey.class == String && message.class == Hash && block_given?
         return @j_del.java_method(:basicPublish, [Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::IoVertxCoreJson::JsonObject.java_class,Java::IoVertxCore::Handler.java_class]).call(exchange,routingKey,::Vertx::Util::Utils.to_json_object(message),(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling basic_publish(exchange,routingKey,message)"
+      raise ArgumentError, "Invalid arguments when calling basic_publish(#{exchange},#{routingKey},#{message})"
     end
     #  Request specific "quality of service" settings, Limiting the number of unacknowledged messages on
     #  a channel (or connection). This limit is applied separately to each new consumer on the channel.
@@ -93,7 +109,7 @@ module VertxRabbitmq
       if prefetchCount.class == Fixnum && block_given?
         return @j_del.java_method(:basicQos, [Java::int.java_class,Java::IoVertxCore::Handler.java_class]).call(prefetchCount,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling basic_qos(prefetchCount)"
+      raise ArgumentError, "Invalid arguments when calling basic_qos(#{prefetchCount})"
     end
     #  Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.
     # @param [String] exchange 
@@ -109,7 +125,7 @@ module VertxRabbitmq
       elsif exchange.class == String && type.class == String && (durable.class == TrueClass || durable.class == FalseClass) && (autoDelete.class == TrueClass || autoDelete.class == FalseClass) && config.class == Hash && block_given?
         return @j_del.java_method(:exchangeDeclare, [Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::boolean.java_class,Java::boolean.java_class,Java::JavaUtil::Map.java_class,Java::IoVertxCore::Handler.java_class]).call(exchange,type,durable,autoDelete,Hash[config.map { |k,v| [k,v] }],(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling exchange_declare(exchange,type,durable,autoDelete,config)"
+      raise ArgumentError, "Invalid arguments when calling exchange_declare(#{exchange},#{type},#{durable},#{autoDelete},#{config})"
     end
     #  Delete an exchange, without regard for whether it is in use or not.
     # @param [String] exchange 
@@ -119,7 +135,7 @@ module VertxRabbitmq
       if exchange.class == String && block_given?
         return @j_del.java_method(:exchangeDelete, [Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(exchange,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling exchange_delete(exchange)"
+      raise ArgumentError, "Invalid arguments when calling exchange_delete(#{exchange})"
     end
     #  Bind an exchange to an exchange.
     # @param [String] destination 
@@ -131,7 +147,7 @@ module VertxRabbitmq
       if destination.class == String && source.class == String && routingKey.class == String && block_given?
         return @j_del.java_method(:exchangeBind, [Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(destination,source,routingKey,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling exchange_bind(destination,source,routingKey)"
+      raise ArgumentError, "Invalid arguments when calling exchange_bind(#{destination},#{source},#{routingKey})"
     end
     #  Unbind an exchange from an exchange.
     # @param [String] destination 
@@ -143,7 +159,7 @@ module VertxRabbitmq
       if destination.class == String && source.class == String && routingKey.class == String && block_given?
         return @j_del.java_method(:exchangeUnbind, [Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(destination,source,routingKey,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling exchange_unbind(destination,source,routingKey)"
+      raise ArgumentError, "Invalid arguments when calling exchange_unbind(#{destination},#{source},#{routingKey})"
     end
     #  Actively declare a server-named exclusive, autodelete, non-durable queue.
     # @yield 
@@ -165,7 +181,7 @@ module VertxRabbitmq
       if queue.class == String && (durable.class == TrueClass || durable.class == FalseClass) && (exclusive.class == TrueClass || exclusive.class == FalseClass) && (autoDelete.class == TrueClass || autoDelete.class == FalseClass) && block_given?
         return @j_del.java_method(:queueDeclare, [Java::java.lang.String.java_class,Java::boolean.java_class,Java::boolean.java_class,Java::boolean.java_class,Java::IoVertxCore::Handler.java_class]).call(queue,durable,exclusive,autoDelete,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ar.result != nil ? JSON.parse(ar.result.encode) : nil : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling queue_declare(queue,durable,exclusive,autoDelete)"
+      raise ArgumentError, "Invalid arguments when calling queue_declare(#{queue},#{durable},#{exclusive},#{autoDelete})"
     end
     #  Delete a queue, without regard for whether it is in use or has messages on it
     # @param [String] queue 
@@ -175,7 +191,7 @@ module VertxRabbitmq
       if queue.class == String && block_given?
         return @j_del.java_method(:queueDelete, [Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(queue,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ar.result != nil ? JSON.parse(ar.result.encode) : nil : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling queue_delete(queue)"
+      raise ArgumentError, "Invalid arguments when calling queue_delete(#{queue})"
     end
     #  Delete a queue
     # @param [String] queue 
@@ -187,7 +203,7 @@ module VertxRabbitmq
       if queue.class == String && (ifUnused.class == TrueClass || ifUnused.class == FalseClass) && (ifEmpty.class == TrueClass || ifEmpty.class == FalseClass) && block_given?
         return @j_del.java_method(:queueDeleteIf, [Java::java.lang.String.java_class,Java::boolean.java_class,Java::boolean.java_class,Java::IoVertxCore::Handler.java_class]).call(queue,ifUnused,ifEmpty,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ar.result != nil ? JSON.parse(ar.result.encode) : nil : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling queue_delete_if(queue,ifUnused,ifEmpty)"
+      raise ArgumentError, "Invalid arguments when calling queue_delete_if(#{queue},#{ifUnused},#{ifEmpty})"
     end
     #  Bind a queue to an exchange
     # @param [String] queue 
@@ -199,7 +215,7 @@ module VertxRabbitmq
       if queue.class == String && exchange.class == String && routingKey.class == String && block_given?
         return @j_del.java_method(:queueBind, [Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(queue,exchange,routingKey,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling queue_bind(queue,exchange,routingKey)"
+      raise ArgumentError, "Invalid arguments when calling queue_bind(#{queue},#{exchange},#{routingKey})"
     end
     #  Returns the number of messages in a queue ready to be delivered.
     # @param [String] queue 
@@ -209,7 +225,7 @@ module VertxRabbitmq
       if queue.class == String && block_given?
         return @j_del.java_method(:messageCount, [Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(queue,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ar.result != nil ? JSON.parse(ar.result.encode) : nil : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling message_count(queue)"
+      raise ArgumentError, "Invalid arguments when calling message_count(#{queue})"
     end
     #  Start the rabbitMQ client. Create the connection and the chanel.
     # @yield 
