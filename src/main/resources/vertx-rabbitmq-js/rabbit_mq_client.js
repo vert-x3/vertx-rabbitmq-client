@@ -20,7 +20,7 @@ var Vertx = require('vertx-js/vertx');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
-var JRabbitMQClient = io.vertx.rabbitmq.RabbitMQClient;
+var JRabbitMQClient = Java.type('io.vertx.rabbitmq.RabbitMQClient');
 
 /**
 
