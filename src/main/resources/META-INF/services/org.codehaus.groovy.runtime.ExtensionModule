@@ -1,4 +1,0 @@
-moduleName = io.vertx.rabbitmq.RabbitMQClient-module
-moduleVersion = 1.0
-extensionClasses = io.vertx.groovy.rabbitmq.RabbitMQClient_GroovyExtension
-staticExtensionClasses = io.vertx.groovy.rabbitmq.RabbitMQClient_GroovyStaticExtension

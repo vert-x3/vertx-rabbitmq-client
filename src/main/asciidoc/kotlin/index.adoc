@@ -34,35 +34,39 @@ dependencies {
 
 You can create a client instance as follows using a full amqp uri:
 
-[source,groovy]
+[source,kotlin]
 ----
-def config = [:]
+var config = json {
+  obj()
+}
 // full amqp uri
-config.uri = "amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc"
-def client = RabbitMQClient.create(vertx, config)
+config.put("uri", "amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc")
+var client = RabbitMQClient.create(vertx, config)
 
 ----
 
 Or you can also specify individual parameters manually:
 
-[source,groovy]
+[source,kotlin]
 ----
-def config = [:]
+var config = json {
+  obj()
+}
 // Each parameter is optional
 // The default parameter with be used if the parameter is not set
-config.user = "user1"
-config.password = "password1"
-config.host = "localhost"
-config.port = 5672
-config.virtualHost = "vhost1"
-config.connectionTimeout = 60
-config.requestedHeartbeat = 60
-config.handshakeTimeout = 60
-config.requestedChannelMax = 5
-config.networkRecoveryInterval = 5
-config.automaticRecoveryEnabled = true
+config.put("user", "user1")
+config.put("password", "password1")
+config.put("host", "localhost")
+config.put("port", 5672)
+config.put("virtualHost", "vhost1")
+config.put("connectionTimeout", 60)
+config.put("requestedHeartbeat", 60)
+config.put("handshakeTimeout", 60)
+config.put("requestedChannelMax", 5)
+config.put("networkRecoveryInterval", 5)
+config.put("automaticRecoveryEnabled", true)
 
-def client = RabbitMQClient.create(vertx, config)
+var client = RabbitMQClient.create(vertx, config)
 
 ----
 
@@ -70,10 +74,10 @@ def client = RabbitMQClient.create(vertx, config)
 
 You can pass additional config parameters to RabbitMQ's exchangeDeclare method
 
-[source, groovy]
+[source, kotlin]
 ----
 
-def config = [:]
+var config = mutableMapOf<String, Any?>()
 
 config["x-dead-letter-exchange"] = "my.deadletter.exchange"
 config["alternate-exchange"] = "my.alternate.exchange"
@@ -98,11 +102,11 @@ Consult the javadoc/documentation for detailed information on all API methods.
 
 Publish a message to a queue
 
-[source,groovy]
+[source,kotlin]
 ----
-def message = [
-  body:"Hello RabbitMQ, from Vert.x !"
-]
+var message = json {
+  obj("body" to "Hello RabbitMQ, from Vert.x !")
+}
 client.basicPublish("", "my.queue", message, { pubResult ->
   if (pubResult.succeeded()) {
     println("Message published !")
@@ -117,13 +121,13 @@ client.basicPublish("", "my.queue", message, { pubResult ->
 
 Consume messages from a queue
 
-[source,groovy]
+[source,kotlin]
 ----
 // Create the event bus handler which messages will be sent to
 // Create the event bus handler which messages will be sent to
-vertx.eventBus().consumer("my.address", { msg ->
-  def json = msg.body()
-  println("Got message: ${json.body}")
+vertx.eventBus().consumer<Any>("my.address", { msg ->
+  var json = msg.body()
+  println("Got message: ${json.getString("body")}")
 })
 
 // Setup the link between rabbitmq consumer and event bus address
@@ -141,12 +145,12 @@ client.basicConsume("my.queue", "my.address", { consumeResult ->
 
 Will get a message from a queue
 
-[source,groovy]
+[source,kotlin]
 ----
 client.basicGet("my.queue", true, { getResult ->
   if (getResult.succeeded()) {
-    def msg = getResult.result()
-    println("Got message: ${msg.body}")
+    var msg = getResult.result()
+    println("Got message: ${msg.getString("body")}")
   } else {
     getResult.cause().printStackTrace()
   }
@@ -156,14 +160,14 @@ client.basicGet("my.queue", true, { getResult ->
 
 === Consume messages without auto-ack
 
-[source,groovy]
+[source,kotlin]
 ----
 // Create the event bus handler which messages will be sent to
-vertx.eventBus().consumer("my.address", { msg ->
-  def json = msg.body()
-  println("Got message: ${json.body}")
+vertx.eventBus().consumer<Any>("my.address", { msg ->
+  var json = msg.body()
+  println("Got message: ${json.getString("body")}")
   // ack
-  client.basicAck(json.deliveryTag, false, { asyncResult ->
+  client.basicAck(json.getLong("deliveryTag"), false, { asyncResult ->
   })
 })
 
