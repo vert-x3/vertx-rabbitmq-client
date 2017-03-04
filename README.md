@@ -16,4 +16,22 @@ Please see the in source asciidoc documentation or the main documentation on the
 
 # Running the tests
 
-You will need to have RabbitMQ installed and running with default ports on localhost for this to work.
+By default the tests uses a cloud provided RabbitMQ instance.
+
+```
+% mvn test
+```
+
+You can run tests with a local RabbitMQ instance:
+
+```
+% mvn test -Prabbitmq.local
+```
+
+You will need to have RabbitMQ running with default ports on localhost for this to work.
+
+You can setup a RabbitMQ instance with Docker:
+
+```
+docker run --rm --name vertx-rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq
+```
