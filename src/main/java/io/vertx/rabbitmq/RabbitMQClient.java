@@ -61,6 +61,13 @@ public interface RabbitMQClient {
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag and error handler
+   *
+   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
+   */
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
+
+  /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
    * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
    *
