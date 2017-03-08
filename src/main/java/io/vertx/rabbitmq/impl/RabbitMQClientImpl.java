@@ -232,21 +232,14 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.exchangeDeclare(exchange, type, durable, autoDelete, null);
-      return null;
-    });
+    exchangeDeclare(exchange, type, durable, autoDelete, null, resultHandler);
   }
 
   @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config,
                               Handler<AsyncResult<Void>> resultHandler) {
-    //convert map
-    Map<String, Object> transformedMap = new HashMap<>();
-    config.forEach(transformedMap::put);
-
     forChannel(resultHandler, channel -> {
-      channel.exchangeDeclare(exchange, type, durable, autoDelete, transformedMap);
+      channel.exchangeDeclare(exchange, type, durable, autoDelete, toArgumentsMap(config));
       return null;
     });
   }
@@ -285,8 +278,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler) {
+    queueDeclare(queue, durable, exclusive, autoDelete, null, resultHandler);
+  }
+
+  @Override
+  public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, null);
+      AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, toArgumentsMap(config));
       return toJson(result);
     });
   }
@@ -434,6 +432,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         }
       }
     });
+  }
+
+  private Map<String, Object> toArgumentsMap(Map<String, String> map) {
+    Map<String, Object> transformedMap = null;
+    if (map != null) {
+      transformedMap = new HashMap<>();
+      map.forEach(transformedMap::put);
+    }
+    return transformedMap;
   }
 
   @Override
