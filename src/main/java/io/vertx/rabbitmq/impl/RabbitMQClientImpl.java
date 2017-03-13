@@ -226,7 +226,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
     forChannel(  resultHandler, channel -> {
       channel.confirmSelect();
-      
+
       return null;
     });
   }
@@ -234,8 +234,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public void waitForConfirms(Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      if(!channel.waitForConfirms())
-        throw new IOException("Failed to confirm published message to queue.");
+      channel.waitForConfirmsOrDie();
 
       return null;
     });
@@ -244,8 +243,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      if(!channel.waitForConfirms(timeout))
-        throw new IOException("Failed to confirm published message to queue.");
+      channel.waitForConfirmsOrDie(timeout);
 
       return null;
     });
