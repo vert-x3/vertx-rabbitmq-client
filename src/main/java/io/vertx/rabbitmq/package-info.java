@@ -71,6 +71,15 @@
  * {@link examples.Examples#basicPublish}
  * ----
  *
+ * === Publish with confirm
+ *
+ * Publish a message to a queue and confirm the broker acknowledged it.
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.Examples#basicPublishWithConfirm}
+ * ----
+ * 
  * === Consume
  *
  * Consume messages from a queue
