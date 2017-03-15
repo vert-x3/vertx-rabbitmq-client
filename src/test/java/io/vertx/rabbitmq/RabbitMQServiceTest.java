@@ -100,48 +100,6 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
-  public void testBasicPublishWithConfirm() throws Exception {
-    String q = setupQueue(null);
-    String body = randomAlphaString(100);
-    JsonObject message = new JsonObject().put("body", body);
-
-    client.confirmSelect(onSuccess(v -> {
-      client.basicPublish("", q, message, onSuccess(vv -> {
-        client.waitForConfirms(onSuccess(vvv -> {
-          client.basicGet(q, true, onSuccess(msg -> {
-            assertNotNull(msg);
-            assertEquals(body, msg.getString("body"));
-            testComplete();
-          }));
-        }));
-      }));
-    }));
-
-    await();
-  }
-
-  @Test
-  public void testBasicPublishWithConfirmAndTimeout() throws Exception {
-    String q = setupQueue(null);
-    String body = randomAlphaString(100);
-    JsonObject message = new JsonObject().put("body", body);
-
-    client.confirmSelect(onSuccess(v -> {
-      client.basicPublish("", q, message, onSuccess(vv -> {
-        client.waitForConfirms(1000, onSuccess(vvv -> {
-          client.basicGet(q, true, onSuccess(msg -> {
-            assertNotNull(msg);
-            assertEquals(body, msg.getString("body"));
-            testComplete();
-          }));
-        }));
-      }));
-    }));
-
-    await();
-  }
-
-  @Test
   public void testBasicPublishJson() throws Exception {
     String q = setupQueue(null);
     JsonObject body = new JsonObject().put("foo", randomAlphaString(5)).put("bar", randomInt());

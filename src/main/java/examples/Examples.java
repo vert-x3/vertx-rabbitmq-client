@@ -46,33 +46,6 @@ public class Examples {
     });
   }
 
-  public void basicPublishWithConfirm(RabbitMQClient client) {
-    JsonObject message = new JsonObject().put("body", "Hello RabbitMQ, from Vert.x !");
-
-    // Put the channel in confirm mode. This can be done once at init.
-    client.confirmSelect(confirmResult -> {
-      if(confirmResult.succeeded()) {
-        client.basicPublish("", "my.queue", message, pubResult -> {
-          if (pubResult.succeeded()) {
-            // Check the message got confirmed by the broker.
-            client.waitForConfirms(waitResult -> {
-              if(waitResult.succeeded())
-                System.out.println("Message published !");
-              else
-                waitResult.cause().printStackTrace();
-            });
-          } else {
-            pubResult.cause().printStackTrace();
-          }
-        });
-      } else {
-        confirmResult.cause().printStackTrace();
-      }
-    });
-
-  }
-
-
   public void basicConsume(Vertx vertx, RabbitMQClient client) {
     // Create the event bus handler which messages will be sent to
     vertx.eventBus().consumer("my.address", msg -> {

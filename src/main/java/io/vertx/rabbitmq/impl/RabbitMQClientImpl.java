@@ -43,7 +43,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private Connection connection;
   private Channel channel;
-  private boolean channelConfirms = false;
 
   public RabbitMQClientImpl(Vertx vertx, JsonObject config) {
     this.vertx = vertx;
@@ -224,36 +223,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(  resultHandler, channel -> {
-
-      channel.confirmSelect();
-
-      channelConfirms = true;
-
-      return null;
-    });
-  }
-
-  @Override
-  public void waitForConfirms(Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.waitForConfirmsOrDie();
-
-      return null;
-    });
-  }
-
-  @Override
-  public void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.waitForConfirmsOrDie(timeout);
-
-      return null;
-    });
-  }
-
-  @Override
   public void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.basicQos(prefetchCount);
@@ -404,9 +373,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         log.debug("channel is close, try create Channel");
 
         channel = connection.createChannel();
-
-        if(channelConfirms)
-          channel.confirmSelect();
       } catch (IOException e) {
         log.debug("create channel error");
         resultHandler.handle(Future.failedFuture(e));
