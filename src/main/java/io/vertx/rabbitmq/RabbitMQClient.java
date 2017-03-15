@@ -1,6 +1,7 @@
 package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Consumer;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
@@ -67,6 +68,40 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Enables publisher acknowledgements on this channel. Can be called once during client initialisation. Calls to basicPublish()
+   * will have to be confirmed.
+   *
+   * @see Channel#confirmSelect()
+   * @see http://www.rabbitmq.com/confirms.html
+   */
+  void confirmSelect(Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Wait until all messages published since the last call have been either ack'd or nack'd by the broker.
+   * This will incur slight performance loss at the expense of higher write consistency.
+   * If desired, multiple calls to basicPublish() can be batched before confirming.
+   *
+   * @see Channel#waitForConfirms()
+   * @see http://www.rabbitmq.com/confirms.html
+   *
+   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
+   */
+  void waitForConfirms(Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Wait until all messages published since the last call have been either ack'd or nack'd by the broker; or until timeout elapses. If the timeout expires a TimeoutException is thrown.
+   *
+   * @param timeout
+   *
+   * @see io.vertx.rabbitmq.impl.RabbitMQClientImpl#waitForConfirms(Handler)
+   * @see http://www.rabbitmq.com/confirms.html
+   *
+   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
+   */
+  void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler);
+
 
   /**
    * Request specific "quality of service" settings, Limiting the number of unacknowledged messages on
