@@ -21,7 +21,8 @@ import java.util.concurrent.CountDownLatch;
  */
 public class RabbitMQServiceTest extends VertxTestBase {
 
-  public static final String CLOUD_AMQP_URI = "amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc";
+  public static final String CLOUD_AMQP_URI = "amqps://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp" +
+    ".com/xvjvsrrc";
   protected RabbitMQClient client;
 
   private Channel channel;
