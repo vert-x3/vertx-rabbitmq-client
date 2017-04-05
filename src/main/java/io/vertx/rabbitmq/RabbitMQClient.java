@@ -169,6 +169,13 @@ public interface RabbitMQClient {
   void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
+   * Declare a queue with config options
+   *
+   * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
+   */
+  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler);
+
+  /**
    * Delete a queue, without regard for whether it is in use or has messages on it
    *
    * @see com.rabbitmq.client.Channel#queueDelete(String)
