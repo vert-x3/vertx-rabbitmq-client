@@ -6,6 +6,7 @@ import static io.vertx.test.core.TestUtils.randomInt;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
+import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.Test;
@@ -145,6 +146,24 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
+  public void testBasicConsumeWithErrorHandler() throws Exception {
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages, "application/json");
+
+    CountDownLatch latch = new CountDownLatch(count);
+
+    vertx.eventBus().consumer("my.address", msg -> fail("Getting message with malformed json"));
+
+    Handler<Throwable> errorHandler = throwable -> latch.countDown();
+
+    client.basicConsume(q, "my.address", true, onSuccess(v -> {}), errorHandler);
+
+    awaitLatch(latch);
+    testComplete();
+  }
+
+  @Test
   public void testBasicConsumeNoAutoAck() throws Exception {
 
     int count = 3;
@@ -277,14 +296,20 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   //TODO More tests
-
   private String setupQueue(Set<String> messages) throws Exception {
+    return setupQueue(messages, null);
+  }
+
+  private String setupQueue(Set<String> messages, String contentType) throws Exception {
     String queue = randomAlphaString(10);
     AMQP.Queue.DeclareOk ok = channel.queueDeclare(queue, false, false, true, null);
     assertNotNull(ok.getQueue());
+    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
+      .contentType(contentType).contentEncoding("UTF-8").build();
+
     if (messages != null) {
       for (String msg : messages) {
-        channel.basicPublish("", queue, new AMQP.BasicProperties(), msg.getBytes("UTF-8"));
+        channel.basicPublish("", queue, properties, msg.getBytes("UTF-8"));
       }
     }
     return queue;

@@ -162,12 +162,20 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
+    basicConsume(queue, address, autoAck, resultHandler, null);
+  }
+
+  @Override
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler) {
     forChannel(resultHandler, channel -> {
       channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
         if (ar.succeeded()) {
           vertx.eventBus().send(address, ar.result());
         } else {
           log.error("Exception occurred inside rabbitmq service consumer.", ar.cause());
+          if (errorHandler != null) {
+            errorHandler.handle(ar.cause());
+          }
         }
       }));
       return null;
