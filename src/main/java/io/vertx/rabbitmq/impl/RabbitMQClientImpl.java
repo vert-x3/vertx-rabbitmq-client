@@ -1,12 +1,5 @@
 package io.vertx.rabbitmq.impl;
 
-import static io.vertx.rabbitmq.impl.Utils.encode;
-import static io.vertx.rabbitmq.impl.Utils.fromJson;
-import static io.vertx.rabbitmq.impl.Utils.parse;
-import static io.vertx.rabbitmq.impl.Utils.populate;
-import static io.vertx.rabbitmq.impl.Utils.put;
-import static io.vertx.rabbitmq.impl.Utils.toJson;
-
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -28,6 +21,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static io.vertx.rabbitmq.impl.Utils.encode;
+import static io.vertx.rabbitmq.impl.Utils.fromJson;
+import static io.vertx.rabbitmq.impl.Utils.parse;
+import static io.vertx.rabbitmq.impl.Utils.populate;
+import static io.vertx.rabbitmq.impl.Utils.put;
+import static io.vertx.rabbitmq.impl.Utils.toJson;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -157,19 +157,19 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler) {
     basicConsume(queue, address, true, resultHandler);
   }
 
   @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler) {
     basicConsume(queue, address, autoAck, resultHandler, null);
   }
 
   @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler) {
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler, Handler<Throwable> errorHandler) {
     forChannel(resultHandler, channel -> {
-      channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
+      String consumerTag = channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
         if (ar.succeeded()) {
           vertx.eventBus().send(address, ar.result());
         } else {
@@ -179,7 +179,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
           }
         }
       }));
-      return null;
+      return consumerTag;
     });
   }
 
@@ -227,6 +227,14 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       }
 
       channel.basicPublish(exchange, routingKey, fromJson(properties), body);
+      return null;
+    });
+  }
+
+  @Override
+  public void basicCancel(String consumerTag, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.basicCancel(consumerTag);
       return null;
     });
   }

@@ -52,21 +52,21 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
-  void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
+  void basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler);
 
   /**
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler);
 
   /**
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag and error handler
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler, Handler<Throwable> errorHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
@@ -75,6 +75,13 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Cancel a consumer. Calls the consumer's {@link Consumer#handleCancelOk} method..
+   *
+   * @see com.rabbitmq.client.Channel#basicCancel(String)
+   */
+  void basicCancel(String consumerTag, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Enables publisher acknowledgements on this channel. Can be called once during client initialisation. Calls to basicPublish()
@@ -232,4 +239,6 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
    */
   boolean isOpenChannel();
+
+
 }
