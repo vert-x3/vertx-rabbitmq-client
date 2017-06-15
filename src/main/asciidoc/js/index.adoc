@@ -15,7 +15,7 @@ Add the following dependency to your maven project
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-rabbitmq-client</artifactId>
-  <version>3.4.2-SNAPSHOT</version>
+  <version>3.4.2</version>
 </dependency>
 ----
 
@@ -26,7 +26,7 @@ Add the following dependency to your gradle project
 [source,groovy,subs="+attributes"]
 ----
 dependencies {
-  compile 'io.vertx:vertx-rabbitmq-client:3.4.2-SNAPSHOT'
+  compile 'io.vertx:vertx-rabbitmq-client:3.4.2'
 }
 ----
 
@@ -114,6 +114,39 @@ client.basicPublish("", "my.queue", message, function (pubResult, pubResult_err)
     pubResult_err.printStackTrace();
   }
 });
+
+----
+
+=== Publish with confirm
+
+Publish a message to a queue and confirm the broker acknowledged it.
+
+[source,js]
+----
+var message = {
+  "body" : "Hello RabbitMQ, from Vert.x !"
+};
+
+// Put the channel in confirm mode. This can be done once at init.
+client.confirmSelect(function (confirmResult, confirmResult_err) {
+  if (confirmResult_err == null) {
+    client.basicPublish("", "my.queue", message, function (pubResult, pubResult_err) {
+      if (pubResult_err == null) {
+        // Check the message got confirmed by the broker.
+        client.waitForConfirms(function (waitResult, waitResult_err) {
+          if (waitResult_err == null) {
+            console.log("Message published !")} else {
+            waitResult_err.printStackTrace()}
+        });
+      } else {
+        pubResult_err.printStackTrace();
+      }
+    });
+  } else {
+    confirmResult_err.printStackTrace();
+  }
+});
+
 
 ----
 
