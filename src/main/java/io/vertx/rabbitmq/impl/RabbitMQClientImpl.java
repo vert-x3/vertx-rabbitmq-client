@@ -25,6 +25,7 @@ import io.vertx.rabbitmq.RabbitMQClient;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -271,7 +272,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
-    exchangeDeclare(exchange, type, durable, autoDelete, null, resultHandler);
+    exchangeDeclare(exchange, type, durable, autoDelete, (Map<String, String>) null, resultHandler);
   }
 
   @Override
@@ -279,6 +280,21 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
                               Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeDeclare(exchange, type, durable, autoDelete, toArgumentsMap(config));
+      return null;
+    });
+  }
+
+  @Override
+  public void exchangeDeclare(
+    String exchange,
+    String type,
+    boolean durable,
+    boolean autoDelete,
+    JsonObject config,
+    Handler<AsyncResult<Void>> resultHandler
+  ) {
+    forChannel(resultHandler, channel -> {
+      channel.exchangeDeclare(exchange, type, durable, autoDelete, new LinkedHashMap<>(config.getMap()));
       return null;
     });
   }

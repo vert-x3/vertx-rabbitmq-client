@@ -132,6 +132,14 @@ public interface RabbitMQClient {
    */
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<Void>> resultHandler);
 
+
+  /**
+   * Declare an exchange with additional parameters such as dead lettering, an alternate exchange or TTL.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
+   */
+  void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config, Handler<AsyncResult<Void>> resultHandler);
+
   /**
    * Delete an exchange, without regard for whether it is in use or not.
    *
