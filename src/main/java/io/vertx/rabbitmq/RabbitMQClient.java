@@ -3,6 +3,7 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Consumer;
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -138,6 +139,7 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
    */
+  @GenIgnore
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config, Handler<AsyncResult<Void>> resultHandler);
 
   /**
@@ -182,6 +184,15 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
    */
   void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler);
+
+  /**
+   * Declare a queue with config options
+   *
+   * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
+   */
+  @GenIgnore
+  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config, Handler<AsyncResult<JsonObject>> resultHandler);
+
 
   /**
    * Delete a queue, without regard for whether it is in use or has messages on it

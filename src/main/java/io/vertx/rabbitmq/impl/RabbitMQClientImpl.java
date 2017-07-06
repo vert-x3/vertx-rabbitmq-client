@@ -333,13 +333,28 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler) {
-    queueDeclare(queue, durable, exclusive, autoDelete, null, resultHandler);
+    queueDeclare(queue, durable, exclusive, autoDelete, (Map<String, String>) null, resultHandler);
   }
 
   @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, channel -> {
       AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, toArgumentsMap(config));
+      return toJson(result);
+    });
+  }
+
+  @Override
+  public void queueDeclare(
+    String queue,
+    boolean durable,
+    boolean exclusive,
+    boolean autoDelete,
+    JsonObject config,
+    Handler<AsyncResult<JsonObject>> resultHandler
+  ) {
+    forChannel(resultHandler, channel -> {
+      AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, new LinkedHashMap<>(config.getMap()));
       return toJson(result);
     });
   }
