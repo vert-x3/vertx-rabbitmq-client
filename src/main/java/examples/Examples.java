@@ -101,10 +101,10 @@ public class Examples {
     });
   }
 
-  //pass the additional config for the exchange as map, check RabbitMQ documentation for specific config parameters
+  //pass the additional config for the exchange as JSON, check RabbitMQ documentation for specific config parameters
   public void exchangeDeclareWithConfig(RabbitMQClient client) {
 
-    Map<String, String> config = new HashMap<>();
+    JsonObject config = new JsonObject();
 
     config.put("x-dead-letter-exchange", "my.deadletter.exchange");
     config.put("alternate-exchange", "my.alternate.exchange");
@@ -136,6 +136,22 @@ public class Examples {
         consumeResult.cause().printStackTrace();
       }
     });
+  }
+
+  //pass the additional config for the queue as JSON, check RabbitMQ documentation for specific config parameters
+  public void queueDeclareWithConfig(RabbitMQClient client) {
+    JsonObject config = new JsonObject();
+    config.put("x-message-ttl", 10_000L);
+
+    client.queueDeclare("my-queue", true, false, true, config, queueResult -> {
+      if (queueResult.succeeded()) {
+        System.out.println("Queue declared!");
+      } else {
+        System.err.println("Queue failed to be declared!");
+        queueResult.cause().printStackTrace();
+      }
+    });
+
   }
 
 }

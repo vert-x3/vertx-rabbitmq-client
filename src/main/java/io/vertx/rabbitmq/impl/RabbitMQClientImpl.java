@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
+  private static final JsonObject emptyConfig = new JsonObject();
 
   private final Vertx vertx;
   private final JsonObject config;
@@ -272,9 +273,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
-    exchangeDeclare(exchange, type, durable, autoDelete, (Map<String, String>) null, resultHandler);
+    exchangeDeclare(exchange, type, durable, autoDelete, emptyConfig, resultHandler);
   }
 
+  @Deprecated
   @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config,
                               Handler<AsyncResult<Void>> resultHandler) {
@@ -333,9 +335,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler) {
-    queueDeclare(queue, durable, exclusive, autoDelete, (Map<String, String>) null, resultHandler);
+    queueDeclare(queue, durable, exclusive, autoDelete, emptyConfig, resultHandler);
   }
 
+  @Deprecated
   @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, channel -> {

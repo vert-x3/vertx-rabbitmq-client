@@ -57,6 +57,15 @@
  * {@link examples.Examples#exchangeDeclareWithConfig(io.vertx.rabbitmq.RabbitMQClient)}
  * ----
  *
+ * === Declare queue with additional config
+ *
+ * You can pass additional config parameters to RabbitMQs queueDeclare method
+ *
+ * [source, $lang]
+ * ----
+ * {@link examples.Examples#queueDeclareWithConfig(io.vertx.rabbitmq.RabbitMQClient)}
+ * ----
+ *
  * == Operations
  *
  * The following are some examples of the operations supported by the RabbitMQService API.
@@ -79,7 +88,7 @@
  * ----
  * {@link examples.Examples#basicPublishWithConfirm}
  * ----
- * 
+ *
  * === Consume
  *
  * Consume messages from a queue
