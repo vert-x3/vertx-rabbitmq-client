@@ -2,14 +2,20 @@ package io.vertx.rabbitmq.impl;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.LongString;
+import com.rabbitmq.client.impl.LongStringHelper;
+
 import io.vertx.core.json.JsonObject;
 
 import java.io.UnsupportedEncodingException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -49,7 +55,7 @@ class Utils {
     JsonObject json = new JsonObject();
     put("contentType", properties.getContentType(), json);
     put("contentEncoding", properties.getContentEncoding(), json);
-    put("headers", properties.getHeaders(), json);
+    put("headers", propertiesParser(properties.getHeaders()), json);
     put("deliveryMode", properties.getDeliveryMode(), json);
     put("priority", properties.getPriority(), json);
     put("correlationId", properties.getCorrelationId(), json);
@@ -64,6 +70,26 @@ class Utils {
 
     return json;
   }
+
+	private static Map<String, Object> propertiesParser(Map<String, Object> map) {
+		 Map<String, Object>result = map.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,e -> Utils.valueParser(e.getValue())));
+		 return result;
+	}
+
+	private static Object valueParser(Object value) {
+		if(value instanceof LongString) {
+			return value.toString();
+		}
+		if(value instanceof List) {
+			List<Object> newList = new ArrayList<>();
+			for(Object item: (List<?>) value) {
+				newList.add(valueParser(item));
+			}
+			return newList;
+		}
+		return value;
+	}
+
 
   public static AMQP.BasicProperties fromJson(JsonObject json) {
     if (json == null) return new AMQP.BasicProperties();
