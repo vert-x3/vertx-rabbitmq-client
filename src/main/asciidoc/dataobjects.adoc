@@ -1,0 +1,30 @@
+= Cheatsheets
+
+[[RabbitMQOptions]]
+== RabbitMQOptions
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[automaticRecoveryEnabled]]`automaticRecoveryEnabled`|`Boolean`|-
+|[[connectionRetries]]`connectionRetries`|`Number (Integer)`|-
+|[[connectionRetryDelay]]`connectionRetryDelay`|`Number (long)`|-
+|[[connectionTimeout]]`connectionTimeout`|`Number (int)`|-
+|[[handshakeTimeout]]`handshakeTimeout`|`Number (int)`|-
+|[[host]]`host`|`String`|-
+|[[includeProperties]]`includeProperties`|`Boolean`|-
+|[[networkRecoveryInterval]]`networkRecoveryInterval`|`Number (long)`|-
+|[[password]]`password`|`String`|-
+|[[port]]`port`|`Number (int)`|-
+|[[requestedChannelMax]]`requestedChannelMax`|`Number (int)`|-
+|[[requestedHeartbeat]]`requestedHeartbeat`|`Number (int)`|-
+|[[uri]]`uri`|`String`|-
+|[[user]]`user`|`String`|-
+|[[virtualHost]]`virtualHost`|`String`|-
+|===
+

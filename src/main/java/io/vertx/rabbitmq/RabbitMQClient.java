@@ -3,6 +3,7 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Consumer;
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -18,8 +19,13 @@ import java.util.Map;
 @VertxGen
 public interface RabbitMQClient {
 
-  static RabbitMQClient create(Vertx vertx, JsonObject config) {
+  static RabbitMQClient create(Vertx vertx, RabbitMQOptions config) {
     return new RabbitMQClientImpl(vertx, config);
+  }
+
+  @GenIgnore
+  static RabbitMQClient create(Vertx vertx, JsonObject config) {
+    return new RabbitMQClientImpl(vertx, new RabbitMQOptions(config));
   }
 
   //TODO: Think about splitting this out into different API's with specific roles (admin, pub, sub)

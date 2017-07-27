@@ -42,7 +42,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
       channel = new ConnectionFactory().newConnection().createChannel();
     } else {
       // Use CloudAMQP
-      JsonObject config = config().put("uri", CLOUD_AMQP_URI);
+      RabbitMQOptions config = config().setUri(CLOUD_AMQP_URI);
       client = RabbitMQClient.create(vertx, config);
       CountDownLatch latch = new CountDownLatch(1);
       client.start(onSuccess(v -> {
@@ -62,8 +62,8 @@ public class RabbitMQServiceTest extends VertxTestBase {
     super.tearDown();
   }
 
-  public JsonObject config() {
-    return new JsonObject().put("connectionRetries", 0);
+  public RabbitMQOptions config() {
+    return new RabbitMQOptions();
   }
 
   @Test
