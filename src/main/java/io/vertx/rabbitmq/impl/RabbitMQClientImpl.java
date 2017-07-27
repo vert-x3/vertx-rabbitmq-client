@@ -22,6 +22,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
 
   private final Vertx vertx;
-  private final JsonObject config;
+  private final RabbitMQOptions config;
   private final Integer retries;
   private final boolean includeProperties;
 
@@ -45,18 +46,18 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private Channel channel;
   private boolean channelConfirms = false;
 
-  public RabbitMQClientImpl(Vertx vertx, JsonObject config) {
+  public RabbitMQClientImpl(Vertx vertx, RabbitMQOptions config) {
     this.vertx = vertx;
     this.config = config;
-    this.retries = config.getInteger("connectionRetries", null);
+    this.retries = config.getConnectionRetries();
     //TODO: includeProperties isn't really intuitive
     //TODO: Think about allowing this at a method level ?
-    this.includeProperties = config.getBoolean("includeProperties", false);
+    this.includeProperties = config.getIncludeProperties();
   }
 
-  private static Connection newConnection(JsonObject config) throws IOException, TimeoutException {
+  private static Connection newConnection(RabbitMQOptions config) throws IOException, TimeoutException {
     ConnectionFactory cf = new ConnectionFactory();
-    String uri = config.getString("uri");
+    String uri = config.getUri();
     // Use uri if set, otherwise support individual connection parameters
     if (uri != null) {
       try {
@@ -65,61 +66,22 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         throw new IllegalArgumentException("Invalid rabbitmq connection uri " + uri);
       }
     } else {
-      String user = config.getString("user");
-      if (user != null) {
-        cf.setUsername(user);
-      }
-      String password = config.getString("password");
-      if (password != null) {
-        cf.setPassword(password);
-      }
-      String host = config.getString("host");
-      if (host != null) {
-        cf.setHost(host);
-      }
-      Integer port = config.getInteger("port");
-      if (port != null) {
-        cf.setPort(port);
-      }
-
-      String virtualHost = config.getString("virtualHost");
-      if (virtualHost != null) {
-        cf.setVirtualHost(virtualHost);
-      }
+      cf.setUsername(config.getUser());
+      cf.setPassword(config.getPassword());
+      cf.setHost(config.getHost());
+      cf.setPort(config.getPort());
+      cf.setVirtualHost(config.getVirtualHost());
     }
 
-    // Connection timeout
-    Integer connectionTimeout = config.getInteger("connectionTimeout");
-    if (connectionTimeout != null) {
-      cf.setConnectionTimeout(connectionTimeout);
-    }
+    cf.setConnectionTimeout(config.getConnectionTimeout());
+    cf.setRequestedHeartbeat(config.getRequestedHeartbeat());
+    cf.setHandshakeTimeout(config.getHandshakeTimeout());
+    cf.setRequestedChannelMax(config.getRequestedChannelMax());
+    cf.setNetworkRecoveryInterval(config.getNetworkRecoveryInterval());
+    cf.setAutomaticRecoveryEnabled(config.isAutomaticRecoveryEnabled());
 
-    Integer requestedHeartbeat = config.getInteger("requestedHeartbeat");
-    if (requestedHeartbeat != null) {
-      cf.setRequestedHeartbeat(requestedHeartbeat);
-    }
-
-    Integer handshakeTimeout = config.getInteger("handshakeTimeout");
-    if (handshakeTimeout != null) {
-      cf.setHandshakeTimeout(handshakeTimeout);
-    }
-
-
-    Integer requestedChannelMax = config.getInteger("requestedChannelMax");
-    if (requestedChannelMax != null) {
-      cf.setRequestedChannelMax(requestedChannelMax);
-    }
-
-    Integer networkRecoveryInterval = config.getInteger("networkRecoveryInterval");
-    if (networkRecoveryInterval != null) {
-      cf.setNetworkRecoveryInterval(networkRecoveryInterval);
-    }
 
     //TODO: Support other configurations
-
-    // Automatic recovery of connections/channels/etc.
-    boolean automaticRecoveryEnabled = config.getBoolean("automaticRecoveryEnabled", true);
-    cf.setAutomaticRecoveryEnabled(automaticRecoveryEnabled);
 
     return cf.newConnection();
   }
@@ -457,7 +419,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     log.info("Attempting to reconnect to rabbitmq...");
     AtomicInteger attempts = new AtomicInteger(0);
     int retries = this.retries;
-    long delay = config.getLong("connectionRetryDelay", 10000L); // Every 10 seconds by default
+    long delay = config.getConnectionRetryDelay();
     vertx.setPeriodic(delay, id -> {
       int attempt = attempts.incrementAndGet();
       if (attempt == retries) {
