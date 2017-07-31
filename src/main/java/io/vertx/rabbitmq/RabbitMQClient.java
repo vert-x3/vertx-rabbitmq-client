@@ -33,6 +33,7 @@ public interface RabbitMQClient {
   /**
    * Like {@link #create(Vertx, RabbitMQOptions)} but with a {@link JsonObject} config object.
    */
+
   @GenIgnore
   static RabbitMQClient create(Vertx vertx, JsonObject config) {
     return new RabbitMQClientImpl(vertx, new RabbitMQOptions(config));
