@@ -55,11 +55,11 @@ config.password = "password1"
 config.host = "localhost"
 config.port = 5672
 config.virtualHost = "vhost1"
-config.connectionTimeout = 60
+config.connectionTimeout = 6000
 config.requestedHeartbeat = 60
-config.handshakeTimeout = 60
+config.handshakeTimeout = 6000
 config.requestedChannelMax = 5
-config.networkRecoveryInterval = 5
+config.networkRecoveryInterval = 500
 config.automaticRecoveryEnabled = true
 
 def client = RabbitMQClient.create(vertx, config)

@@ -3,6 +3,7 @@ package examples;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,27 +11,27 @@ import java.util.Map;
 public class Examples {
 
   public void createClientWithUri(Vertx vertx) {
-    JsonObject config = new JsonObject();
+    RabbitMQOptions config = new RabbitMQOptions();
     // full amqp uri
-    config.put("uri", "amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc");
+    config.setUri("amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc");
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
   }
 
   public void createClientWithManualParams(Vertx vertx) {
-    JsonObject config = new JsonObject();
+    RabbitMQOptions config = new RabbitMQOptions();
     // Each parameter is optional
     // The default parameter with be used if the parameter is not set
-    config.put("user", "user1");
-    config.put("password", "password1");
-    config.put("host", "localhost");
-    config.put("port", 5672);
-    config.put("virtualHost", "vhost1");
-    config.put("connectionTimeout", 60); // in seconds
-    config.put("requestedHeartbeat", 60); // in seconds
-    config.put("handshakeTimeout", 60); // in seconds
-    config.put("requestedChannelMax", 5);
-    config.put("networkRecoveryInterval", 5); // in seconds
-    config.put("automaticRecoveryEnabled", true);
+    config.setUser("user1");
+    config.setPassword("password1");
+    config.setHost("localhost");
+    config.setPort(5672);
+    config.setVirtualHost("vhost1");
+    config.setConnectionTimeout(6000); // in milliseconds
+    config.setRequestedHeartbeat(60); // in seconds
+    config.setHandshakeTimeout(6000); // in milliseconds
+    config.setRequestedChannelMax(5);
+    config.setNetworkRecoveryInterval(500); // in milliseconds
+    config.setAutomaticRecoveryEnabled(true);
 
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
   }

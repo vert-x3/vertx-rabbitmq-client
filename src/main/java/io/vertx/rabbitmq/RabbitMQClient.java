@@ -19,9 +19,20 @@ import java.util.Map;
 @VertxGen
 public interface RabbitMQClient {
 
+  /**
+   * Create and return a client.
+   *
+   * @param vertx the vertx instance
+   * @param config the client config
+   * @return the client
+   */
   static RabbitMQClient create(Vertx vertx, RabbitMQOptions config) {
     return new RabbitMQClientImpl(vertx, config);
   }
+
+  /**
+   * Like {@link #create(Vertx, RabbitMQOptions)} but with a {@link JsonObject} config object.
+   */
 
   @GenIgnore
   static RabbitMQClient create(Vertx vertx, JsonObject config) {
