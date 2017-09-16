@@ -9,6 +9,8 @@ import java.util.Map;
 
 import org.junit.Test;
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.impl.LongStringHelper;
+
 import io.vertx.core.json.JsonObject;
 
 public class UtilsTest {
@@ -36,14 +38,16 @@ public class UtilsTest {
 
     Map<String, Object> headers = new HashMap<>();
     headers.put( "customId", 123 );
-    headers.put( "customQualifier", "new1" );
+    headers.put( "customQualifier", "qualifier1" );
+    headers.put( "customQualifierLongString", LongStringHelper.asLongString( "qualifier2" ) );
 
     JsonObject result = Utils.toJson( new BasicPropertiesTestBuilder().setHeaders( headers ).build() );
     Map<String, Object> headersConverted = result.getJsonObject( "headers" ).getMap();
     assertNotNull( headersConverted );
-    assertEquals( 2, headersConverted.entrySet().size() );
+    assertEquals( 3, headersConverted.entrySet().size() );
     assertEquals( 123, headersConverted.get( "customId" ) );
-    assertEquals( "new1", headersConverted.get( "customQualifier" ) );
+    assertEquals( "qualifier1", headersConverted.get( "customQualifier" ) );
+    assertEquals( "qualifier2", headersConverted.get( "customQualifierLongString" ) );
   }
 
   /**
