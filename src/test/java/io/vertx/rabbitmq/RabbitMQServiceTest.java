@@ -6,11 +6,15 @@ import static io.vertx.test.core.TestUtils.randomInt;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
+import io.sniffy.socket.DisableSockets;
+import io.sniffy.test.junit.SniffyRule;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.test.core.VertxTestBase;
+import org.junit.Rule;
 import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -21,7 +25,6 @@ import java.util.concurrent.CountDownLatch;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class RabbitMQServiceTest extends VertxTestBase {
-
   public static final String CLOUD_AMQP_URI = "amqps://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp" +
     ".com/xvjvsrrc";
   protected RabbitMQClient client;
@@ -31,34 +34,11 @@ public class RabbitMQServiceTest extends VertxTestBase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-
-    if ("true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
-      client = RabbitMQClient.create(vertx, config());
-      CountDownLatch latch = new CountDownLatch(1);
-      client.start(onSuccess(v -> {
-        latch.countDown();
-      }));
-      awaitLatch(latch);
-      channel = new ConnectionFactory().newConnection().createChannel();
-    } else {
-      // Use CloudAMQP
-      RabbitMQOptions config = config().setUri(CLOUD_AMQP_URI);
-      client = RabbitMQClient.create(vertx, config);
-      CountDownLatch latch = new CountDownLatch(1);
-      client.start(onSuccess(v -> {
-        latch.countDown();
-      }));
-      awaitLatch(latch);
-      ConnectionFactory factory = new ConnectionFactory();
-      factory.setUri(CLOUD_AMQP_URI);
-      channel = factory.newConnection().createChannel();
-    }
   }
-
 
   @Override
   protected void tearDown() throws Exception {
-    channel.close();
+    if(channel != null) channel.close();
     super.tearDown();
   }
 
@@ -66,8 +46,28 @@ public class RabbitMQServiceTest extends VertxTestBase {
     return new RabbitMQOptions();
   }
 
+  @Rule
+  public SniffyRule sniffyRule = new SniffyRule();
+
+  @Test
+  @DisableSockets
+  public void testStartWithReconnectFuture() throws Exception {
+    Future<Void> future = Future.future();
+    CountDownLatch latch = new CountDownLatch(1);
+    RabbitMQOptions options = "true".equalsIgnoreCase(System.getProperty("rabbitmq.local")) ? config().setUri(CLOUD_AMQP_URI) : config();
+    options.setConnectionRetries(3);
+    options.setConnectionRetryDelay(1L);
+    RabbitMQClient.create(Vertx.vertx(), options).start(future.completer());
+    future.setHandler(onFailure(v -> {
+      latch.countDown();
+    }));
+    awaitLatch(latch);
+    assertTrue(future.isComplete() && future.failed());
+  }
+
   @Test
   public void testBasicGet() throws Exception {
+    startClient();
     int count = 3;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages);
@@ -87,6 +87,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Test
   public void testBasicPublish() throws Exception {
+    startClient();
     String q = setupQueue(null);
     String body = randomAlphaString(100);
     JsonObject message = new JsonObject().put("body", body);
@@ -103,6 +104,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Test
   public void testBasicPublishWithConfirm() throws Exception {
+    startClient();
     String q = setupQueue(null);
     String body = randomAlphaString(100);
     JsonObject message = new JsonObject().put("body", body);
@@ -124,6 +126,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Test
   public void testBasicPublishWithConfirmAndTimeout() throws Exception {
+    startClient();
     String q = setupQueue(null);
     String body = randomAlphaString(100);
     JsonObject message = new JsonObject().put("body", body);
@@ -145,6 +148,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Test
   public void testBasicPublishJson() throws Exception {
+    startClient();
     String q = setupQueue(null);
     JsonObject body = new JsonObject().put("foo", randomAlphaString(5)).put("bar", randomInt());
     JsonObject message = new JsonObject().put("body", body);
@@ -165,6 +169,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Test
   public void testBasicConsume() throws Exception {
+    startClient();
     int count = 3;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages);
@@ -189,6 +194,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Test
   public void testBasicConsumeWithErrorHandler() throws Exception {
+    startClient();
     int count = 3;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages, "application/json");
@@ -207,7 +213,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Test
   public void testBasicConsumeNoAutoAck() throws Exception {
-
+    startClient();
     int count = 3;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages);
@@ -245,7 +251,8 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
-  public void testQueueDeclareAndDelete() {
+  public void testQueueDeclareAndDelete() throws Exception {
+    startClient();
     String queueName = randomAlphaString(10);
 
     client.queueDeclare(queueName, false, false, true, asyncResult -> {
@@ -265,6 +272,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
   //TODO: create an integration test with a test scenario
   @Test
   public void testDeclareExchangeWithAlternateExchange() throws Exception {
+    startClient();
     String exName = randomAlphaString(10);
     Map<String, String> params = new HashMap<>();
     params.put("alternate-exchange", "alt.ex");
@@ -278,6 +286,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
   //TODO: create an integration test with a test scenario
   @Test
   public void testDeclareExchangeWithDLX() throws Exception {
+    startClient();
     String exName = randomAlphaString(10);
     Map<String, String> params = new HashMap<>();
     params.put("x-dead-letter-exchange", "dlx.exchange");
@@ -288,8 +297,8 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
-  public void testIsOpenChannel() {
-
+  public void testIsOpenChannel() throws Exception {
+    startClient();
     boolean result = client.isOpenChannel();
 
     assertTrue(result);
@@ -303,8 +312,8 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   @Test
-  public void testIsConnected() {
-
+  public void testIsConnected() throws Exception {
+    startClient();
     boolean result = client.isConnected();
 
     assertTrue(result);
@@ -319,6 +328,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Test
   public void testGetMessageCount() throws Exception {
+    startClient();
     int count = 3;
     Set<String> messages = createMessages(count);
 
@@ -340,6 +350,30 @@ public class RabbitMQServiceTest extends VertxTestBase {
   //TODO More tests
   private String setupQueue(Set<String> messages) throws Exception {
     return setupQueue(messages, null);
+  }
+
+  private void startClient() throws Exception {
+    if ("true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
+      client = RabbitMQClient.create(vertx, config());
+      CountDownLatch latch = new CountDownLatch(1);
+      client.start(onSuccess(v -> {
+        latch.countDown();
+      }));
+      awaitLatch(latch);
+      channel = new ConnectionFactory().newConnection().createChannel();
+    } else {
+      // Use CloudAMQP
+      RabbitMQOptions config = config().setUri(CLOUD_AMQP_URI);
+      client = RabbitMQClient.create(vertx, config);
+      CountDownLatch latch = new CountDownLatch(1);
+      client.start(onSuccess(v -> {
+        latch.countDown();
+      }));
+      awaitLatch(latch);
+      ConnectionFactory factory = new ConnectionFactory();
+      factory.setUri(CLOUD_AMQP_URI);
+      channel = factory.newConnection().createChannel();
+    }
   }
 
   private String setupQueue(Set<String> messages, String contentType) throws Exception {

@@ -335,7 +335,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         log.error("Could not connect to rabbitmq", e);
         if (retries != null && retries > 0) {
           try {
-            reconnect();
+            reconnect(future);
           } catch (IOException ioex) {
             future.fail(ioex);
           }
@@ -411,7 +411,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     }
   }
 
-  private void reconnect() throws IOException {
+  private void reconnect(Future<Void> future) throws IOException {
     if (retries == null || retries < 1) {
       return;
     }
@@ -424,13 +424,16 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       int attempt = attempts.incrementAndGet();
       if (attempt == retries) {
         vertx.cancelTimer(id);
-        log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
+        String message = "Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again";
+        log.info(message);
+        future.fail(new Throwable(message));
       } else {
         try {
           log.debug("Reconnect attempt # " + attempt);
           connect();
           vertx.cancelTimer(id);
           log.info("Successfully reconnected to rabbitmq (attempt # " + attempt + ")");
+          future.complete();
         } catch (IOException | TimeoutException e) {
           log.debug("Failed to connect attempt # " + attempt, e);
         }
