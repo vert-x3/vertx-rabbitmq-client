@@ -54,7 +54,7 @@ public class RabbitMQServiceTest extends VertxTestBase {
   public void testStartWithReconnectFuture() throws Exception {
     Future<Void> future = Future.future();
     CountDownLatch latch = new CountDownLatch(1);
-    RabbitMQOptions options = "true".equalsIgnoreCase(System.getProperty("rabbitmq.local")) ? config().setUri(CLOUD_AMQP_URI) : config();
+    RabbitMQOptions options = "true".equalsIgnoreCase(System.getProperty("rabbitmq.local")) ?  config() : config().setUri(CLOUD_AMQP_URI);
     options.setConnectionRetries(3);
     options.setConnectionRetryDelay(1L);
     RabbitMQClient.create(Vertx.vertx(), options).start(future.completer());
