@@ -31,28 +31,18 @@ public class RabbitMQServiceTest extends VertxTestBase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-
-    if ("true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
-      client = RabbitMQClient.create(vertx, config());
-      CountDownLatch latch = new CountDownLatch(1);
-      client.start(onSuccess(v -> {
-        latch.countDown();
-      }));
-      awaitLatch(latch);
-      channel = new ConnectionFactory().newConnection().createChannel();
-    } else {
-      // Use CloudAMQP
-      RabbitMQOptions config = config().setUri(CLOUD_AMQP_URI);
-      client = RabbitMQClient.create(vertx, config);
-      CountDownLatch latch = new CountDownLatch(1);
-      client.start(onSuccess(v -> {
-        latch.countDown();
-      }));
-      awaitLatch(latch);
-      ConnectionFactory factory = new ConnectionFactory();
-      factory.setUri(CLOUD_AMQP_URI);
-      channel = factory.newConnection().createChannel();
+    RabbitMQOptions config = config();
+    client = RabbitMQClient.create(vertx, config);
+    CountDownLatch latch = new CountDownLatch(1);
+    client.start(onSuccess(v -> {
+      latch.countDown();
+    }));
+    awaitLatch(latch);
+    ConnectionFactory factory = new ConnectionFactory();
+    if (config.getUri() != null) {
+      factory.setUri(config.getUri());
     }
+    channel = factory.newConnection().createChannel();
   }
 
 
@@ -63,7 +53,12 @@ public class RabbitMQServiceTest extends VertxTestBase {
   }
 
   public RabbitMQOptions config() {
-    return new RabbitMQOptions();
+    RabbitMQOptions config = new RabbitMQOptions();
+    if (!"true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
+      // Use CloudAMQP
+      config.setUri(CLOUD_AMQP_URI);
+    }
+    return config;
   }
 
   @Test
