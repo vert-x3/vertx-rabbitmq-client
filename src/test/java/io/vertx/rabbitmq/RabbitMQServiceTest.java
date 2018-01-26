@@ -15,58 +15,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class RabbitMQServiceTest extends VertxTestBase {
-
-  public static final String CLOUD_AMQP_URI = "amqps://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp" +
-    ".com/xvjvsrrc";
-  protected RabbitMQClient client;
-
-  private Channel channel;
+public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    RabbitMQOptions config = config();
-    client = RabbitMQClient.create(vertx, config);
-    CompletableFuture<Void> latch = new CompletableFuture<>();
-    client.start(ar -> {
-      if (ar.succeeded()) {
-        latch.complete(null);
-      } else {
-        latch.completeExceptionally(ar.cause());
-      }
-    });
-    latch.get(10L, TimeUnit.SECONDS);
-    ConnectionFactory factory = new ConnectionFactory();
-    if (config.getUri() != null) {
-      factory.setUri(config.getUri());
-    }
-    channel = factory.newConnection().createChannel();
-  }
-
-
-  @Override
-  protected void tearDown() throws Exception {
-    if (channel != null) {
-      channel.close();
-    }
-    super.tearDown();
-  }
-
-  public RabbitMQOptions config() {
-    RabbitMQOptions config = new RabbitMQOptions();
-    if (!"true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
-      // Use CloudAMQP
-      config.setUri(CLOUD_AMQP_URI);
-    }
-    return config;
+    connect();
   }
 
   @Test
