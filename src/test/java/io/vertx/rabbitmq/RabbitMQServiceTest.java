@@ -15,7 +15,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -33,11 +35,15 @@ public class RabbitMQServiceTest extends VertxTestBase {
     super.setUp();
     RabbitMQOptions config = config();
     client = RabbitMQClient.create(vertx, config);
-    CountDownLatch latch = new CountDownLatch(1);
-    client.start(onSuccess(v -> {
-      latch.countDown();
-    }));
-    awaitLatch(latch);
+    CompletableFuture<Void> latch = new CompletableFuture<>();
+    client.start(ar -> {
+      if (ar.succeeded()) {
+        latch.complete(null);
+      } else {
+        latch.completeExceptionally(ar.cause());
+      }
+    });
+    latch.get(10L, TimeUnit.SECONDS);
     ConnectionFactory factory = new ConnectionFactory();
     if (config.getUri() != null) {
       factory.setUri(config.getUri());
@@ -48,7 +54,9 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   @Override
   protected void tearDown() throws Exception {
-    channel.close();
+    if (channel != null) {
+      channel.close();
+    }
     super.tearDown();
   }
 
