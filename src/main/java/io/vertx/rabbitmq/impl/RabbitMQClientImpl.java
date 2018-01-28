@@ -326,24 +326,33 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
     log.info("Starting rabbitmq client");
+    start(0, resultHandler);
+  }
 
-    vertx.executeBlocking(future -> {
+  private void start(int attempts, Handler<AsyncResult<Void>> resultHandler) {
+    vertx.<Void>executeBlocking(future -> {
       try {
         connect();
         future.complete();
       } catch (IOException | TimeoutException e) {
         log.error("Could not connect to rabbitmq", e);
-        if (retries != null && retries > 0) {
-          try {
-            reconnect();
-          } catch (IOException ioex) {
-            future.fail(ioex);
-          }
-        } else {
-          future.fail(e);
-        }
+        future.fail(e);
       }
-    }, resultHandler);
+    }, ar -> {
+      if (ar.succeeded() || retries == null) {
+        resultHandler.handle(ar);
+      } else if (attempts >= retries) {
+        log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
+        resultHandler.handle(ar);
+      } else {
+        long delay = config.getConnectionRetryDelay();
+        log.info("Attempting to reconnect to rabbitmq...");
+        vertx.setTimer(delay, id -> {
+          log.debug("Reconnect attempt # " + attempts);
+          start(attempts + 1, resultHandler);
+        });
+      }
+    });
   }
 
   @Override
@@ -409,33 +418,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       connection = null;
       channel = null;
     }
-  }
-
-  private void reconnect() throws IOException {
-    if (retries == null || retries < 1) {
-      return;
-    }
-
-    log.info("Attempting to reconnect to rabbitmq...");
-    AtomicInteger attempts = new AtomicInteger(0);
-    int retries = this.retries;
-    long delay = config.getConnectionRetryDelay();
-    vertx.setPeriodic(delay, id -> {
-      int attempt = attempts.incrementAndGet();
-      if (attempt == retries) {
-        vertx.cancelTimer(id);
-        log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
-      } else {
-        try {
-          log.debug("Reconnect attempt # " + attempt);
-          connect();
-          vertx.cancelTimer(id);
-          log.info("Successfully reconnected to rabbitmq (attempt # " + attempt + ")");
-        } catch (IOException | TimeoutException e) {
-          log.debug("Failed to connect attempt # " + attempt, e);
-        }
-      }
-    });
   }
 
   private Map<String, Object> toArgumentsMap(Map<String, String> map) {

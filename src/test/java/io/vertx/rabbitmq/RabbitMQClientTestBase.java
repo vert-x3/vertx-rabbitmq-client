@@ -37,7 +37,7 @@ public class RabbitMQClientTestBase extends VertxTestBase {
     channel = factory.newConnection().createChannel();
   }
 
-  public RabbitMQOptions config() {
+  public RabbitMQOptions config() throws Exception {
     RabbitMQOptions config = new RabbitMQOptions();
     if (!"true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
       // Use CloudAMQP
