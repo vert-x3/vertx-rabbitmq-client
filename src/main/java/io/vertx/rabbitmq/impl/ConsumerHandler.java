@@ -55,14 +55,11 @@ class ConsumerHandler extends DefaultConsumer {
     // Parse the body
     try {
       msg.put("body", parse(properties, body));
-      vertx.runOnContext(v -> {
-        handler.handle(Future.succeededFuture(msg));
-      });
-
       msg.put("deliveryTag", envelope.getDeliveryTag());
+      handler.handle(Future.succeededFuture(msg));
 
     } catch (Exception e) {
-      vertx.runOnContext(v -> handler.handle(Future.failedFuture(e)));
+      handler.handle(Future.failedFuture(e));
     }
   }
 
