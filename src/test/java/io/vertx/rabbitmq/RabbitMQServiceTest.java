@@ -224,6 +224,26 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     await();
   }
 
+  @Test
+  public void testQueueDeclareAndDeleteWithConfig() {
+    String queueName = randomAlphaString(10);
+    JsonObject config = new JsonObject();
+    config.put("x-message-ttl", 10_000L);
+
+    client.queueDeclare(queueName, false, false, true, config, asyncResult -> {
+      assertTrue(asyncResult.succeeded());
+      JsonObject result = asyncResult.result();
+      assertEquals(result.getString("queue"), queueName);
+
+      client.queueDelete(queueName, deleteAsyncResult -> {
+        assertTrue(deleteAsyncResult.succeeded());
+        testComplete();
+      });
+    });
+
+    await();
+  }
+
   //TODO: create an integration test with a test scenario
   @Test
   public void testDeclareExchangeWithAlternateExchange() throws Exception {

@@ -146,8 +146,21 @@ public interface RabbitMQClient {
    * Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.
    *
    * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
+   * @see #exchangeDeclare(String, String, boolean, boolean, JsonObject, Handler)
+   * @deprecated Use {@link #exchangeDeclare(String, String, boolean, boolean, JsonObject, Handler)} instead for
+   * support for more than just String config values
    */
+  @GenIgnore
+  @Deprecated
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<Void>> resultHandler);
+
+
+  /**
+   * Declare an exchange with additional parameters such as dead lettering, an alternate exchange or TTL.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
+   */
+  void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Delete an exchange, without regard for whether it is in use or not.
@@ -189,8 +202,21 @@ public interface RabbitMQClient {
    * Declare a queue with config options
    *
    * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
+   * @see #queueDeclare(String, boolean, boolean, boolean, JsonObject, Handler)
+   * @deprecated See {@link #queueDeclare(String, boolean, boolean, boolean, JsonObject, Handler)} instead for
+   * support for more than just String config values
    */
+  @GenIgnore
+  @Deprecated
   void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler);
+
+  /**
+   * Declare a queue with config options
+   *
+   * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
+   */
+  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config, Handler<AsyncResult<JsonObject>> resultHandler);
+
 
   /**
    * Delete a queue, without regard for whether it is in use or has messages on it
