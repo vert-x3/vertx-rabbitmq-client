@@ -1,27 +1,36 @@
 package io.vertx.rabbitmq;
 
-import static io.vertx.test.core.TestUtils.randomAlphaString;
-import static io.vertx.test.core.TestUtils.randomInt;
-
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 import io.vertx.test.core.VertxTestBase;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static io.vertx.test.core.TestUtils.randomAlphaString;
+import static io.vertx.test.core.TestUtils.randomInt;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class RabbitMQServiceTest extends VertxTestBase {
 
+  private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
   public static final String CLOUD_AMQP_URI = "amqps://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp" +
     ".com/xvjvsrrc";
   protected RabbitMQClient client;
@@ -64,6 +73,48 @@ public class RabbitMQServiceTest extends VertxTestBase {
 
   public RabbitMQOptions config() {
     return new RabbitMQOptions();
+  }
+
+  @Test
+  public void testMessageOrderingWhenConsuming() throws IOException, InterruptedException {
+
+    String queueName = "message_ordering_test";
+    String address = queueName + ".address";
+
+    int count = 1000;
+
+    CountDownLatch latch = new CountDownLatch(count - 1);
+    List<String> sendingOrder = IntStream.range(1, count).boxed().map(Object::toString).collect(Collectors.toList());
+
+    ArrayBlockingQueue<String> receiveOrderQueue = new ArrayBlockingQueue<>(count);
+    receiveOrderQueue.addAll(sendingOrder);
+
+    // set up queue
+    AMQP.Queue.DeclareOk ok = channel.queueDeclare(queueName, false, false, true, null);
+    assertNotNull(ok.getQueue());
+    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().contentType("text/plain").contentEncoding("UTF-8").build();
+
+    // send  messages
+    for (String msg : sendingOrder)
+      channel.basicPublish("", queueName, properties, msg.getBytes("UTF-8"));
+
+    vertx.eventBus().consumer(address, msg -> {
+      String expectedMessage = receiveOrderQueue.poll();
+      assertNotNull(msg);
+      JsonObject json = (JsonObject) msg.body();
+      assertNotNull(json);
+      String body = json.getString("body");
+      assertNotNull(body);
+      log.info("received: " + body + " expected: " + expectedMessage);
+      assertTrue(body.equals(expectedMessage));
+      latch.countDown();
+    });
+
+    client.basicConsume(queueName, address, onSuccess(v -> {
+    }));
+
+    awaitLatch(latch);
+    testComplete();
   }
 
   @Test
