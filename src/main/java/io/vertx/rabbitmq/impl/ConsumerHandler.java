@@ -5,6 +5,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -13,7 +14,6 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 import static io.vertx.rabbitmq.impl.Utils.*;
 
@@ -25,11 +25,13 @@ class ConsumerHandler extends DefaultConsumer {
   private final Vertx vertx;
   private final Handler<AsyncResult<JsonObject>> handler;
   private final boolean includeProperties;
+  private final Context handlerContext;
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerHandler.class);
 
   public ConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, Handler<AsyncResult<JsonObject>> handler) {
     super(channel);
+    this.handlerContext = vertx.getOrCreateContext();
     this.vertx = vertx;
     this.includeProperties = includeProperties;
     this.handler = handler;
@@ -56,10 +58,10 @@ class ConsumerHandler extends DefaultConsumer {
     try {
       msg.put("body", parse(properties, body));
       msg.put("deliveryTag", envelope.getDeliveryTag());
-      handler.handle(Future.succeededFuture(msg));
+      this.handlerContext.runOnContext(v -> handler.handle(Future.succeededFuture(msg)));
 
     } catch (Exception e) {
-      handler.handle(Future.failedFuture(e));
+      this.handlerContext.runOnContext(v -> handler.handle(Future.failedFuture(e)));
     }
   }
 
