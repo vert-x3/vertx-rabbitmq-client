@@ -27,7 +27,7 @@ import static io.vertx.test.core.TestUtils.randomInt;
  */
 public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
-  private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
+  private static final Logger log = LoggerFactory.getLogger(RabbitMQServiceTest.class);
 
   @Override
   public void setUp() throws Exception {
