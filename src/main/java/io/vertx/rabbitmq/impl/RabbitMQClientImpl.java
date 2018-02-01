@@ -26,6 +26,7 @@ import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
+  private static final JsonObject emptyConfig = new JsonObject();
 
   private final Vertx vertx;
   private final RabbitMQOptions config;
@@ -233,14 +235,30 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
-    exchangeDeclare(exchange, type, durable, autoDelete, null, resultHandler);
+    exchangeDeclare(exchange, type, durable, autoDelete, emptyConfig, resultHandler);
   }
 
+  @Deprecated
   @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config,
                               Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeDeclare(exchange, type, durable, autoDelete, toArgumentsMap(config));
+      return null;
+    });
+  }
+
+  @Override
+  public void exchangeDeclare(
+    String exchange,
+    String type,
+    boolean durable,
+    boolean autoDelete,
+    JsonObject config,
+    Handler<AsyncResult<Void>> resultHandler
+  ) {
+    forChannel(resultHandler, channel -> {
+      channel.exchangeDeclare(exchange, type, durable, autoDelete, new LinkedHashMap<>(config.getMap()));
       return null;
     });
   }
@@ -279,13 +297,29 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler) {
-    queueDeclare(queue, durable, exclusive, autoDelete, null, resultHandler);
+    queueDeclare(queue, durable, exclusive, autoDelete, emptyConfig, resultHandler);
   }
 
+  @Deprecated
   @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, channel -> {
       AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, toArgumentsMap(config));
+      return toJson(result);
+    });
+  }
+
+  @Override
+  public void queueDeclare(
+    String queue,
+    boolean durable,
+    boolean exclusive,
+    boolean autoDelete,
+    JsonObject config,
+    Handler<AsyncResult<JsonObject>> resultHandler
+  ) {
+    forChannel(resultHandler, channel -> {
+      AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, new LinkedHashMap<>(config.getMap()));
       return toJson(result);
     });
   }
@@ -326,24 +360,33 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
     log.info("Starting rabbitmq client");
+    start(0, resultHandler);
+  }
 
-    vertx.executeBlocking(future -> {
+  private void start(int attempts, Handler<AsyncResult<Void>> resultHandler) {
+    vertx.<Void>executeBlocking(future -> {
       try {
         connect();
         future.complete();
       } catch (IOException | TimeoutException e) {
         log.error("Could not connect to rabbitmq", e);
-        if (retries != null && retries > 0) {
-          try {
-            reconnect();
-          } catch (IOException ioex) {
-            future.fail(ioex);
-          }
-        } else {
-          future.fail(e);
-        }
+        future.fail(e);
       }
-    }, resultHandler);
+    }, ar -> {
+      if (ar.succeeded() || retries == null) {
+        resultHandler.handle(ar);
+      } else if (attempts >= retries) {
+        log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
+        resultHandler.handle(ar);
+      } else {
+        long delay = config.getConnectionRetryDelay();
+        log.info("Attempting to reconnect to rabbitmq...");
+        vertx.setTimer(delay, id -> {
+          log.debug("Reconnect attempt # " + attempts);
+          start(attempts + 1, resultHandler);
+        });
+      }
+    });
   }
 
   @Override
@@ -409,33 +452,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       connection = null;
       channel = null;
     }
-  }
-
-  private void reconnect() throws IOException {
-    if (retries == null || retries < 1) {
-      return;
-    }
-
-    log.info("Attempting to reconnect to rabbitmq...");
-    AtomicInteger attempts = new AtomicInteger(0);
-    int retries = this.retries;
-    long delay = config.getConnectionRetryDelay();
-    vertx.setPeriodic(delay, id -> {
-      int attempt = attempts.incrementAndGet();
-      if (attempt == retries) {
-        vertx.cancelTimer(id);
-        log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
-      } else {
-        try {
-          log.debug("Reconnect attempt # " + attempt);
-          connect();
-          vertx.cancelTimer(id);
-          log.info("Successfully reconnected to rabbitmq (attempt # " + attempt + ")");
-        } catch (IOException | TimeoutException e) {
-          log.debug("Failed to connect attempt # " + attempt, e);
-        }
-      }
-    });
   }
 
   private Map<String, Object> toArgumentsMap(Map<String, String> map) {

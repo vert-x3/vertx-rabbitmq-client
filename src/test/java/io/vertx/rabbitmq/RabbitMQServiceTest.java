@@ -1,14 +1,11 @@
 package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
-import io.vertx.test.core.VertxTestBase;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -28,51 +25,14 @@ import static io.vertx.test.core.TestUtils.randomInt;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class RabbitMQServiceTest extends VertxTestBase {
+public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
-  public static final String CLOUD_AMQP_URI = "amqps://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp" +
-    ".com/xvjvsrrc";
-  protected RabbitMQClient client;
-
-  private Channel channel;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-
-    if ("true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
-      client = RabbitMQClient.create(vertx, config());
-      CountDownLatch latch = new CountDownLatch(1);
-      client.start(onSuccess(v -> {
-        latch.countDown();
-      }));
-      awaitLatch(latch);
-      channel = new ConnectionFactory().newConnection().createChannel();
-    } else {
-      // Use CloudAMQP
-      RabbitMQOptions config = config().setUri(CLOUD_AMQP_URI);
-      client = RabbitMQClient.create(vertx, config);
-      CountDownLatch latch = new CountDownLatch(1);
-      client.start(onSuccess(v -> {
-        latch.countDown();
-      }));
-      awaitLatch(latch);
-      ConnectionFactory factory = new ConnectionFactory();
-      factory.setUri(CLOUD_AMQP_URI);
-      channel = factory.newConnection().createChannel();
-    }
-  }
-
-
-  @Override
-  protected void tearDown() throws Exception {
-    channel.close();
-    super.tearDown();
-  }
-
-  public RabbitMQOptions config() {
-    return new RabbitMQOptions();
+    connect();
   }
 
   @Test
@@ -300,6 +260,26 @@ public class RabbitMQServiceTest extends VertxTestBase {
     String queueName = randomAlphaString(10);
 
     client.queueDeclare(queueName, false, false, true, asyncResult -> {
+      assertTrue(asyncResult.succeeded());
+      JsonObject result = asyncResult.result();
+      assertEquals(result.getString("queue"), queueName);
+
+      client.queueDelete(queueName, deleteAsyncResult -> {
+        assertTrue(deleteAsyncResult.succeeded());
+        testComplete();
+      });
+    });
+
+    await();
+  }
+
+  @Test
+  public void testQueueDeclareAndDeleteWithConfig() {
+    String queueName = randomAlphaString(10);
+    JsonObject config = new JsonObject();
+    config.put("x-message-ttl", 10_000L);
+
+    client.queueDeclare(queueName, false, false, true, config, asyncResult -> {
       assertTrue(asyncResult.succeeded());
       JsonObject result = asyncResult.result();
       assertEquals(result.getString("queue"), queueName);
