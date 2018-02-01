@@ -3,9 +3,6 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -26,8 +23,6 @@ import static io.vertx.test.core.TestUtils.randomInt;
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 public class RabbitMQServiceTest extends RabbitMQClientTestBase {
-
-  private static final Logger log = LoggerFactory.getLogger(RabbitMQServiceTest.class);
 
   @Override
   public void setUp() throws Exception {
@@ -65,7 +60,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
       assertNotNull(json);
       String body = json.getString("body");
       assertNotNull(body);
-      log.info("received: " + body + " expected: " + expectedMessage);
       assertTrue(body.equals(expectedMessage));
       latch.countDown();
     });
@@ -74,7 +68,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     }));
 
     awaitLatch(latch);
-    testComplete();
   }
 
   @Test
