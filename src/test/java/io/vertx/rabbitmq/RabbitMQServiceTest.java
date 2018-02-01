@@ -6,12 +6,13 @@ import io.vertx.core.json.JsonObject;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -31,18 +32,14 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testMessageOrderingWhenConsuming() throws IOException, InterruptedException {
+  public void testMessageOrderingWhenConsuming() throws IOException {
 
     String queueName = "message_ordering_test";
     String address = queueName + ".address";
 
     int count = 1000;
 
-    CountDownLatch latch = new CountDownLatch(count - 1);
     List<String> sendingOrder = IntStream.range(1, count).boxed().map(Object::toString).collect(Collectors.toList());
-
-    ArrayBlockingQueue<String> receiveOrderQueue = new ArrayBlockingQueue<>(count);
-    receiveOrderQueue.addAll(sendingOrder);
 
     // set up queue
     AMQP.Queue.DeclareOk ok = channel.queueDeclare(queueName, false, false, true, null);
@@ -53,21 +50,25 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     for (String msg : sendingOrder)
       channel.basicPublish("", queueName, properties, msg.getBytes("UTF-8"));
 
+    List<String> receivedOrder = Collections.synchronizedList(new ArrayList<>());
+
     vertx.eventBus().consumer(address, msg -> {
-      String expectedMessage = receiveOrderQueue.poll();
       assertNotNull(msg);
       JsonObject json = (JsonObject) msg.body();
       assertNotNull(json);
       String body = json.getString("body");
       assertNotNull(body);
-      assertTrue(body.equals(expectedMessage));
-      latch.countDown();
+      receivedOrder.add(body);
     });
 
     client.basicConsume(queueName, address, onSuccess(v -> {
     }));
 
-    awaitLatch(latch);
+
+    assertWaitUntil(() -> receivedOrder.size() == sendingOrder.size());
+    for (int i = 0; i < sendingOrder.size(); i++) {
+      assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
+    }
   }
 
   @Test
