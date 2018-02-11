@@ -15,7 +15,7 @@ Add the following dependency to your maven project
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-rabbitmq-client</artifactId>
-  <version>3.5.0</version>
+  <version>3.5.1</version>
 </dependency>
 ----
 
@@ -26,7 +26,7 @@ Add the following dependency to your gradle project
 [source,groovy,subs="+attributes"]
 ----
 dependencies {
-  compile 'io.vertx:vertx-rabbitmq-client:3.5.0'
+  compile 'io.vertx:vertx-rabbitmq-client:3.5.1'
 }
 ----
 
@@ -77,10 +77,11 @@ You can pass additional config parameters to RabbitMQ's exchangeDeclare method
 [source, js]
 ----
 
-var config = {};
+var config = {
+};
 
-config["x-dead-letter-exchange"] = "my.deadletter.exchange";
-config["alternate-exchange"] = "my.alternate.exchange";
+config.x-dead-letter-exchange = "my.deadletter.exchange";
+config.alternate-exchange = "my.alternate.exchange";
 // ...
 client.exchangeDeclare("my.exchange", "fanout", true, false, config, function (onResult, onResult_err) {
   if (onResult_err == null) {
@@ -89,6 +90,28 @@ client.exchangeDeclare("my.exchange", "fanout", true, false, config, function (o
     onResult_err.printStackTrace();
   }
 });
+
+----
+
+=== Declare queue with additional config
+
+You can pass additional config parameters to RabbitMQs queueDeclare method
+
+[source, js]
+----
+var config = {
+};
+config.x-message-ttl = 10000;
+
+client.queueDeclare("my-queue", true, false, true, config, function (queueResult, queueResult_err) {
+  if (queueResult_err == null) {
+    console.log("Queue declared!");
+  } else {
+    console.error("Queue failed to be declared!");
+    queueResult_err.printStackTrace();
+  }
+});
+
 
 ----
 
