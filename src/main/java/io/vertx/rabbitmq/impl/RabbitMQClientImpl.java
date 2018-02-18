@@ -1,19 +1,10 @@
 package io.vertx.rabbitmq.impl;
 
-import static io.vertx.rabbitmq.impl.Utils.encode;
-import static io.vertx.rabbitmq.impl.Utils.fromJson;
-import static io.vertx.rabbitmq.impl.Utils.parse;
-import static io.vertx.rabbitmq.impl.Utils.populate;
-import static io.vertx.rabbitmq.impl.Utils.put;
-import static io.vertx.rabbitmq.impl.Utils.toJson;
-
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.GetResponse;
-import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -23,18 +14,25 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQOptions;
+import io.vertx.rabbitmq.RabbitMQueue;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
+
+import static io.vertx.rabbitmq.impl.Utils.encode;
+import static io.vertx.rabbitmq.impl.Utils.fromJson;
+import static io.vertx.rabbitmq.impl.Utils.parse;
+import static io.vertx.rabbitmq.impl.Utils.populate;
+import static io.vertx.rabbitmq.impl.Utils.put;
+import static io.vertx.rabbitmq.impl.Utils.toJson;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
+public class RabbitMQClientImpl implements RabbitMQClient {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
   private static final JsonObject emptyConfig = new JsonObject();
@@ -121,30 +119,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) {
-    basicConsume(queue, address, true, resultHandler);
+  public RabbitMQueue basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler) {
+    return basicConsume(queue, address, true, resultHandler);
   }
 
   @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
-    basicConsume(queue, address, autoAck, resultHandler, null);
-  }
-
-  @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
-        if (ar.succeeded()) {
-          vertx.eventBus().send(address, ar.result());
-        } else {
-          log.error("Exception occurred inside rabbitmq service consumer.", ar.cause());
-          if (errorHandler != null) {
-            errorHandler.handle(ar.cause());
-          }
-        }
-      }));
-      return null;
-    });
+  public RabbitMQueue basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler) {
+    RabbitMQueueImpl rabbitMQueue = new RabbitMQueueImpl();
+    forChannel(resultHandler, channel -> channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, rabbitMQueue)));
+    return rabbitMQueue;
   }
 
   @Override
@@ -197,7 +180,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(  resultHandler, channel -> {
+    forChannel(resultHandler, channel -> {
 
       channel.confirmSelect();
 
@@ -413,11 +396,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
         // change
         log.debug("channel is close, try create Channel");
-
         channel = connection.createChannel();
 
-        if(channelConfirms)
+        if (channelConfirms) {
           channel.confirmSelect();
+        }
       } catch (IOException e) {
         log.debug("create channel error");
         resultHandler.handle(Future.failedFuture(e));
@@ -437,7 +420,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private void connect() throws IOException, TimeoutException {
     log.debug("Connecting to rabbitmq...");
     connection = newConnection(config);
-    connection.addShutdownListener(this);
     channel = connection.createChannel();
     log.debug("Connected to rabbitmq !");
   }
@@ -463,14 +445,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     return transformedMap;
   }
 
-  @Override
-  public void shutdownCompleted(ShutdownSignalException cause) {
-    if (cause.isInitiatedByApplication()) {
-      return;
-    }
-
-    log.info("RabbitMQ connection shutdown! The client will attempt to reconnect automatically", cause);
-  }
 
   private interface ChannelHandler<T> {
 

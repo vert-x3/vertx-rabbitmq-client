@@ -4,16 +4,11 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-
-import java.io.IOException;
 
 import static io.vertx.rabbitmq.impl.Utils.*;
 
@@ -23,25 +18,25 @@ import static io.vertx.rabbitmq.impl.Utils.*;
 class ConsumerHandler extends DefaultConsumer {
 
   private final Vertx vertx;
-  private final Handler<AsyncResult<JsonObject>> handler;
+  private final RabbitMQueueImpl queue;
   private final boolean includeProperties;
   private final Context handlerContext;
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerHandler.class);
 
-  public ConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, Handler<AsyncResult<JsonObject>> handler) {
+  ConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, RabbitMQueueImpl queue) {
     super(channel);
     this.handlerContext = vertx.getOrCreateContext();
     this.vertx = vertx;
     this.includeProperties = includeProperties;
-    this.handler = handler;
+    this.queue = queue;
   }
 
   // TODO: Think about implementing all Consume methods and deliver that back to the handler ?
 
   @Override
   //TODO: Clean this up, some dup logic here and in basicGet of RabbitMQServiceImpl
-  public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+  public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
     JsonObject msg = new JsonObject();
     msg.put("consumerTag", consumerTag);
 
@@ -58,15 +53,16 @@ class ConsumerHandler extends DefaultConsumer {
     try {
       msg.put("body", parse(properties, body));
       msg.put("deliveryTag", envelope.getDeliveryTag());
-      this.handlerContext.runOnContext(v -> handler.handle(Future.succeededFuture(msg)));
+      this.handlerContext.runOnContext(v -> queue.push(msg));
 
     } catch (Exception e) {
-      this.handlerContext.runOnContext(v -> handler.handle(Future.failedFuture(e)));
+      this.handlerContext.runOnContext(v -> queue.raiseException(e));
     }
   }
 
   @Override
-  public void handleCancel(String consumerTag) throws IOException {
+  public void handleCancel(String consumerTag) {
     log.debug("consumer has been cancelled unexpectedly");
+    queue.triggerStreamEnd();
   }
 }

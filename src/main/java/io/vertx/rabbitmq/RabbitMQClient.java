@@ -9,6 +9,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 
 import java.util.Map;
@@ -69,21 +70,14 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
-  void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
+  RabbitMQueue basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler);
 
   /**
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag and error handler
-   *
-   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
-   */
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
+  RabbitMQueue basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
