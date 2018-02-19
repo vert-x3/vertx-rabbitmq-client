@@ -13,10 +13,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
-import static io.vertx.rabbitmq.impl.Utils.parse;
-import static io.vertx.rabbitmq.impl.Utils.populate;
-import static io.vertx.rabbitmq.impl.Utils.put;
-import static io.vertx.rabbitmq.impl.Utils.toJson;
+import java.io.IOException;
+
+import static io.vertx.rabbitmq.impl.Utils.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -42,7 +41,7 @@ class ConsumerHandler extends DefaultConsumer {
 
   @Override
   //TODO: Clean this up, some dup logic here and in basicGet of RabbitMQServiceImpl
-  public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
+  public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
     JsonObject msg = new JsonObject();
     msg.put("consumerTag", consumerTag);
 
@@ -67,7 +66,7 @@ class ConsumerHandler extends DefaultConsumer {
   }
 
   @Override
-  public void handleCancel(String consumerTag) {
+  public void handleCancel(String consumerTag) throws IOException {
     log.debug("consumer has been cancelled unexpectedly");
   }
 }
