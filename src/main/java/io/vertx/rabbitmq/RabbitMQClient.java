@@ -66,18 +66,48 @@ public interface RabbitMQClient {
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
+   * Use {@link RabbitMQClient#basicConsumer(String, Handler)} instead
+   * <p>
    * Start a non-nolocal, non-exclusive consumer, with auto acknowledgement and a server-generated consumerTag.
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
-  RabbitMQueue basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler);
+  @Deprecated
+  void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Use {@link RabbitMQClient#basicConsumer(String, boolean, Handler)} instead
+   * <p>
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  RabbitMQueue basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler);
+  @Deprecated
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Use {@link RabbitMQClient#basicConsumer(String, boolean, Handler)} instead
+   * <p>
+   * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag and error handler
+   *
+   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
+   */
+  @Deprecated
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
+
+  /**
+   * @param resultHandler handler with result of operation and consumer tag
+   * @return a stream for message consumption
+   * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
+   */
+  RabbitMQueue basicConsumer(String queue, Handler<AsyncResult<String>> resultHandler);
+
+  /**
+   * @param resultHandler handler with result of operation and consumer tag
+   * @return a stream for message consumption
+   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
+   */
+  RabbitMQueue basicConsumer(String queue, boolean autoAck, Handler<AsyncResult<String>> resultHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,

@@ -6,7 +6,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -199,7 +198,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  @Ignore
   public void testBasicConsumeWithErrorHandler() throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
@@ -211,7 +209,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
-//    client.basicConsume(q, "my.address", true, onSuccess(v -> {}), errorHandler);
+    client.basicConsume(q, "my.address", true, onSuccess(v -> {}), errorHandler);
 
     awaitLatch(latch);
     testComplete();
