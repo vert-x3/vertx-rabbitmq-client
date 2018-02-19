@@ -1,6 +1,5 @@
 package io.vertx.rabbitmq.impl;
 
-import com.rabbitmq.client.ShutdownSignalException;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -61,12 +60,6 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   public RabbitMQueue endHandler(Handler<Void> endHandler) {
     this.endHandler = endHandler;
     return this;
-  }
-
-
-  @Override
-  public void shutdownCompleted(ShutdownSignalException cause) {
-
   }
 
   @Override
