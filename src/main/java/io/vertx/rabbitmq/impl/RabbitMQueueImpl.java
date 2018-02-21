@@ -22,6 +22,7 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   private Handler<Throwable> exceptionHandler;
   private Handler<JsonObject> messageArrivedHandler;
   private Handler<Void> endHandler;
+  private String consumerTag;
 
   private volatile int queueSize = DEFAULT_QUEUE_SIZE;
   private AtomicInteger currentQueueSize = new AtomicInteger(0);
@@ -66,6 +67,15 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   public synchronized boolean setQueueSize(int size) {
     queueSize = size;
     return false;
+  }
+
+  @Override
+  public String consumerTag() {
+    return consumerTag;
+  }
+
+  public void setConsumerTag(String consumerTag) {
+    this.consumerTag = consumerTag;
   }
 
   /**

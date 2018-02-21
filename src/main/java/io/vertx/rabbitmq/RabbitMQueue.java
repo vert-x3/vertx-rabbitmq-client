@@ -30,4 +30,9 @@ public interface RabbitMQueue extends ReadStream<JsonObject> {
    * How much messages can be in a internal queue.
    */
   boolean setQueueSize(int size);
+
+  /**
+   * @return a consumer tag
+   */
+  String consumerTag();
 }

@@ -95,18 +95,16 @@ public interface RabbitMQClient {
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
 
   /**
-   * @param resultHandler handler with result of operation and consumer tag
-   * @return a stream for message consumption
+   * @param resultHandler handler with result of operation queue to consume messages from
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
-  RabbitMQueue basicConsumer(String queue, Handler<AsyncResult<String>> resultHandler);
+  void basicConsumer(String queue, Handler<AsyncResult<RabbitMQueue>> resultHandler);
 
   /**
-   * @param resultHandler handler with result of operation and consumer tag
-   * @return a stream for message consumption
+   * @param resultHandler handler with result of operation queue to consume messages from
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  RabbitMQueue basicConsumer(String queue, boolean autoAck, Handler<AsyncResult<String>> resultHandler);
+  void basicConsumer(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQueue>> resultHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
