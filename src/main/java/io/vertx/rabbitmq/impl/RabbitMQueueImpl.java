@@ -64,9 +64,8 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   }
 
   @Override
-  public synchronized boolean setQueueSize(int size) {
-    queueSize = size;
-    return false;
+  public synchronized void size(int value) {
+    queueSize = value;
   }
 
   @Override
