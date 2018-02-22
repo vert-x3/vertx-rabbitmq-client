@@ -128,10 +128,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public void basicConsumer(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      RabbitMQueueImpl rabbitMQueue = new RabbitMQueueImpl();
-      String consumerTag = channel.basicConsume(queue, autoAck, new QueueConsumerHandler(vertx, channel, includeProperties, rabbitMQueue));
-      rabbitMQueue.setConsumerTag(consumerTag);
-      return rabbitMQueue;
+      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, includeProperties);
+      String consumerTag = channel.basicConsume(queue, autoAck, handler);
+      return handler.queue();
     });
   }
 

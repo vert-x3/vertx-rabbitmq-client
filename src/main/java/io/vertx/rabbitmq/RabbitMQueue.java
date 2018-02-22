@@ -1,6 +1,7 @@
 package io.vertx.rabbitmq;
 
 import io.vertx.codegen.annotations.VertxGen;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
@@ -37,4 +38,21 @@ public interface RabbitMQueue extends ReadStream<JsonObject> {
    * @return a consumer tag
    */
   String consumerTag();
+
+
+  /**
+   * Stop message consumption from a queue.
+   * <p>
+   * The operation is asynchronous. When consumption will be stopped, you can by notified via {@link RabbitMQueue#endHandler(Handler)}
+   */
+  void cancel();
+
+  /**
+   * Stop message consumption from a queue.
+   * <p>
+   * The operation is asynchronous. When consumption will be stopped, you can by notified via {@link RabbitMQueue#endHandler(Handler)}
+   *
+   * @param cancelResult contains information about operation status: success/fail.
+   */
+  void cancel(Handler<AsyncResult<Void>> cancelResult);
 }

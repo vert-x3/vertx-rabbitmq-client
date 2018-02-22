@@ -1,11 +1,14 @@
 package io.vertx.rabbitmq.impl;
 
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Future
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.RabbitMQueue;
 
+import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,7 +25,7 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   private Handler<Throwable> exceptionHandler;
   private Handler<JsonObject> messageArrivedHandler;
   private Handler<Void> endHandler;
-  private String consumerTag;
+  private final QueueConsumerHandler consumerHandler;
 
   private volatile int queueSize = DEFAULT_QUEUE_SIZE;
   private AtomicInteger currentQueueSize = new AtomicInteger(0);
@@ -31,6 +34,9 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   // a storage of all received messages
   private Queue<JsonObject> messagesQueue = new ConcurrentLinkedQueue<>();
 
+  RabbitMQueueImpl(QueueConsumerHandler consumerHandler) {
+    this.consumerHandler = consumerHandler;
+  }
 
   @Override
   public RabbitMQueue exceptionHandler(Handler<Throwable> exceptionHandler) {
@@ -70,11 +76,26 @@ public class RabbitMQueueImpl implements RabbitMQueue {
 
   @Override
   public String consumerTag() {
-    return consumerTag;
+    return consumerHandler.getConsumerTag();
   }
 
-  public void setConsumerTag(String consumerTag) {
-    this.consumerTag = consumerTag;
+  @Override
+  public void cancel() {
+    cancel(null);
+  }
+
+  @Override
+  public void cancel(Handler<AsyncResult<Void>> cancelResult) {
+    AsyncResult<Void> operationResult;
+    try {
+      consumerHandler.getChannel().basicCancel(consumerTag());
+      operationResult = Future.succeededFuture();
+    } catch (IOException e) {
+      operationResult = Future.failedFuture(e);
+    }
+    if (cancelResult != null) {
+      cancelResult.handle(operationResult);
+    }
   }
 
   /**
