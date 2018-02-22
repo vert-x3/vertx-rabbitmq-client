@@ -128,7 +128,7 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   /**
    * Handle all messages in a queue
    */
-  private void flushQueue() {
+  private synchronized void flushQueue() {
     JsonObject message;
     while ((message = messagesQueue.poll()) != null) {
       if (messageArrivedHandler != null) {
