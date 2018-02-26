@@ -6,11 +6,8 @@ A Vert.x client allowing applications to interact with a RabbitMQ broker (AMQP 0
 
 Please see the in source asciidoc documentation or the main documentation on the web-site for a full description:
 
-* Web-site docs
-* [Java in-source docs](../master/src/main/asciidoc/java/index.adoc)
-* [JavaScript in-source docs](../master/src/main/asciidoc/js/index.adoc)
-* [Groovy in-source docs](../master/src/main/asciidoc/groovy/index.adoc)
-* [Ruby in-source docs](../master/src/main/asciidoc/ruby/index.adoc)
+* [Web-site docs](http://vertx.io/docs/#integration)
+* [Java in-source docs](../master/src/main/asciidoc/index.adoc)
 
 # Running the tests
 
