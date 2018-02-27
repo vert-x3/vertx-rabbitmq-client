@@ -8,7 +8,7 @@ import io.vertx.rabbitmq.RabbitMQOptions;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Examples {
+public class RabbitMQExamples {
 
   public void createClientWithUri(Vertx vertx) {
     RabbitMQOptions config = new RabbitMQOptions();
