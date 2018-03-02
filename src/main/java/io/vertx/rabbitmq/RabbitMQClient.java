@@ -95,16 +95,37 @@ public interface RabbitMQClient {
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
 
   /**
-   * @param resultHandler handler with result of operation queue to consume messages from
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
+   * @see RabbitMQClient#basicConsumer(String, QueueConsumptionMode, boolean, Handler)
    */
   void basicConsumer(String queue, Handler<AsyncResult<RabbitMQueue>> resultHandler);
 
   /**
-   * @param resultHandler handler with result of operation queue to consume messages from
-   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
+   * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
+   * @see RabbitMQClient#basicConsumer(String, QueueConsumptionMode, boolean, Handler)
    */
   void basicConsumer(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQueue>> resultHandler);
+
+  /**
+   * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
+   * @see RabbitMQClient#basicConsumer(String, QueueConsumptionMode, boolean, Handler)
+   */
+  void basicConsumer(String queue, QueueConsumptionMode mode, Handler<AsyncResult<RabbitMQueue>> resultHandler);
+
+  /**
+   * Create a consumer with a given options.
+   *
+   * @param queue         the name of a queue
+   * @param mode          the mode for defining behaviour of a internal consumer queue
+   * @param autoAck       true if the server should consider messages
+   *                      acknowledged once delivered; false if the server should expect
+   *                      explicit acknowledgements
+   * @param resultHandler a handler through which you can find out the operation status;
+   *                      if the operation succeeds you can begin to receive messages
+   *                      through an instance of {@link RabbitMQueue}
+   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
+   */
+  void basicConsumer(String queue, QueueConsumptionMode mode, boolean autoAck, Handler<AsyncResult<RabbitMQueue>> resultHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
