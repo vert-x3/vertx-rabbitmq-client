@@ -25,7 +25,7 @@ public class RabbitMQueueImpl implements RabbitMQueue {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQueueImpl.class);
 
-  private final int DEFAULT_QUEUE_SIZE = 2048;
+  private static final int DEFAULT_QUEUE_SIZE = 2048;
   private Handler<Throwable> exceptionHandler;
   private Handler<JsonObject> messageArrivedHandler;
   private Handler<Void> endHandler;
