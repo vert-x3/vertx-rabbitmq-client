@@ -22,7 +22,7 @@ public interface RabbitMQClient {
   /**
    * Create and return a client.
    *
-   * @param vertx the vertx instance
+   * @param vertx  the vertx instance
    * @param config the client config
    * @return the client
    */
@@ -96,36 +96,45 @@ public interface RabbitMQClient {
 
   /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
-   * @see RabbitMQClient#basicConsumer(String, QueueConsumptionMode, boolean, Handler)
+   * @see RabbitMQClient#basicConsumer(String, boolean, boolean, boolean, Handler)
    */
-  void basicConsumer(String queue, Handler<AsyncResult<RabbitMQueue>> resultHandler);
+  default void basicConsumer(String queue, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
+    basicConsumer(queue, true, resultHandler);
+  }
 
   /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
-   * @see RabbitMQClient#basicConsumer(String, QueueConsumptionMode, boolean, Handler)
+   * @see RabbitMQClient#basicConsumer(String, boolean, boolean, boolean, Handler)
    */
-  void basicConsumer(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQueue>> resultHandler);
+  default void basicConsumer(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
+    basicConsumer(queue, autoAck, false, resultHandler);
+  }
 
   /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
-   * @see RabbitMQClient#basicConsumer(String, QueueConsumptionMode, boolean, Handler)
+   * @see RabbitMQClient#basicConsumer(String, boolean, boolean, boolean, Handler)
    */
-  void basicConsumer(String queue, QueueConsumptionMode mode, Handler<AsyncResult<RabbitMQueue>> resultHandler);
+  default void basicConsumer(String queue, boolean autoAck, boolean buffer, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
+    basicConsumer(queue, autoAck, buffer, false, resultHandler);
+  }
 
   /**
    * Create a consumer with a given options.
    *
-   * @param queue         the name of a queue
-   * @param mode          the mode for defining behaviour of a internal consumer queue
-   * @param autoAck       true if the server should consider messages
-   *                      acknowledged once delivered; false if the server should expect
-   *                      explicit acknowledgements
-   * @param resultHandler a handler through which you can find out the operation status;
-   *                      if the operation succeeds you can begin to receive messages
-   *                      through an instance of {@link RabbitMQueue}
+   * @param queue          the name of a queue
+   * @param keepMostRecent {@code true} for discarding old messages instead of recent ones, otherwise use {@code false}
+   * @param buffer         {@code true} for storing all incoming messages in a internal queue
+   *                       when stream is paused while it's fit provided size;
+   *                       {@code false} for discarding all incoming messages when stream is paused
+   * @param autoAck        true if the server should consider messages
+   *                       acknowledged once delivered; false if the server should expect
+   *                       explicit acknowledgements
+   * @param resultHandler  a handler through which you can find out the operation status;
+   *                       if the operation succeeds you can begin to receive messages
+   *                       through an instance of {@link RabbitMQueue}
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  void basicConsumer(String queue, QueueConsumptionMode mode, boolean autoAck, Handler<AsyncResult<RabbitMQueue>> resultHandler);
+  void basicConsumer(String queue, boolean autoAck, boolean buffer, boolean keepMostRecent, Handler<AsyncResult<RabbitMQueue>> resultHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
@@ -149,10 +158,9 @@ public interface RabbitMQClient {
    * This will incur slight performance loss at the expense of higher write consistency.
    * If desired, multiple calls to basicPublish() can be batched before confirming.
    *
+   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    * @see Channel#waitForConfirms()
    * @see http://www.rabbitmq.com/confirms.html
-   *
-   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
   void waitForConfirms(Handler<AsyncResult<Void>> resultHandler);
 
@@ -160,11 +168,9 @@ public interface RabbitMQClient {
    * Wait until all messages published since the last call have been either ack'd or nack'd by the broker; or until timeout elapses. If the timeout expires a TimeoutException is thrown.
    *
    * @param timeout
-   *
+   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    * @see io.vertx.rabbitmq.impl.RabbitMQClientImpl#waitForConfirms(Handler)
    * @see http://www.rabbitmq.com/confirms.html
-   *
-   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
   void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler);
 

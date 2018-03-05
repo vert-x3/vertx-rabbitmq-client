@@ -8,7 +8,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.rabbitmq.QueueConsumptionMode;
 import io.vertx.rabbitmq.RabbitMQueue;
 
 import java.io.IOException;
@@ -18,8 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import static io.vertx.rabbitmq.QueueConsumptionMode.DISCARD_ALL;
 
 /**
  * A implementation of {@link RabbitMQueue}
@@ -33,9 +30,10 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   private Handler<JsonObject> messageArrivedHandler;
   private Handler<Void> endHandler;
   private final QueueConsumerHandler consumerHandler;
-  private final QueueConsumptionMode mode;
   private final Context runningContext;
   private final Lock queueRemoveLock = new ReentrantLock();
+  private final boolean buffer;
+  private final boolean keepMostRecent;
 
   private volatile int queueSize = DEFAULT_QUEUE_SIZE;
   private AtomicInteger currentQueueSize = new AtomicInteger(0);
@@ -44,10 +42,11 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   // a storage of all received messages
   private Queue<JsonObject> messagesQueue = new ConcurrentLinkedQueue<>();
 
-  RabbitMQueueImpl(Vertx vertx, QueueConsumerHandler consumerHandler, QueueConsumptionMode mode) {
+  RabbitMQueueImpl(Vertx vertx, QueueConsumerHandler consumerHandler, boolean buffer, boolean keepMostRecent) {
     runningContext = vertx.getOrCreateContext();
     this.consumerHandler = consumerHandler;
-    this.mode = mode;
+    this.keepMostRecent = keepMostRecent;
+    this.buffer = buffer;
   }
 
   @Override
@@ -119,8 +118,8 @@ public class RabbitMQueueImpl implements RabbitMQueue {
    */
   void push(JsonObject message) {
 
-    if (paused.get() && mode == DISCARD_ALL) {
-      log.debug(String.format("Discard a received message since queue consumption strategy is %s", mode));
+    if (paused.get() && !buffer) {
+      log.debug("Discard a received message since stream is paused and buffer flag is false");
       return;
     }
 
@@ -136,17 +135,14 @@ public class RabbitMQueueImpl implements RabbitMQueue {
         // if compare and set == false then continue CompareAndSet loop
         compareAndSetLoopFlag = !compareAndSetOp;
       } else {
-        switch (mode) {
-          case BUFFER:
-            log.debug(String.format("Discard a received message due to exceed queue size limit. Strategy: %s", mode));
-            break;
-          case BUFFER_REPLACE_OLD_WITH_NEW:
-            queueRemoveLock.lock();
-            messagesQueue.poll();
-            messagesQueue.add(message);
-            queueRemoveLock.unlock();
-            log.debug(String.format("Remove a old message and put a new message into the internal queue. Strategy: %s", mode));
-            break;
+        if (keepMostRecent) {
+          queueRemoveLock.lock();
+          messagesQueue.poll();
+          messagesQueue.add(message);
+          queueRemoveLock.unlock();
+          log.debug("Remove a old message and put a new message into the internal queue.");
+        } else {
+          log.debug("Discard a received message due to exceed queue size limit.");
         }
 
         compareAndSetLoopFlag = false;
