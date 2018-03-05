@@ -124,7 +124,7 @@ public interface RabbitMQClient {
    * @param queue          the name of a queue
    * @param keepMostRecent {@code true} for discarding old messages instead of recent ones, otherwise use {@code false}
    * @param buffer         {@code true} for storing all incoming messages in a internal queue
-   *                       when stream is paused while it's fit provided size;
+   *                       when stream is paused while it's fit provided size via {@link RabbitMQueue#size(int)};
    *                       {@code false} for discarding all incoming messages when stream is paused
    * @param autoAck        true if the server should consider messages
    *                       acknowledged once delivered; false if the server should expect
