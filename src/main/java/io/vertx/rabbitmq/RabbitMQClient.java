@@ -22,7 +22,7 @@ public interface RabbitMQClient {
   /**
    * Create and return a client.
    *
-   * @param vertx  the vertx instance
+   * @param vertx the vertx instance
    * @param config the client config
    * @return the client
    */
@@ -79,7 +79,7 @@ public interface RabbitMQClient {
    * <p>
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
    *
-   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, Consumer)
+   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
   @Deprecated
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
@@ -136,9 +136,10 @@ public interface RabbitMQClient {
    * This will incur slight performance loss at the expense of higher write consistency.
    * If desired, multiple calls to basicPublish() can be batched before confirming.
    *
-   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    * @see Channel#waitForConfirms()
    * @see http://www.rabbitmq.com/confirms.html
+   *
+   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
   void waitForConfirms(Handler<AsyncResult<Void>> resultHandler);
 
@@ -146,9 +147,11 @@ public interface RabbitMQClient {
    * Wait until all messages published since the last call have been either ack'd or nack'd by the broker; or until timeout elapses. If the timeout expires a TimeoutException is thrown.
    *
    * @param timeout
-   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
+   *
    * @see io.vertx.rabbitmq.impl.RabbitMQClientImpl#waitForConfirms(Handler)
    * @see http://www.rabbitmq.com/confirms.html
+   *
+   * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
   void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler);
 
