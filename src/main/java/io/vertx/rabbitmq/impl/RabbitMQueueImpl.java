@@ -8,6 +8,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQueue;
 
 import java.io.IOException;
@@ -25,7 +26,6 @@ public class RabbitMQueueImpl implements RabbitMQueue {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQueueImpl.class);
 
-  private static final int DEFAULT_QUEUE_SIZE = 2048;
   private Handler<Throwable> exceptionHandler;
   private Handler<JsonObject> messageArrivedHandler;
   private Handler<Void> endHandler;
@@ -35,18 +35,19 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   private final boolean buffer;
   private final boolean keepMostRecent;
 
-  private volatile int queueSize = DEFAULT_QUEUE_SIZE;
+  private volatile int queueSize;
   private AtomicInteger currentQueueSize = new AtomicInteger(0);
   private AtomicBoolean paused = new AtomicBoolean(false);
 
   // a storage of all received messages
   private Queue<JsonObject> messagesQueue = new ConcurrentLinkedQueue<>();
 
-  RabbitMQueueImpl(Vertx vertx, QueueConsumerHandler consumerHandler, boolean buffer, boolean keepMostRecent) {
+  RabbitMQueueImpl(Vertx vertx, QueueConsumerHandler consumerHandler, QueueOptions options) {
     runningContext = vertx.getOrCreateContext();
     this.consumerHandler = consumerHandler;
-    this.keepMostRecent = keepMostRecent;
-    this.buffer = buffer;
+    this.keepMostRecent = options.isKeepMostRecent();
+    this.buffer = options.isBuffer();
+    this.queueSize = options.maxInternalQueueSize();
   }
 
   @Override

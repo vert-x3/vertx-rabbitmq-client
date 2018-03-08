@@ -9,6 +9,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQueue;
 
 import static io.vertx.rabbitmq.impl.Utils.parse;
@@ -24,11 +25,11 @@ public class QueueConsumerHandler extends DefaultConsumer {
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerHandler.class);
 
-  QueueConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, boolean buffer, boolean keepMostRecent) {
+  QueueConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, QueueOptions options) {
     super(channel);
     this.handlerContext = vertx.getOrCreateContext();
     this.includeProperties = includeProperties;
-    this.queue = new RabbitMQueueImpl(vertx, this, buffer, keepMostRecent);
+    this.queue = new RabbitMQueueImpl(vertx, this, options);
   }
 
   @Override

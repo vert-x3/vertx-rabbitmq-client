@@ -65,7 +65,7 @@ public interface RabbitMQClient {
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
-   * Use {@link RabbitMQClient#basicConsumer(String, Handler)} instead
+   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
    * <p>
    * Start a non-nolocal, non-exclusive consumer, with auto acknowledgement and a server-generated consumerTag.
    *
@@ -75,17 +75,17 @@ public interface RabbitMQClient {
   void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
 
   /**
-   * Use {@link RabbitMQClient#basicConsumer(String, boolean, Handler)} instead
+   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
    * <p>
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
    *
-   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
+   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, Consumer)
    */
   @Deprecated
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
 
   /**
-   * Use {@link RabbitMQClient#basicConsumer(String, boolean, Handler)} instead
+   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
    * <p>
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag and error handler
    *
@@ -96,45 +96,23 @@ public interface RabbitMQClient {
 
   /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
-   * @see RabbitMQClient#basicConsumer(String, boolean, boolean, boolean, Handler)
+   * @see RabbitMQClient#basicConsumer(String, Handler)
    */
   default void basicConsumer(String queue, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
-    basicConsumer(queue, true, resultHandler);
-  }
-
-  /**
-   * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
-   * @see RabbitMQClient#basicConsumer(String, boolean, boolean, boolean, Handler)
-   */
-  default void basicConsumer(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
-    basicConsumer(queue, autoAck, false, resultHandler);
-  }
-
-  /**
-   * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
-   * @see RabbitMQClient#basicConsumer(String, boolean, boolean, boolean, Handler)
-   */
-  default void basicConsumer(String queue, boolean autoAck, boolean buffer, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
-    basicConsumer(queue, autoAck, buffer, false, resultHandler);
+    basicConsumer(queue, new QueueOptions(), resultHandler);
   }
 
   /**
    * Create a consumer with a given options.
    *
    * @param queue          the name of a queue
-   * @param keepMostRecent {@code true} for discarding old messages instead of recent ones, otherwise use {@code false}
-   * @param buffer         {@code true} for storing all incoming messages in a internal queue
-   *                       when stream is paused while it's fit provided size via {@link RabbitMQueue#size(int)};
-   *                       {@code false} for discarding all incoming messages when stream is paused
-   * @param autoAck        true if the server should consider messages
-   *                       acknowledged once delivered; false if the server should expect
-   *                       explicit acknowledgements
+   * @param options        options for queue
    * @param resultHandler  a handler through which you can find out the operation status;
    *                       if the operation succeeds you can begin to receive messages
    *                       through an instance of {@link RabbitMQueue}
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  void basicConsumer(String queue, boolean autoAck, boolean buffer, boolean keepMostRecent, Handler<AsyncResult<RabbitMQueue>> resultHandler);
+  void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQueue>> resultHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,

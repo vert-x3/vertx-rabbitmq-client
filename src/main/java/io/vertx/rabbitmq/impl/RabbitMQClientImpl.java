@@ -21,6 +21,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQOptions;
 import io.vertx.rabbitmq.RabbitMQueue;
@@ -121,10 +122,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicConsumer(String queue, boolean autoAck, boolean buffer, boolean keepMostRecent, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
+  public void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, includeProperties, buffer, keepMostRecent);
-      String consumerTag = channel.basicConsume(queue, autoAck, handler);
+      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, includeProperties, options);
+      String consumerTag = channel.basicConsume(queue, options.isAutoAck(), handler);
       return handler.queue();
     });
   }
