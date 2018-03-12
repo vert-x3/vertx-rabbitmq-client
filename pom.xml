@@ -15,7 +15,6 @@
   <properties>
     <stack.version>3.6.0-SNAPSHOT</stack.version>
     <rabbitmq.client.version>3.6.5</rabbitmq.client.version>
-    <codegen.rxjava.deprecated>true</codegen.rxjava.deprecated>
   </properties>
 
   <dependencyManagement>
