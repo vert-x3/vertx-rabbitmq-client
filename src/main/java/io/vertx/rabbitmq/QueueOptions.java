@@ -42,7 +42,7 @@ public class QueueOptions {
   /**
    * @param buffer {@code true} for storing all incoming messages in a internal queue
    *               when stream is paused and while it's fit provided size via
-   *               {@link RabbitMQueue#size(int)} or {@link #setMaxInternalQueueSize(int)};
+   *               {@link RabbitMQConsumer#size(int)} or {@link #setMaxInternalQueueSize(int)};
    *               {@code false} for discarding all incoming messages when stream is paused
    */
   public QueueOptions setBuffer(boolean buffer) {
@@ -80,7 +80,7 @@ public class QueueOptions {
   /**
    * @return {@code true} if queue will store all incoming messages in a internal queue
    * when stream is paused and while it's fit provided size via
-   * {@link RabbitMQueue#size(int)} or {@link #setMaxInternalQueueSize(int)};
+   * {@link RabbitMQConsumer#size(int)} or {@link #setMaxInternalQueueSize(int)};
    * {@code false} if all incoming messages will be discarded when stream is paused
    */
   public boolean isBuffer() {

@@ -9,7 +9,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.QueueOptions;
-import io.vertx.rabbitmq.RabbitMQueue;
+import io.vertx.rabbitmq.RabbitMQConsumer;
 
 import java.io.IOException;
 import java.util.Queue;
@@ -20,11 +20,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A implementation of {@link RabbitMQueue}
+ * A implementation of {@link RabbitMQConsumer}
  */
-public class RabbitMQueueImpl implements RabbitMQueue {
+public class RabbitMQConsumerImpl implements RabbitMQConsumer {
 
-  private static final Logger log = LoggerFactory.getLogger(RabbitMQueueImpl.class);
+  private static final Logger log = LoggerFactory.getLogger(RabbitMQConsumerImpl.class);
 
   private Handler<Throwable> exceptionHandler;
   private Handler<JsonObject> messageArrivedHandler;
@@ -42,7 +42,7 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   // a storage of all received messages
   private Queue<JsonObject> messagesQueue = new ConcurrentLinkedQueue<>();
 
-  RabbitMQueueImpl(Vertx vertx, QueueConsumerHandler consumerHandler, QueueOptions options) {
+  RabbitMQConsumerImpl(Vertx vertx, QueueConsumerHandler consumerHandler, QueueOptions options) {
     runningContext = vertx.getOrCreateContext();
     this.consumerHandler = consumerHandler;
     this.keepMostRecent = options.isKeepMostRecent();
@@ -51,32 +51,32 @@ public class RabbitMQueueImpl implements RabbitMQueue {
   }
 
   @Override
-  public RabbitMQueue exceptionHandler(Handler<Throwable> exceptionHandler) {
+  public RabbitMQConsumer exceptionHandler(Handler<Throwable> exceptionHandler) {
     this.exceptionHandler = exceptionHandler;
     return this;
   }
 
   @Override
-  public RabbitMQueue handler(Handler<JsonObject> messageArrivedHandler) {
+  public RabbitMQConsumer handler(Handler<JsonObject> messageArrivedHandler) {
     this.messageArrivedHandler = messageArrivedHandler;
     return this;
   }
 
   @Override
-  public RabbitMQueue pause() {
+  public RabbitMQConsumer pause() {
     paused.set(true);
     return this;
   }
 
   @Override
-  public RabbitMQueue resume() {
+  public RabbitMQConsumer resume() {
     paused.set(false);
     flushQueue();
     return this;
   }
 
   @Override
-  public RabbitMQueue endHandler(Handler<Void> endHandler) {
+  public RabbitMQConsumer endHandler(Handler<Void> endHandler) {
     this.endHandler = endHandler;
     return this;
   }

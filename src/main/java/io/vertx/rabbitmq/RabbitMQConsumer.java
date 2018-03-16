@@ -10,7 +10,7 @@ import io.vertx.core.streams.ReadStream;
  * A stream of messages from a rabbitmq queue.
  */
 @VertxGen
-public interface RabbitMQueue extends ReadStream<JsonObject> {
+public interface RabbitMQConsumer extends ReadStream<JsonObject> {
 
   /**
    * Set an exception handler on the read stream.
@@ -19,7 +19,7 @@ public interface RabbitMQueue extends ReadStream<JsonObject> {
    * @return a reference to this, so the API can be used fluently
    */
   @Override
-  RabbitMQueue exceptionHandler(Handler<Throwable> exceptionHandler);
+  RabbitMQConsumer exceptionHandler(Handler<Throwable> exceptionHandler);
 
   /**
    * Set a message handler. As message appear in a queue, the handler will be called with the message.
@@ -27,18 +27,18 @@ public interface RabbitMQueue extends ReadStream<JsonObject> {
    * @return a reference to this, so the API can be used fluently
    */
   @Override
-  RabbitMQueue handler(Handler<JsonObject> messageArrived);
+  RabbitMQConsumer handler(Handler<JsonObject> messageArrived);
 
   /**
    * Pause the stream of incoming messages from queue.
    * <p>
    * The messages will continue to arrive, but they will be stored in a internal queue.
-   * If the queue size would exceed the limit provided by {@link RabbitMQueue#size(int)}, then incoming messages will be discarded.
+   * If the queue size would exceed the limit provided by {@link RabbitMQConsumer#size(int)}, then incoming messages will be discarded.
    *
    * @return a reference to this, so the API can be used fluently
    */
   @Override
-  RabbitMQueue pause();
+  RabbitMQConsumer pause();
 
   /**
    * Resume reading from a queue. Flushes internal queue.
@@ -46,7 +46,7 @@ public interface RabbitMQueue extends ReadStream<JsonObject> {
    * @return a reference to this, so the API can be used fluently
    */
   @Override
-  RabbitMQueue resume();
+  RabbitMQConsumer resume();
 
   /**
    * Set an end handler. Once the stream has canceled successfully, the handler will be called.
@@ -54,7 +54,7 @@ public interface RabbitMQueue extends ReadStream<JsonObject> {
    * @return a reference to this, so the API can be used fluently
    */
   @Override
-  RabbitMQueue endHandler(Handler<Void> endHandler);
+  RabbitMQConsumer endHandler(Handler<Void> endHandler);
 
   /**
    * How much messages can be in a internal queue.
@@ -71,14 +71,14 @@ public interface RabbitMQueue extends ReadStream<JsonObject> {
   /**
    * Stop message consumption from a queue.
    * <p>
-   * The operation is asynchronous. When consumption will be stopped, you can by notified via {@link RabbitMQueue#endHandler(Handler)}
+   * The operation is asynchronous. When consumption will be stopped, you can by notified via {@link RabbitMQConsumer#endHandler(Handler)}
    */
   void cancel();
 
   /**
    * Stop message consumption from a queue.
    * <p>
-   * The operation is asynchronous. When consumption will be stopped, you can by notified via {@link RabbitMQueue#endHandler(Handler)}
+   * The operation is asynchronous. When consumption will be stopped, you can by notified via {@link RabbitMQConsumer#endHandler(Handler)}
    *
    * @param cancelResult contains information about operation status: success/fail.
    */

@@ -98,21 +98,21 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    * @see RabbitMQClient#basicConsumer(String, Handler)
    */
-  default void basicConsumer(String queue, Handler<AsyncResult<RabbitMQueue>> resultHandler) {
+  default void basicConsumer(String queue, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
     basicConsumer(queue, new QueueOptions(), resultHandler);
   }
 
   /**
-   * Create a consumer with a given options.
+   * Create a consumer with the given {@code options}.
    *
    * @param queue          the name of a queue
    * @param options        options for queue
    * @param resultHandler  a handler through which you can find out the operation status;
    *                       if the operation succeeds you can begin to receive messages
-   *                       through an instance of {@link RabbitMQueue}
+   *                       through an instance of {@link RabbitMQConsumer}
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQueue>> resultHandler);
+  void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
