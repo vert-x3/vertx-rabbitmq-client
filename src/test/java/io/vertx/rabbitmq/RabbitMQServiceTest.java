@@ -76,6 +76,48 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     }
   }
 
+
+  @Test
+  public void testMessageOrderingWhenConsumingNewApi() throws IOException {
+
+    String queueName = "message_ordering_test";
+    String address = queueName + ".address";
+
+    int count = 1000;
+
+    List<String> sendingOrder = IntStream.range(1, count).boxed().map(Object::toString).collect(Collectors.toList());
+
+    // set up queue
+    AMQP.Queue.DeclareOk ok = channel.queueDeclare(queueName, false, false, true, null);
+    assertNotNull(ok.getQueue());
+    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().contentType("text/plain").contentEncoding("UTF-8").build();
+
+    // send  messages
+    for (String msg : sendingOrder)
+      channel.basicPublish("", queueName, properties, msg.getBytes("UTF-8"));
+
+    List<String> receivedOrder = Collections.synchronizedList(new ArrayList<>());
+
+    client.basicConsumer(queueName, consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        consumerHandler.result().handler(json -> {
+          assertNotNull(json);
+          String body = json.getString("body");
+          assertNotNull(body);
+          receivedOrder.add(body);
+        });
+      } else {
+        fail();
+      }
+    });
+
+
+    assertWaitUntil(() -> receivedOrder.size() == sendingOrder.size());
+    for (int i = 0; i < sendingOrder.size(); i++) {
+      assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
+    }
+  }
+
   @Test
   public void testBasicGet() throws Exception {
     int count = 3;
@@ -198,6 +240,32 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
+  public void testBasicConsumer() throws Exception {
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages);
+
+    CountDownLatch latch = new CountDownLatch(count);
+
+    client.basicConsumer(q, consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        consumerHandler.result().handler(json -> {
+          assertNotNull(json);
+          String body = json.getString("body");
+          assertNotNull(body);
+          assertTrue(messages.contains(body));
+          latch.countDown();
+        });
+      } else {
+        fail();
+      }
+    });
+
+    awaitLatch(latch);
+    testComplete();
+  }
+
+  @Test
   public void testBasicConsumeWithErrorHandler() throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
@@ -210,6 +278,31 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
     client.basicConsume(q, "my.address", true, onSuccess(v -> {}), errorHandler);
+
+    awaitLatch(latch);
+    testComplete();
+  }
+
+  @Test
+  public void testBasicConsumerWithErrorHandler() throws Exception {
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages, "application/json");
+
+    CountDownLatch latch = new CountDownLatch(count);
+
+    Handler<Throwable> errorHandler = throwable -> latch.countDown();
+
+    client.basicConsumer(q, consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        RabbitMQConsumer result = consumerHandler.result();
+        result.exceptionHandler(errorHandler);
+        result.handler(json -> fail("Getting message with malformed json"));
+      } else {
+        fail();
+      }
+    });
+
 
     awaitLatch(latch);
     testComplete();
