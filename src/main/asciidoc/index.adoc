@@ -93,8 +93,16 @@ Consume messages from a queue
 
 [source,$lang]
 ----
-// Create the event bus handler which messages will be sent to
-{@link examples.RabbitMQExamples#basicConsume}
+// Create a stream of messages from a queue
+{@link examples.RabbitMQExamples#basicConsumer}
+----
+
+[source,$lang]
+----
+// Create a stream of messages from a queue with a specific options.
+// In this case, in order to handel back-pressure all messages will be stored in a internal queue of 1 000 000 elements.
+// If queue would exceed the limit incoming messages, old messages will be replaced with new ones.
+{@link examples.RabbitMQExamples#basicConsumerOptions(io.vertx.core.Vertx, io.vertx.rabbitmq.RabbitMQClient)}
 ----
 
 === Get
