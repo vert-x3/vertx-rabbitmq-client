@@ -2,7 +2,9 @@ package examples;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.util.HashMap;
@@ -87,6 +89,35 @@ public class RabbitMQExamples {
         System.out.println("RabbitMQ consumer created !");
       } else {
         consumeResult.cause().printStackTrace();
+      }
+    });
+  }
+
+  public void basicConsumer(Vertx vertx, RabbitMQClient client) {
+    client.basicConsumer("my.queue", rabbitMQConsumerAsyncResult -> {
+      if (rabbitMQConsumerAsyncResult.succeeded()) {
+        System.out.println("RabbitMQ consumer created !");
+        RabbitMQConsumer mqConsumer = rabbitMQConsumerAsyncResult.result();
+        mqConsumer.handler(message -> {
+          System.out.println("Got message: " + message.getString("body"));
+        });
+      } else {
+        rabbitMQConsumerAsyncResult.cause().printStackTrace();
+      }
+    });
+  }
+
+  public void basicConsumerOptions(Vertx vertx, RabbitMQClient client) {
+    QueueOptions options = new QueueOptions();
+    options.setMaxInternalQueueSize(1000000);
+    options.setKeepMostRecent(true);
+    options.setBuffer(true);
+
+    client.basicConsumer("my.queue", options, rabbitMQConsumerAsyncResult -> {
+      if (rabbitMQConsumerAsyncResult.succeeded()) {
+        System.out.println("RabbitMQ consumer created !");
+      } else {
+        rabbitMQConsumerAsyncResult.cause().printStackTrace();
       }
     });
   }
