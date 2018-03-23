@@ -126,14 +126,50 @@ public interface RabbitMQClient {
    */
   void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler);
 
+  /**
+   * Request a specific prefetchCount "quality of service" settings
+   * for this channel.
+   *
+   * @see #basicQos(int, int, boolean, Handler)
+   * @param prefetchCount maximum number of messages that the server
+   * will deliver, 0 if unlimited
+   * @param resultHandler handler called when operation is done with a result of the operation
+   */
+  default void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler) {
+    basicQos(prefetchCount, false, resultHandler);
+  }
 
   /**
-   * Request specific "quality of service" settings, Limiting the number of unacknowledged messages on
-   * a channel (or connection). This limit is applied separately to each new consumer on the channel.
+   * Request a specific prefetchCount "quality of service" settings
+   * for this channel.
    *
-   * @see com.rabbitmq.client.Channel#basicQos(int)
+   * @see #basicQos(int, int, boolean, Handler)
+   * @param prefetchCount maximum number of messages that the server
+   * will deliver, 0 if unlimited
+   * @param global true if the settings should be applied to the
+   * entire channel rather than each consumer
+   * @param resultHandler handler called when operation is done with a result of the operation
    */
-  void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler);
+  default void basicQos(int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler) {
+    basicQos(0, prefetchCount, global, resultHandler);
+  }
+
+  /**
+   * Request specific "quality of service" settings.
+   *
+   * These settings impose limits on the amount of data the server
+   * will deliver to consumers before requiring acknowledgements.
+   * Thus they provide a means of consumer-initiated flow control.
+   * @see com.rabbitmq.client.AMQP.Basic.Qos
+   * @param prefetchSize maximum amount of content (measured in
+   * octets) that the server will deliver, 0 if unlimited
+   * @param prefetchCount maximum number of messages that the server
+   * will deliver, 0 if unlimited
+   * @param global true if the settings should be applied to the
+   * entire channel rather than each consumer
+   * @param resultHandler handler called when operation is done with a result of the operation
+   */
+  void basicQos(int prefetchSize, int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Declare an exchange.

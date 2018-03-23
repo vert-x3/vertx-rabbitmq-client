@@ -3,7 +3,11 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,6 +27,7 @@ import static io.vertx.test.core.TestUtils.randomInt;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
+@RunWith(VertxUnitRunner.class)
 public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
   @Override
@@ -360,6 +365,42 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     }));
 
     await();
+  }
+
+  @Test
+  public void consumerPrefetch(TestContext context) throws Exception {
+    // 1. Limit number of unack messages to 2
+    // 2. Send 3 messages
+    // 3. Ensure only 2 messages received
+    int count = 3;
+    int amountOfUnAckMessages = count - 1;
+
+    Async prefetchDone = context.async();
+    client.basicQos(amountOfUnAckMessages, done -> prefetchDone.countDown());
+    prefetchDone.await();
+
+    Set<String> messages = createMessages(count);
+    String queue = setupQueue(messages);
+    String address = queue + ".address";
+
+    Async receivedExpectedNumberOfMessages = context.async(amountOfUnAckMessages);
+
+    vertx.eventBus().consumer(address, msg -> {
+      if (receivedExpectedNumberOfMessages.isCompleted()) {
+        context.fail();
+      } else {
+        receivedExpectedNumberOfMessages.countDown();
+      }
+    });
+
+    client.basicConsume(queue, address, false, onSuccess(v -> {
+    }));
+
+    receivedExpectedNumberOfMessages.await();
+
+    // At the point we are sure, that we have already received 2 messages.
+    // But, if 3rd message will arrive the test will fail in the next second.
+    Thread.sleep(1000);
   }
 
   //TODO More tests
