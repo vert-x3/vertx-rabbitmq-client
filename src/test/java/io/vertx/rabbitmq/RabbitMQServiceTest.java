@@ -319,23 +319,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     vertx.eventBus().consumer("my.address", msg -> {
       JsonObject json = (JsonObject) msg.body();
-      String body = json.getString("body");
-      assertTrue(messages.contains(body));
-
-      Long deliveryTag = json.getLong("deliveryTag");
-
-      if (json.getBoolean("isRedeliver")) {
-        client.basicAck(deliveryTag, false, onSuccess(v -> {
-          // remove the message if is redeliver (unacked)
-          messages.remove(body);
-          latch.countDown();
-        }));
-      } else {
-        // send and Nack for every ready message
-        client.basicNack(deliveryTag, false, true, onSuccess(v -> {
-        }));
-      }
-
+      handleUnAckDelivery(messages, latch, json);
     });
 
     client.basicConsume(q, "my.address", false, onSuccess(v -> {
@@ -345,6 +329,48 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     //assert all messages should be consumed.
     assertTrue(messages.isEmpty());
     testComplete();
+  }
+
+  @Test
+  public void testBasicConsumerNoAutoAck() throws Exception {
+
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages);
+
+    CountDownLatch latch = new CountDownLatch(count);
+
+    client.basicConsumer(q, new QueueOptions().setAutoAck(false), consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        RabbitMQConsumer result = consumerHandler.result();
+        result.handler(json -> handleUnAckDelivery(messages, latch, json));
+      } else {
+        fail();
+      }
+    });
+
+
+    awaitLatch(latch);
+    //assert all messages should be consumed.
+    assertTrue(messages.isEmpty());
+    testComplete();
+  }
+
+  private void handleUnAckDelivery(Set<String> messages, CountDownLatch latch, JsonObject json) {
+    String body = json.getString("body");
+    assertTrue(messages.contains(body));
+    Long deliveryTag = json.getLong("deliveryTag");
+    if (json.getBoolean("isRedeliver")) {
+      client.basicAck(deliveryTag, false, onSuccess(v -> {
+        // remove the message if is redeliver (unacked)
+        messages.remove(body);
+        latch.countDown();
+      }));
+    } else {
+      // send and Nack for every ready message
+      client.basicNack(deliveryTag, false, true, onSuccess(v -> {
+      }));
+    }
   }
 
   @Test
