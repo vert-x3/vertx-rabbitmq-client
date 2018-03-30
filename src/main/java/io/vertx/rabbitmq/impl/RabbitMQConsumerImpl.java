@@ -108,6 +108,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
     if (cancelResult != null) {
       cancelResult.handle(operationResult);
     }
+    triggerStreamEnd();
   }
 
   /**
