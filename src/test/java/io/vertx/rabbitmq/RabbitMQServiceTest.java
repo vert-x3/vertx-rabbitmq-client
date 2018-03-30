@@ -402,7 +402,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     // But, if 3rd message will arrive the test will fail in the next second.
     Async async = context.async();
     vertx.setTimer(1000, spent -> async.countDown());
-    async.awaitSuccess();
   }
 
   //TODO More tests
