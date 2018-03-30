@@ -6,6 +6,8 @@ import org.junit.Test;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
+import static io.vertx.test.core.TestUtils.randomAlphaString;
+
 public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
 
   @Override
@@ -128,6 +130,46 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     channel.basicPublish("", q, properties, "whatever".getBytes());
 
     // wait some time to ensure that handler will not receive any messages when the stream is ended
+    Thread.sleep(1000);
+
+    testComplete();
+  }
+
+  @Test
+  public void whenBufferIsDisabledClientShouldNotReceiveAnyMessages() throws Exception {
+    String q =  randomAlphaString(10);
+
+    channel.queueDeclare(q, false, false, true, null);
+
+    CountDownLatch paused = new CountDownLatch(1);
+    CountDownLatch resumed = new CountDownLatch(1);
+
+    client.basicConsumer(q, new QueueOptions().setBuffer(false), consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        RabbitMQConsumer mqConsumer = consumerHandler.result();
+        mqConsumer.handler(json -> fail());
+        mqConsumer.pause();
+        paused.countDown();
+        try {
+          awaitLatch(resumed);
+        } catch (InterruptedException e) {
+          fail();
+        }
+        mqConsumer.resume();
+      } else {
+        fail();
+      }
+    });
+
+    awaitLatch(paused);
+
+    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().build();
+    channel.basicPublish("", q, properties, "whatever".getBytes());
+
+    resumed.countDown();
+
+    // wait some time to ensure that handler will not receive any messages
+    // since when it was paused messages were not buffered
     Thread.sleep(1000);
 
     testComplete();

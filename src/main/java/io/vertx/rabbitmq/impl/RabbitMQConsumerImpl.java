@@ -36,8 +36,8 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   private final boolean keepMostRecent;
 
   private volatile int queueSize;
-  private AtomicInteger currentQueueSize = new AtomicInteger(0);
-  private AtomicBoolean paused = new AtomicBoolean(false);
+  private final AtomicInteger currentQueueSize = new AtomicInteger(0);
+  private final AtomicBoolean paused = new AtomicBoolean(false);
 
   // a storage of all received messages
   private Queue<JsonObject> messagesQueue = new ConcurrentLinkedQueue<>();
