@@ -524,30 +524,4 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   //TODO More tests
-  private String setupQueue(Set<String> messages) throws Exception {
-    return setupQueue(messages, null);
-  }
-
-  private String setupQueue(Set<String> messages, String contentType) throws Exception {
-    String queue = randomAlphaString(10);
-    AMQP.Queue.DeclareOk ok = channel.queueDeclare(queue, false, false, true, null);
-    assertNotNull(ok.getQueue());
-    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
-      .contentType(contentType).contentEncoding("UTF-8").build();
-
-    if (messages != null) {
-      for (String msg : messages) {
-        channel.basicPublish("", queue, properties, msg.getBytes("UTF-8"));
-      }
-    }
-    return queue;
-  }
-
-  private Set<String> createMessages(int number) {
-    Set<String> messages = new HashSet<>();
-    for (int i = 0; i < number; i++) {
-      messages.add(randomAlphaString(20));
-    }
-    return messages;
-  }
 }

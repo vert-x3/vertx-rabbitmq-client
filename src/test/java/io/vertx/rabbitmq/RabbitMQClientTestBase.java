@@ -1,11 +1,16 @@
 package io.vertx.rabbitmq;
 
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.test.core.VertxTestBase;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+
+import static io.vertx.test.core.TestUtils.randomAlphaString;
 
 public class RabbitMQClientTestBase extends VertxTestBase {
 
@@ -52,5 +57,32 @@ public class RabbitMQClientTestBase extends VertxTestBase {
       channel.close();
     }
     super.tearDown();
+  }
+
+  String setupQueue(Set<String> messages) throws Exception {
+    return setupQueue(messages, null);
+  }
+
+  String setupQueue(Set<String> messages, String contentType) throws Exception {
+    String queue = randomAlphaString(10);
+    AMQP.Queue.DeclareOk ok = channel.queueDeclare(queue, false, false, true, null);
+    assertNotNull(ok.getQueue());
+    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
+      .contentType(contentType).contentEncoding("UTF-8").build();
+
+    if (messages != null) {
+      for (String msg : messages) {
+        channel.basicPublish("", queue, properties, msg.getBytes("UTF-8"));
+      }
+    }
+    return queue;
+  }
+
+  Set<String> createMessages(int number) {
+    Set<String> messages = new HashSet<>();
+    for (int i = 0; i < number; i++) {
+      messages.add(randomAlphaString(20));
+    }
+    return messages;
   }
 }
