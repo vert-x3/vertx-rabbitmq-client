@@ -226,9 +226,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicQos(int prefetchSize, int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      channel.basicQos(prefetchCount);
+      channel.basicQos(prefetchSize, prefetchCount, global);
       return null;
     });
   }
