@@ -83,4 +83,9 @@ public interface RabbitMQConsumer extends ReadStream<JsonObject> {
    * @param cancelResult contains information about operation status: success/fail.
    */
   void cancel(Handler<AsyncResult<Void>> cancelResult);
+
+  /**
+   * @return is the stream paused?
+   */
+  boolean isPaused();
 }

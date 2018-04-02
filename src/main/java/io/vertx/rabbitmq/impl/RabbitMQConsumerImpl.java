@@ -111,6 +111,11 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
     triggerStreamEnd();
   }
 
+  @Override
+  public boolean isPaused() {
+    return paused.get();
+  }
+
   /**
    * Push message to stream.
    * <p>
