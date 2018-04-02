@@ -80,7 +80,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   @Test
   public void testMessageOrderingWhenConsumingNewApi() throws IOException {
 
-    String queueName = "message_ordering_test";
+    String queueName =  randomAlphaString(10);
     String address = queueName + ".address";
 
     int count = 1000;
@@ -284,12 +284,12 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testBasicConsumerWithErrorHandler() throws Exception {
+  public void testBasicConsumerWithErrorHandler(TestContext context) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages, "application/json");
 
-    CountDownLatch latch = new CountDownLatch(count);
+    Async latch = context.async(count);
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
@@ -302,10 +302,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
         fail();
       }
     });
-
-
-    awaitLatch(latch);
-    testComplete();
   }
 
   @Test
