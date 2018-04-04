@@ -10,7 +10,7 @@ import io.vertx.core.streams.ReadStream;
  * A stream of messages from a rabbitmq queue.
  */
 @VertxGen
-public interface RabbitMQConsumer extends ReadStream<JsonObject> {
+public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
 
   /**
    * Set an exception handler on the read stream.
@@ -27,7 +27,7 @@ public interface RabbitMQConsumer extends ReadStream<JsonObject> {
    * @return a reference to this, so the API can be used fluently
    */
   @Override
-  RabbitMQConsumer handler(Handler<JsonObject> messageArrived);
+  RabbitMQConsumer handler(Handler<RabbitMQMessage> messageArrived);
 
   /**
    * Pause the stream of incoming messages from queue.

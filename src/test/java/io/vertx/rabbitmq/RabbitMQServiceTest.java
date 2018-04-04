@@ -100,9 +100,9 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     client.basicConsumer(queueName, consumerHandler -> {
       if (consumerHandler.succeeded()) {
-        consumerHandler.result().handler(json -> {
-          assertNotNull(json);
-          String body = json.getString("body");
+        consumerHandler.result().handler(msg -> {
+          assertNotNull(msg);
+          String body = msg.body().toString();
           assertNotNull(body);
           receivedOrder.add(body);
         });
@@ -249,9 +249,9 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     client.basicConsumer(q, consumerHandler -> {
       if (consumerHandler.succeeded()) {
-        consumerHandler.result().handler(json -> {
-          assertNotNull(json);
-          String body = json.getString("body");
+        consumerHandler.result().handler(msg -> {
+          assertNotNull(msg);
+          String body = msg.body().toString();
           assertNotNull(body);
           assertTrue(messages.contains(body));
           latch.countDown();
@@ -339,7 +339,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     client.basicConsumer(q, new QueueOptions().setAutoAck(false), consumerHandler -> {
       if (consumerHandler.succeeded()) {
         RabbitMQConsumer result = consumerHandler.result();
-        result.handler(json -> handleUnAckDelivery(messages, latch, json));
+        result.handler(msg -> handleUnAckDelivery(messages, latch, msg));
       } else {
         fail();
       }
@@ -357,6 +357,23 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     assertTrue(messages.contains(body));
     Long deliveryTag = json.getLong("deliveryTag");
     if (json.getBoolean("isRedeliver")) {
+      client.basicAck(deliveryTag, false, onSuccess(v -> {
+        // remove the message if is redeliver (unacked)
+        messages.remove(body);
+        latch.countDown();
+      }));
+    } else {
+      // send and Nack for every ready message
+      client.basicNack(deliveryTag, false, true, onSuccess(v -> {
+      }));
+    }
+  }
+
+  private void handleUnAckDelivery(Set<String> messages, CountDownLatch latch, RabbitMQMessage message) {
+    String body = message.body().toString();
+    assertTrue(messages.contains(body));
+    Long deliveryTag = message.envelope().getDeliveryTag();
+    if (message.envelope().isRedeliver()) {
       client.basicAck(deliveryTag, false, onSuccess(v -> {
         // remove the message if is redeliver (unacked)
         messages.remove(body);

@@ -10,6 +10,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
+import io.vertx.rabbitmq.RabbitMQMessage;
 
 import java.io.IOException;
 import java.util.Queue;
@@ -27,7 +28,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   private static final Logger log = LoggerFactory.getLogger(RabbitMQConsumerImpl.class);
 
   private Handler<Throwable> exceptionHandler;
-  private Handler<JsonObject> messageArrivedHandler;
+  private Handler<RabbitMQMessage> messageArrivedHandler;
   private Handler<Void> endHandler;
   private final QueueConsumerHandler consumerHandler;
   private final Context runningContext;
@@ -40,7 +41,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   private final AtomicBoolean paused = new AtomicBoolean(false);
 
   // a storage of all received messages
-  private Queue<JsonObject> messagesQueue = new ConcurrentLinkedQueue<>();
+  private Queue<RabbitMQMessage> messagesQueue = new ConcurrentLinkedQueue<>();
 
   RabbitMQConsumerImpl(Vertx vertx, QueueConsumerHandler consumerHandler, QueueOptions options) {
     runningContext = vertx.getOrCreateContext();
@@ -57,7 +58,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   }
 
   @Override
-  public RabbitMQConsumer handler(Handler<JsonObject> messageArrivedHandler) {
+  public RabbitMQConsumer handler(Handler<RabbitMQMessage> messageArrivedHandler) {
     this.messageArrivedHandler = messageArrivedHandler;
     return this;
   }
@@ -123,7 +124,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
    *
    * @param message received message to deliver
    */
-  void push(JsonObject message) {
+  void push(RabbitMQMessage message) {
 
     if (paused.get() && !buffer) {
       log.debug("Discard a received message since stream is paused and buffer flag is false");
@@ -183,10 +184,10 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
    */
   private void flushQueue() {
     queueRemoveLock.lock();
-    JsonObject message;
+    RabbitMQMessage message;
     while ((message = messagesQueue.poll()) != null) {
       if (messageArrivedHandler != null) {
-        JsonObject finalMessage = message;
+        RabbitMQMessage finalMessage = message;
         runningContext.runOnContext(v -> messageArrivedHandler.handle(finalMessage));
       }
     }

@@ -99,7 +99,7 @@ public class RabbitMQExamples {
         System.out.println("RabbitMQ consumer created !");
         RabbitMQConsumer mqConsumer = rabbitMQConsumerAsyncResult.result();
         mqConsumer.handler(message -> {
-          System.out.println("Got message: " + message.getString("body"));
+          System.out.println("Got message: " + message.body().toString());
         });
       } else {
         rabbitMQConsumerAsyncResult.cause().printStackTrace();

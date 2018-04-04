@@ -35,11 +35,11 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
 
     client.basicConsumer(q, consumerHandler -> {
       if (consumerHandler.succeeded()) {
-        consumerHandler.result().handler(json -> {
-          assertNotNull(json);
-          String tag = json.getString("consumerTag");
+        consumerHandler.result().handler(msg -> {
+          assertNotNull(msg);
+          String tag = msg.consumerTag();
           assertTrue(tag.equals(consumerHandler.result().consumerTag()));
-          String body = json.getString("body");
+          String body = msg.body().toString();
           assertNotNull(body);
           assertTrue(messages.contains(body));
           messagesReceived.countDown();
@@ -65,8 +65,8 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
       if (consumerHandler.succeeded()) {
         RabbitMQConsumer mqConsumer = consumerHandler.result();
         mqConsumer.pause();
-        mqConsumer.handler(json -> {
-          assertNotNull(json);
+        mqConsumer.handler(msg -> {
+          assertNotNull(msg);
           // if not resumed, test should fail
           if (resumed.count() == 1) {
             fail();
@@ -111,7 +111,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
           }
         });
 
-        mqConsumer.handler(json -> fail());
+        mqConsumer.handler(msg -> fail());
       } else {
         fail();
       }
@@ -140,7 +140,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
       if (consumerHandler.succeeded()) {
         RabbitMQConsumer consumer = consumerHandler.result();
         mqConsumer.set(consumer);
-        consumer.handler(json -> fail());
+        consumer.handler(msg -> fail());
         consumer.pause();
         paused.countDown();
       } else {
@@ -184,8 +184,8 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
         RabbitMQConsumer consumer = consumerHandler.result();
         mqConsumer.set(consumer);
         consumer.pause();
-        consumer.handler(json -> {
-          assertTrue("only second message should be stored", json.getString("body").equals(secondMessage));
+        consumer.handler(msg -> {
+          assertTrue("only second message should be stored", msg.body().toString().equals(secondMessage));
         });
         paused.countDown();
       } else {

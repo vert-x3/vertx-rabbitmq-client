@@ -11,6 +11,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
+import io.vertx.rabbitmq.RabbitMQMessage;
 
 import static io.vertx.rabbitmq.impl.Utils.parse;
 import static io.vertx.rabbitmq.impl.Utils.populate;
@@ -34,23 +35,9 @@ public class QueueConsumerHandler extends DefaultConsumer {
 
   @Override
   public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
-    JsonObject msg = new JsonObject();
-    msg.put("consumerTag", consumerTag);
-
-    // Add the envelope data
-    populate(msg, envelope);
-
-    // Add properties (if configured)
-    if (includeProperties) {
-      put("properties", toJson(properties), msg);
-    }
-
-    // Parse the body
+    RabbitMQMessage msg = new RabbitMQMessage(body, consumerTag, envelope, properties);
     try {
-      msg.put("body", parse(properties, body));
-      msg.put("deliveryTag", envelope.getDeliveryTag());
       this.handlerContext.runOnContext(v -> queue.push(msg));
-
     } catch (Exception e) {
       this.handlerContext.runOnContext(v -> queue.raiseException(e));
     }
