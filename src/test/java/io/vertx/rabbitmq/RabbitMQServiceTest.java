@@ -372,7 +372,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   private void handleUnAckDelivery(Set<String> messages, CountDownLatch latch, RabbitMQMessage message) {
     String body = message.body().toString();
     assertTrue(messages.contains(body));
-    Long deliveryTag = message.envelope().getDeliveryTag();
+    Long deliveryTag = message.envelope().deliveryTag();
     if (message.envelope().isRedeliver()) {
       client.basicAck(deliveryTag, false, onSuccess(v -> {
         // remove the message if is redeliver (unacked)
