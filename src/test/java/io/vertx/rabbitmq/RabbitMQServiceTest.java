@@ -80,7 +80,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   @Test
   public void testMessageOrderingWhenConsumingNewApi() throws IOException {
 
-    String queueName =  randomAlphaString(10);
+    String queueName = randomAlphaString(10);
     String address = queueName + ".address";
 
     int count = 1000;
@@ -240,12 +240,12 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testBasicConsumer() throws Exception {
+  public void testBasicConsumer(TestContext context) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages);
 
-    CountDownLatch latch = new CountDownLatch(count);
+    Async latch = context.async();
 
     client.basicConsumer(q, consumerHandler -> {
       if (consumerHandler.succeeded()) {
@@ -260,9 +260,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
         fail();
       }
     });
-
-    awaitLatch(latch);
-    testComplete();
   }
 
   @Test
@@ -285,7 +282,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
   @Test
   public void testBasicConsumerWithErrorHandler(TestContext context) throws Exception {
-    int count = 3;
+    int count = 1;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages, "application/json");
 
@@ -297,9 +294,11 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
       if (consumerHandler.succeeded()) {
         RabbitMQConsumer result = consumerHandler.result();
         result.exceptionHandler(errorHandler);
-        result.handler(json -> fail("Getting message with malformed json"));
+        result.handler(json -> {
+          throw new IllegalStateException("Getting message with malformed json");
+        });
       } else {
-        fail();
+        context.fail();
       }
     });
   }

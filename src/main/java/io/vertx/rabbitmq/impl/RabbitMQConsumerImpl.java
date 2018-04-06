@@ -60,6 +60,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   @Override
   public RabbitMQConsumer handler(Handler<RabbitMQMessage> messageArrivedHandler) {
     this.messageArrivedHandler = messageArrivedHandler;
+    flushQueue();
     return this;
   }
 
@@ -188,7 +189,13 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
     while ((message = messagesQueue.poll()) != null) {
       if (messageArrivedHandler != null) {
         RabbitMQMessage finalMessage = message;
-        runningContext.runOnContext(v -> messageArrivedHandler.handle(finalMessage));
+        runningContext.runOnContext(v -> {
+          try {
+            messageArrivedHandler.handle(finalMessage);
+          } catch (Exception e) {
+            raiseException(e);
+          }
+        });
       }
     }
     currentQueueSize.set(messagesQueue.size());
