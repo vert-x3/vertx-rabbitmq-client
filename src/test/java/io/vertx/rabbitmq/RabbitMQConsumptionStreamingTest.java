@@ -45,7 +45,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
           messagesReceived.countDown();
         });
       } else {
-        fail();
+        context.fail();
       }
     });
   }
@@ -69,7 +69,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
           assertNotNull(msg);
           // if not resumed, test should fail
           if (resumed.count() == 1) {
-            fail();
+            context.fail();
           } else {
             messageReceived.countDown();
           }
@@ -79,7 +79,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
         resumed.await();
         mqConsumer.resume();
       } else {
-        fail();
+        context.fail();
       }
     });
 
@@ -140,11 +140,11 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
       if (consumerHandler.succeeded()) {
         RabbitMQConsumer consumer = consumerHandler.result();
         mqConsumer.set(consumer);
-        consumer.handler(msg -> fail());
+        consumer.handler(msg -> context.fail());
         consumer.pause();
         paused.countDown();
       } else {
-        fail();
+        context.fail();
       }
     });
 
@@ -155,7 +155,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     Async done = context.async();
 
     // resume in 10 seconds, so message should be received, but not stored
-    vertx.setTimer(10000, l -> {
+    vertx.setTimer(1000, l -> {
       mqConsumer.get().resume();
       // wait some time to ensure that handler will not receive any messages
       // since when it was paused messages were not buffered
@@ -197,7 +197,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
 
     Async done = context.async();
     // resume in 10 seconds, so message should be received and stored
-    vertx.setTimer(10000, l -> {
+    vertx.setTimer(1000, l -> {
       mqConsumer.get().resume();
       // wait some time to ensure that handler will be called only with the second message
       vertx.setTimer(1000, t -> done.countDown());

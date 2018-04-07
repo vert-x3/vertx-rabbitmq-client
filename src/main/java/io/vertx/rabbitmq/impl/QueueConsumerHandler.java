@@ -36,11 +36,7 @@ public class QueueConsumerHandler extends DefaultConsumer {
   @Override
   public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
     RabbitMQMessage msg = new RabbitMQMessageImpl(body, consumerTag, envelope, properties);
-    try {
-      this.handlerContext.runOnContext(v -> queue.push(msg));
-    } catch (Exception e) {
-      this.handlerContext.runOnContext(v -> queue.raiseException(e));
-    }
+    this.handlerContext.runOnContext(v -> queue.push(msg));
   }
 
   @Override

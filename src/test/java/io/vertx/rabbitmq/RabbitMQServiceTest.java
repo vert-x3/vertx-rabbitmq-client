@@ -3,6 +3,8 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -13,7 +15,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +30,8 @@ import static io.vertx.test.core.TestUtils.randomInt;
  */
 @RunWith(VertxUnitRunner.class)
 public class RabbitMQServiceTest extends RabbitMQClientTestBase {
+
+  private static final Logger log = LoggerFactory.getLogger(RabbitMQServiceTest.class);
 
   @Override
   public void setUp() throws Exception {
@@ -75,7 +78,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
       assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
     }
   }
-
 
   @Test
   public void testMessageOrderingWhenConsumingNewApi() throws IOException {
@@ -274,7 +276,8 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
-    client.basicConsume(q, "my.address", true, onSuccess(v -> {}), errorHandler);
+    client.basicConsume(q, "my.address", true, onSuccess(v -> {
+    }), errorHandler);
 
     awaitLatch(latch);
     testComplete();
@@ -327,28 +330,29 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testBasicConsumerNoAutoAck() throws Exception {
+  public void testBasicConsumerNoAutoAck(TestContext context) throws Exception {
 
     int count = 3;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages);
 
-    CountDownLatch latch = new CountDownLatch(count);
+    Async latch = context.async(count);
 
     client.basicConsumer(q, new QueueOptions().setAutoAck(false), consumerHandler -> {
       if (consumerHandler.succeeded()) {
+        log.info("Consumer started successfully");
         RabbitMQConsumer result = consumerHandler.result();
-        result.handler(msg -> handleUnAckDelivery(messages, latch, msg));
+        result.handler(msg -> {
+          handleUnAckDelivery(messages, latch, msg);
+        });
       } else {
-        fail();
+        context.fail();
       }
     });
 
-
-    awaitLatch(latch);
+    latch.await();
     //assert all messages should be consumed.
     assertTrue(messages.isEmpty());
-    testComplete();
   }
 
   private void handleUnAckDelivery(Set<String> messages, CountDownLatch latch, JsonObject json) {
@@ -368,15 +372,17 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     }
   }
 
-  private void handleUnAckDelivery(Set<String> messages, CountDownLatch latch, RabbitMQMessage message) {
+  private void handleUnAckDelivery(Set<String> messages, Async async, RabbitMQMessage message) {
     String body = message.body().toString();
     assertTrue(messages.contains(body));
     Long deliveryTag = message.envelope().deliveryTag();
+    log.info("message arrived: " + message.body().toString(message.properties().contentEncoding()));
+    log.info("redelivered? : "+ message.envelope().isRedeliver());
     if (message.envelope().isRedeliver()) {
       client.basicAck(deliveryTag, false, onSuccess(v -> {
         // remove the message if is redeliver (unacked)
         messages.remove(body);
-        latch.countDown();
+        async.countDown();
       }));
     } else {
       // send and Nack for every ready message

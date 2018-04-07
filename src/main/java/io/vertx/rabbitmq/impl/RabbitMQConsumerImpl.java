@@ -157,9 +157,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
         compareAndSetLoopFlag = false;
       }
     } while (compareAndSetLoopFlag);
-    if (!paused.get()) {
-      flushQueue();
-    }
+    flushQueue();
   }
 
   /**
@@ -184,22 +182,23 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
    * Handle all messages in the queue
    */
   private void flushQueue() {
-    queueRemoveLock.lock();
-    RabbitMQMessage message;
-    while ((message = messagesQueue.poll()) != null) {
-      if (messageArrivedHandler != null) {
-        RabbitMQMessage finalMessage = message;
-        runningContext.runOnContext(v -> {
-          try {
-            messageArrivedHandler.handle(finalMessage);
-          } catch (Exception e) {
-            raiseException(e);
-          }
-        });
+    if (!paused.get()) {
+      queueRemoveLock.lock();
+      RabbitMQMessage message;
+      while ((message = messagesQueue.poll()) != null) {
+        if (messageArrivedHandler != null) {
+          RabbitMQMessage finalMessage = message;
+          runningContext.runOnContext(v -> {
+            try {
+              messageArrivedHandler.handle(finalMessage);
+            } catch (Exception e) {
+              raiseException(e);
+            }
+          });
+        }
       }
+      currentQueueSize.set(messagesQueue.size());
+      queueRemoveLock.unlock();
     }
-    currentQueueSize.set(messagesQueue.size());
-    queueRemoveLock.unlock();
   }
-
 }
