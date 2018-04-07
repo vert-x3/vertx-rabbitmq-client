@@ -89,20 +89,56 @@ Publish a message to a queue and confirm the broker acknowledged it.
 
 === Consume
 
-Consume messages from a queue
+Consume messages from a queue.
 
 [source,$lang]
 ----
 // Create a stream of messages from a queue
-{@link examples.RabbitMQExamples#basicConsumer}
+{@link examples.RabbitMQExamples#basicConsumer(io.vertx.core.Vertx, io.vertx.rabbitmq.RabbitMQClient)}
 ----
+
+In any moment of time you can pause or resume the stream. So when stream is paused it is guarantied that you will not receive any messages.
 
 [source,$lang]
 ----
-// Create a stream of messages from a queue with a specific options.
+{@link examples.RabbitMQExamples#pauseAndResumeConsumer(io.vertx.rabbitmq.RabbitMQConsumer)}
+----
+
+There are actually a set options to specify when creating a consumption stream.
+
+[source,$lang]
+----
 // In this case, in order to handel back-pressure all messages will be stored in a internal queue of 1 000 000 elements.
 // If queue would exceed the limit incoming messages, old messages will be replaced with new ones.
 {@link examples.RabbitMQExamples#basicConsumerOptions(io.vertx.core.Vertx, io.vertx.rabbitmq.RabbitMQClient)}
+----
+
+In case you want to stop consuming messages from a queue, you should do as following:
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#cancelConsumer(io.vertx.rabbitmq.RabbitMQConsumer)}
+----
+
+If you want to get notified when consumption stopped by both of client or rabbitmq-service initiative you should use the _endHandler_:
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#endHandlerConsumer(io.vertx.rabbitmq.RabbitMQConsumer)}
+----
+
+During the message handling process some exception may occurred, to be aware of it use _exceptionHandler_:
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#exceptionHandler(io.vertx.rabbitmq.RabbitMQConsumer)}
+----
+
+And finally, you may want to retrive a related to the consumer tag:
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#consumerTag(io.vertx.rabbitmq.RabbitMQConsumer)}
 ----
 
 === Get

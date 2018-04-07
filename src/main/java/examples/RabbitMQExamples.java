@@ -122,6 +122,40 @@ public class RabbitMQExamples {
     });
   }
 
+  public void pauseAndResumeConsumer(RabbitMQConsumer consumer){
+    consumer.pause();
+    consumer.resume();
+  }
+
+  public void endHandlerConsumer(RabbitMQConsumer rabbitMQConsumer) {
+    rabbitMQConsumer.endHandler(v -> {
+      System.out.println("It is the end of the stream");
+    });
+  }
+
+  public void cancelConsumer(RabbitMQConsumer rabbitMQConsumer) {
+    rabbitMQConsumer.cancel(cancelResult -> {
+      if (cancelResult.succeeded()) {
+        System.out.println("Consumption successfully stopped");
+      } else {
+        System.out.println("Tired in attempt to stop consumption");
+        cancelResult.cause().printStackTrace();
+      }
+    });
+  }
+
+  public void exceptionHandler(RabbitMQConsumer consumer) {
+    consumer.exceptionHandler(e -> {
+      System.out.println("An exception occurred in the process of message handling");
+      e.printStackTrace();
+    });
+  }
+
+  public void consumerTag(RabbitMQConsumer consumer) {
+    String consumerTag = consumer.consumerTag();
+    System.out.println("Consumer tag is: " + consumerTag);
+  }
+
   public void getMessage(RabbitMQClient client) {
     client.basicGet("my.queue", true, getResult -> {
       if (getResult.succeeded()) {
