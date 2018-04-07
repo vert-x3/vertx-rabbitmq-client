@@ -10,7 +10,7 @@ import io.vertx.core.json.JsonObject;
 @DataObject(generateConverter = true)
 public class QueueOptions {
 
-  private static final int DEFAULT_QUEUE_SIZE = 2048;
+  private static final int DEFAULT_QUEUE_SIZE = Integer.MAX_VALUE;
   private static final boolean DEFAULT_AUTO_ACK = true;
   private static final boolean DEFAULT_BUFFER = false;
   private static final boolean DEFAULT_KEEP_MOST_RECENT = false;
