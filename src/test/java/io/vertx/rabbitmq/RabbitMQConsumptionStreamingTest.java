@@ -176,8 +176,12 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     String q = setupQueue(messages);
 
     Async paused = context.async();
+    Async secondReceived = context.async();
     AtomicReference<RabbitMQConsumer> mqConsumer = new AtomicReference<>(null);
-    QueueOptions queueOptions = new QueueOptions().setKeepMostRecent(true).setMaxInternalQueueSize(queueSize);
+    QueueOptions queueOptions = new QueueOptions()
+      .setKeepMostRecent(true)
+      .setMaxInternalQueueSize(queueSize)
+      .setBuffer(true);
 
     client.basicConsumer(q, queueOptions, consumerHandler -> {
       if (consumerHandler.succeeded()) {
@@ -186,10 +190,11 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
         consumer.pause();
         consumer.handler(msg -> {
           assertTrue("only second message should be stored", msg.body().toString().equals(secondMessage));
+          secondReceived.countDown();
         });
         paused.countDown();
       } else {
-        fail();
+        context.fail();
       }
     });
 
