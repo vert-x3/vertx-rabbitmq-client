@@ -182,20 +182,18 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
    * Handle all messages in the queue
    */
   private void flushQueue() {
-    if (!paused.get()) {
+    if (messageArrivedHandler != null && !paused.get()) {
       queueRemoveLock.lock();
       RabbitMQMessage message;
       while ((message = messagesQueue.poll()) != null) {
-        if (messageArrivedHandler != null) {
-          RabbitMQMessage finalMessage = message;
-          runningContext.runOnContext(v -> {
-            try {
-              messageArrivedHandler.handle(finalMessage);
-            } catch (Exception e) {
-              raiseException(e);
-            }
-          });
-        }
+        RabbitMQMessage finalMessage = message;
+        runningContext.runOnContext(v -> {
+          try {
+            messageArrivedHandler.handle(finalMessage);
+          } catch (Exception e) {
+            raiseException(e);
+          }
+        });
       }
       currentQueueSize.set(messagesQueue.size());
       queueRemoveLock.unlock();
