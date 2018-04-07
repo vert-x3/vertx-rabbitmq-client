@@ -5,7 +5,6 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.QueueOptions;
@@ -81,11 +80,6 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   public RabbitMQConsumer endHandler(Handler<Void> endHandler) {
     this.endHandler = endHandler;
     return this;
-  }
-
-  @Override
-  public synchronized void size(int value) {
-    queueSize = value;
   }
 
   @Override

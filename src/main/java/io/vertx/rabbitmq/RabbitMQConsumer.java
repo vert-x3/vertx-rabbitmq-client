@@ -57,13 +57,6 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
   RabbitMQConsumer endHandler(Handler<Void> endHandler);
 
   /**
-   * How much messages can be in a internal queue.
-   *
-   * @param value new size of queue
-   */
-  void size(int value);
-
-  /**
    * @return a consumer tag
    */
   String consumerTag();
