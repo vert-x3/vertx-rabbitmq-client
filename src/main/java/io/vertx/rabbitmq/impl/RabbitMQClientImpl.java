@@ -21,7 +21,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.io.IOException;
@@ -29,7 +31,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -117,6 +118,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     forChannel(resultHandler, (channel) -> {
       channel.basicNack(deliveryTag, multiple, requeue);
       return null;
+    });
+  }
+
+  @Override
+  public void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, includeProperties, options);
+      String consumerTag = channel.basicConsume(queue, options.isAutoAck(), handler);
+      return handler.queue();
     });
   }
 

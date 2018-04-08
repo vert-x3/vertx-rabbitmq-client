@@ -89,12 +89,60 @@ Publish a message to a queue and confirm the broker acknowledged it.
 
 === Consume
 
-Consume messages from a queue
+Consume messages from a queue.
 
 [source,$lang]
 ----
-// Create the event bus handler which messages will be sent to
-{@link examples.RabbitMQExamples#basicConsume}
+// Create a stream of messages from a queue
+{@link examples.RabbitMQExamples#basicConsumer}
+----
+
+At any moment of time you can pause or resume the stream. When stream is paused you won't receive any message.
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#pauseAndResumeConsumer(io.vertx.rabbitmq.RabbitMQConsumer)}
+----
+
+There are actually a set of options to specify when creating a consumption stream.
+
+The `QueueOptions` lets you specify:
+
+ * The size of internal queue with `setMaxInternalQueueSize`
+ * Should incoming messages be stored when stream is paused with `setBuffer`
+ * Should the stream keep more recent messages when queue size is exceed with `setKeepMostRecent`
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#basicConsumerOptions}
+----
+
+When you want to stop consuming message from a queue, you can do:
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#cancelConsumer}
+----
+
+You can get notified by the end handler when the queue won't process any more messages:
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#endHandlerConsumer}
+----
+
+You can set the exception handler to be notified of any error that may occur when a message is processed:
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#exceptionHandler}
+----
+
+And finally, you may want to retrive a related to the consumer tag:
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#consumerTag}
 ----
 
 === Get

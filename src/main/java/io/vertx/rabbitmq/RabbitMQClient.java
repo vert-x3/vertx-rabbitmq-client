@@ -65,25 +65,54 @@ public interface RabbitMQClient {
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
+   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
+   * <p>
    * Start a non-nolocal, non-exclusive consumer, with auto acknowledgement and a server-generated consumerTag.
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
+  @Deprecated
   void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
+   * <p>
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
+  @Deprecated
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
+   * <p>
    * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag and error handler
    *
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
+  @Deprecated
   void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
+
+  /**
+   * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
+   * @see RabbitMQClient#basicConsumer(String, Handler)
+   */
+  default void basicConsumer(String queue, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
+    basicConsumer(queue, new QueueOptions(), resultHandler);
+  }
+
+  /**
+   * Create a consumer with the given {@code options}.
+   *
+   * @param queue          the name of a queue
+   * @param options        options for queue
+   * @param resultHandler  a handler through which you can find out the operation status;
+   *                       if the operation succeeds you can begin to receive messages
+   *                       through an instance of {@link RabbitMQConsumer}
+   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
+   */
+  void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,

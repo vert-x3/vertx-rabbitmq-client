@@ -3,6 +3,8 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -13,7 +15,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +30,8 @@ import static io.vertx.test.core.TestUtils.randomInt;
  */
 @RunWith(VertxUnitRunner.class)
 public class RabbitMQServiceTest extends RabbitMQClientTestBase {
+
+  private static final Logger log = LoggerFactory.getLogger(RabbitMQServiceTest.class);
 
   @Override
   public void setUp() throws Exception {
@@ -68,6 +71,47 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     client.basicConsume(queueName, address, onSuccess(v -> {
     }));
+
+
+    assertWaitUntil(() -> receivedOrder.size() == sendingOrder.size());
+    for (int i = 0; i < sendingOrder.size(); i++) {
+      assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
+    }
+  }
+
+  @Test
+  public void testMessageOrderingWhenConsumingNewApi() throws IOException {
+
+    String queueName = randomAlphaString(10);
+    String address = queueName + ".address";
+
+    int count = 1000;
+
+    List<String> sendingOrder = IntStream.range(1, count).boxed().map(Object::toString).collect(Collectors.toList());
+
+    // set up queue
+    AMQP.Queue.DeclareOk ok = channel.queueDeclare(queueName, false, false, true, null);
+    assertNotNull(ok.getQueue());
+    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().contentType("text/plain").contentEncoding("UTF-8").build();
+
+    // send  messages
+    for (String msg : sendingOrder)
+      channel.basicPublish("", queueName, properties, msg.getBytes("UTF-8"));
+
+    List<String> receivedOrder = Collections.synchronizedList(new ArrayList<>());
+
+    client.basicConsumer(queueName, consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        consumerHandler.result().handler(msg -> {
+          assertNotNull(msg);
+          String body = msg.body().toString();
+          assertNotNull(body);
+          receivedOrder.add(body);
+        });
+      } else {
+        fail();
+      }
+    });
 
 
     assertWaitUntil(() -> receivedOrder.size() == sendingOrder.size());
@@ -198,6 +242,29 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
+  public void testBasicConsumer(TestContext context) throws Exception {
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages);
+
+    Async latch = context.async();
+
+    client.basicConsumer(q, consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        consumerHandler.result().handler(msg -> {
+          assertNotNull(msg);
+          String body = msg.body().toString();
+          assertNotNull(body);
+          assertTrue(messages.contains(body));
+          latch.countDown();
+        });
+      } else {
+        fail();
+      }
+    });
+  }
+
+  @Test
   public void testBasicConsumeWithErrorHandler() throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
@@ -209,10 +276,34 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
-    client.basicConsume(q, "my.address", true, onSuccess(v -> {}), errorHandler);
+    client.basicConsume(q, "my.address", true, onSuccess(v -> {
+    }), errorHandler);
 
     awaitLatch(latch);
     testComplete();
+  }
+
+  @Test
+  public void testBasicConsumerWithErrorHandler(TestContext context) throws Exception {
+    int count = 1;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages, "application/json");
+
+    Async latch = context.async(count);
+
+    Handler<Throwable> errorHandler = throwable -> latch.countDown();
+
+    client.basicConsumer(q, consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        RabbitMQConsumer result = consumerHandler.result();
+        result.exceptionHandler(errorHandler);
+        result.handler(json -> {
+          throw new IllegalStateException("Getting message with malformed json");
+        });
+      } else {
+        context.fail();
+      }
+    });
   }
 
   @Test
@@ -226,23 +317,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     vertx.eventBus().consumer("my.address", msg -> {
       JsonObject json = (JsonObject) msg.body();
-      String body = json.getString("body");
-      assertTrue(messages.contains(body));
-
-      Long deliveryTag = json.getLong("deliveryTag");
-
-      if (json.getBoolean("isRedeliver")) {
-        client.basicAck(deliveryTag, false, onSuccess(v -> {
-          // remove the message if is redeliver (unacked)
-          messages.remove(body);
-          latch.countDown();
-        }));
-      } else {
-        // send and Nack for every ready message
-        client.basicNack(deliveryTag, false, true, onSuccess(v -> {
-        }));
-      }
-
+      handleUnAckDelivery(messages, latch, json);
     });
 
     client.basicConsume(q, "my.address", false, onSuccess(v -> {
@@ -252,6 +327,70 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     //assert all messages should be consumed.
     assertTrue(messages.isEmpty());
     testComplete();
+  }
+
+  @Test
+  public void testBasicConsumerNoAutoAck(TestContext context) throws Exception {
+
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages);
+
+    Async latch = context.async(count);
+
+    client.basicConsumer(q, new QueueOptions().setAutoAck(false), consumerHandler -> {
+      if (consumerHandler.succeeded()) {
+        log.info("Consumer started successfully");
+        RabbitMQConsumer result = consumerHandler.result();
+        result.exceptionHandler(e -> {
+          log.error(e);
+          context.fail();
+        });
+        result.handler(msg -> handleUnAckDelivery(messages, latch, msg));
+      } else {
+        context.fail();
+      }
+    });
+
+    latch.await();
+    //assert all messages should be consumed.
+    assertTrue(messages.isEmpty());
+  }
+
+  private void handleUnAckDelivery(Set<String> messages, CountDownLatch latch, JsonObject json) {
+    String body = json.getString("body");
+    assertTrue(messages.contains(body));
+    Long deliveryTag = json.getLong("deliveryTag");
+    if (json.getBoolean("isRedeliver")) {
+      client.basicAck(deliveryTag, false, onSuccess(v -> {
+        // remove the message if is redeliver (unacked)
+        messages.remove(body);
+        latch.countDown();
+      }));
+    } else {
+      // send and Nack for every ready message
+      client.basicNack(deliveryTag, false, true, onSuccess(v -> {
+      }));
+    }
+  }
+
+  private void handleUnAckDelivery(Set<String> messages, Async async, RabbitMQMessage message) {
+    String body = message.body().toString();
+    assertTrue(messages.contains(body));
+    Long deliveryTag = message.envelope().deliveryTag();
+    log.info("message arrived: " + message.body().toString(message.properties().contentEncoding()));
+    log.info("redelivered? : " + message.envelope().isRedelivery());
+    if (message.envelope().isRedelivery()) {
+      client.basicAck(deliveryTag, false, onSuccess(v -> {
+        // remove the message if is redeliver (unacked)
+        messages.remove(body);
+        async.countDown();
+      }));
+    } else {
+      // send and Nack for every ready message
+      client.basicNack(deliveryTag, false, true, onSuccess(v -> {
+      }));
+    }
   }
 
   @Test
@@ -405,30 +544,4 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   //TODO More tests
-  private String setupQueue(Set<String> messages) throws Exception {
-    return setupQueue(messages, null);
-  }
-
-  private String setupQueue(Set<String> messages, String contentType) throws Exception {
-    String queue = randomAlphaString(10);
-    AMQP.Queue.DeclareOk ok = channel.queueDeclare(queue, false, false, true, null);
-    assertNotNull(ok.getQueue());
-    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
-      .contentType(contentType).contentEncoding("UTF-8").build();
-
-    if (messages != null) {
-      for (String msg : messages) {
-        channel.basicPublish("", queue, properties, msg.getBytes("UTF-8"));
-      }
-    }
-    return queue;
-  }
-
-  private Set<String> createMessages(int number) {
-    Set<String> messages = new HashSet<>();
-    for (int i = 0; i < number; i++) {
-      messages.add(randomAlphaString(20));
-    }
-    return messages;
-  }
 }

@@ -2,7 +2,9 @@ package examples;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.util.HashMap;
@@ -89,6 +91,69 @@ public class RabbitMQExamples {
         consumeResult.cause().printStackTrace();
       }
     });
+  }
+
+  public void basicConsumer(Vertx vertx, RabbitMQClient client) {
+    client.basicConsumer("my.queue", rabbitMQConsumerAsyncResult -> {
+      if (rabbitMQConsumerAsyncResult.succeeded()) {
+        System.out.println("RabbitMQ consumer created !");
+        RabbitMQConsumer mqConsumer = rabbitMQConsumerAsyncResult.result();
+        mqConsumer.handler(message -> {
+          System.out.println("Got message: " + message.body().toString());
+        });
+      } else {
+        rabbitMQConsumerAsyncResult.cause().printStackTrace();
+      }
+    });
+  }
+
+  public void basicConsumerOptions(Vertx vertx, RabbitMQClient client) {
+    QueueOptions options = new QueueOptions()
+      .setMaxInternalQueueSize(1000)
+      .setKeepMostRecent(true)
+      .setBuffer(true);
+
+    client.basicConsumer("my.queue", options, rabbitMQConsumerAsyncResult -> {
+      if (rabbitMQConsumerAsyncResult.succeeded()) {
+        System.out.println("RabbitMQ consumer created !");
+      } else {
+        rabbitMQConsumerAsyncResult.cause().printStackTrace();
+      }
+    });
+  }
+
+  public void pauseAndResumeConsumer(RabbitMQConsumer consumer){
+    consumer.pause();
+    consumer.resume();
+  }
+
+  public void endHandlerConsumer(RabbitMQConsumer rabbitMQConsumer) {
+    rabbitMQConsumer.endHandler(v -> {
+      System.out.println("It is the end of the stream");
+    });
+  }
+
+  public void cancelConsumer(RabbitMQConsumer rabbitMQConsumer) {
+    rabbitMQConsumer.cancel(cancelResult -> {
+      if (cancelResult.succeeded()) {
+        System.out.println("Consumption successfully stopped");
+      } else {
+        System.out.println("Tired in attempt to stop consumption");
+        cancelResult.cause().printStackTrace();
+      }
+    });
+  }
+
+  public void exceptionHandler(RabbitMQConsumer consumer) {
+    consumer.exceptionHandler(e -> {
+      System.out.println("An exception occurred in the process of message handling");
+      e.printStackTrace();
+    });
+  }
+
+  public void consumerTag(RabbitMQConsumer consumer) {
+    String consumerTag = consumer.consumerTag();
+    System.out.println("Consumer tag is: " + consumerTag);
   }
 
   public void getMessage(RabbitMQClient client) {
