@@ -97,7 +97,7 @@ Consume messages from a queue.
 {@link examples.RabbitMQExamples#basicConsumer(io.vertx.core.Vertx, io.vertx.rabbitmq.RabbitMQClient)}
 ----
 
-In any moment of time you can pause or resume the stream. So when stream is paused it is guarantied that you will not receive any messages.
+At any moment of time you can pause or resume the stream. When stream is paused you won't receive any message.
 
 [source,$lang]
 ----
@@ -113,21 +113,21 @@ There are actually a set options to specify when creating a consumption stream.
 {@link examples.RabbitMQExamples#basicConsumerOptions(io.vertx.core.Vertx, io.vertx.rabbitmq.RabbitMQClient)}
 ----
 
-In case you want to stop consuming messages from a queue, you should do as following:
+When you want to stop consuming message from a queue, you can do:
 
 [source,$lang]
 ----
 {@link examples.RabbitMQExamples#cancelConsumer(io.vertx.rabbitmq.RabbitMQConsumer)}
 ----
 
-If you want to get notified when consumption stopped by both of client or rabbitmq-service initiative you should use the _endHandler_:
+You can get notified by the end handler when the queue won't process any more messages:
 
 [source,$lang]
 ----
 {@link examples.RabbitMQExamples#endHandlerConsumer(io.vertx.rabbitmq.RabbitMQConsumer)}
 ----
 
-During the message handling process some exception may occurred, to be aware of it use _exceptionHandler_:
+You can set the exception handler to be notified of any error that may occur when a message is processed:
 
 [source,$lang]
 ----
