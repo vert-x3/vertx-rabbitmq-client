@@ -122,7 +122,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   void push(RabbitMQMessage message) {
 
     if (paused.get() && !buffer) {
-      log.info("Discard a received message since stream is paused and buffer flag is false");
+      log.debug("Discard a received message since stream is paused and buffer flag is false");
       return;
     }
 
@@ -143,9 +143,9 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
           messagesQueue.poll();
           messagesQueue.add(message);
           queueRemoveLock.unlock();
-          log.info("Remove a old message and put a new message into the internal queue.");
+          log.debug("Remove a old message and put a new message into the internal queue.");
         } else {
-          log.info("Discard a received message due to exceed queue size limit.");
+          log.debug("Discard a received message due to exceed queue size limit.");
         }
 
         compareAndSetLoopFlag = false;
