@@ -379,8 +379,8 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     assertTrue(messages.contains(body));
     Long deliveryTag = message.envelope().deliveryTag();
     log.info("message arrived: " + message.body().toString(message.properties().contentEncoding()));
-    log.info("redelivered? : " + message.envelope().isRedeliver());
-    if (message.envelope().isRedeliver()) {
+    log.info("redelivered? : " + message.envelope().isRedelivery());
+    if (message.envelope().isRedelivery()) {
       client.basicAck(deliveryTag, false, onSuccess(v -> {
         // remove the message if is redeliver (unacked)
         messages.remove(body);

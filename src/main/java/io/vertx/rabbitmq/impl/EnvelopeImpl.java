@@ -22,7 +22,7 @@ public class EnvelopeImpl implements Envelope {
   }
 
   @Override
-  public boolean isRedeliver() {
+  public boolean isRedelivery() {
     return redeliver;
   }
 

@@ -26,7 +26,7 @@ public interface Envelope {
    * @return the redelivery flag
    */
   @CacheReturn
-  boolean isRedeliver();
+  boolean isRedelivery();
 
   /**
    * Get the name of the exchange included in this parameter envelope
