@@ -108,10 +108,10 @@ public class RabbitMQExamples {
   }
 
   public void basicConsumerOptions(Vertx vertx, RabbitMQClient client) {
-    QueueOptions options = new QueueOptions();
-    options.setMaxInternalQueueSize(1000000);
-    options.setKeepMostRecent(true);
-    options.setBuffer(true);
+    QueueOptions options = new QueueOptions()
+      .setMaxInternalQueueSize(1000)
+      .setKeepMostRecent(true)
+      .setBuffer(true);
 
     client.basicConsumer("my.queue", options, rabbitMQConsumerAsyncResult -> {
       if (rabbitMQConsumerAsyncResult.succeeded()) {
