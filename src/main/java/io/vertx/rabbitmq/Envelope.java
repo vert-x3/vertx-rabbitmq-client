@@ -4,7 +4,7 @@ import io.vertx.codegen.annotations.CacheReturn;
 import io.vertx.codegen.annotations.VertxGen;
 
 /**
- * Analogy of {@link com.rabbitmq.client.Envelope}.
+ * Like {@link com.rabbitmq.client.Envelope}.
  */
 @VertxGen
 public interface Envelope {
