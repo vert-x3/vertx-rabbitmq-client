@@ -14,7 +14,7 @@
 
   <properties>
     <stack.version>3.6.0-SNAPSHOT</stack.version>
-    <rabbitmq.client.version>5.2.0</rabbitmq.client.version>
+    <rabbitmq.client.version>3.6.5</rabbitmq.client.version>
   </properties>
 
   <dependencyManagement>
@@ -49,12 +49,6 @@
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>
       <version>${rabbitmq.client.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <!-- Testing -->
