@@ -14,7 +14,8 @@
 
   <properties>
     <stack.version>3.6.0-SNAPSHOT</stack.version>
-    <rabbitmq.client.version>3.6.5</rabbitmq.client.version>
+    <rabbitmq.client.version>5.2.0</rabbitmq.client.version>
+    <slf4j.version>1.7.16</slf4j.version>
   </properties>
 
   <dependencyManagement>
@@ -44,11 +45,21 @@
       <artifactId>vertx-docgen</artifactId>
       <optional>true</optional>
     </dependency>
-
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>
       <version>${rabbitmq.client.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <!-- Testing -->
