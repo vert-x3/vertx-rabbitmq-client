@@ -20,6 +20,16 @@ import java.util.Map;
 public interface RabbitMQClient {
 
   /**
+   * Create and return a client configured with the default options.
+   *
+   * @param vertx the vertx instance
+   * @return the client
+   */
+  static RabbitMQClient create(Vertx vertx) {
+    return new RabbitMQClientImpl(vertx, new RabbitMQOptions());
+  }
+
+  /**
    * Create and return a client.
    *
    * @param vertx the vertx instance
