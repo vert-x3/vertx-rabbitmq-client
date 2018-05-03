@@ -1,6 +1,7 @@
 # RabbitMQ Client for Vert.x
 
 [![Build Status](https://vertx.ci.cloudbees.com/buildStatus/icon?job=vert.x3-rabbitmq-client)](https://vertx.ci.cloudbees.com/view/vert.x-3/job/vert.x3-rabbitmq-client/)
+[![codecov](https://codecov.io/gh/vert-x3/vertx-rabbitmq-client/branch/master/graph/badge.svg)](https://codecov.io/gh/Sammers21/vertx-rabbitmq-client)
 
 A Vert.x client allowing applications to interact with a RabbitMQ broker (AMQP 0.9.1)
 
