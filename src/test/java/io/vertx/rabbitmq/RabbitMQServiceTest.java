@@ -495,10 +495,10 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     vertx.setTimer(2000, t ->
       client.messageCount(queue, onSuccess(messageCount -> {
-          assertEquals(count, messageCount.intValue());
+        assertEquals(count, messageCount.intValue());
 
-          // remove the queue
-          client.queueDelete(queue, deleteAsyncResult -> async.countDown());
+        // remove the queue
+        client.queueDelete(queue, deleteAsyncResult -> async.countDown());
         })
       )
     );
