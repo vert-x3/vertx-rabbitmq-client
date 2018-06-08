@@ -359,12 +359,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void messageCount(String queue, Handler<AsyncResult<JsonObject>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      Long result = channel.messageCount(queue);
-
-      return new JsonObject().put("messageCount", result);
-    });
+  public void messageCount(String queue, Handler<AsyncResult<Long>> resultHandler) {
+    forChannel(resultHandler, channel -> channel.messageCount(queue));
   }
 
   @Override

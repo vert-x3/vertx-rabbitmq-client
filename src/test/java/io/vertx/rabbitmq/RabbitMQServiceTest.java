@@ -487,23 +487,21 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testGetMessageCount() throws Exception {
+  public void testGetMessageCount(TestContext context) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
-
     String queue = setupQueue(messages);
+    Async async = context.async();
 
-    client.messageCount(queue, onSuccess(json -> {
-      long messageCount = json.getLong("messageCount");
-      assertEquals(count, messageCount);
+    vertx.setTimer(2000, t ->
+      client.messageCount(queue, onSuccess(messageCount -> {
+          assertEquals(count, messageCount.intValue());
 
-      // remove the queue
-      client.queueDelete(queue, deleteAsyncResult -> {
-        testComplete();
-      });
-    }));
-
-    await();
+          // remove the queue
+          client.queueDelete(queue, deleteAsyncResult -> async.countDown());
+        })
+      )
+    );
   }
 
   @Test
