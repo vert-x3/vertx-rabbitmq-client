@@ -319,7 +319,7 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#messageCount(String)
    */
-  void messageCount(String queue, Handler<AsyncResult<JsonObject>> resultHandler);
+  void messageCount(String queue, Handler<AsyncResult<Long>> resultHandler);
 
   /**
    * Start the rabbitMQ client. Create the connection and the chanel.
