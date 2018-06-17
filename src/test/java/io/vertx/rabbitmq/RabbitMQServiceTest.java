@@ -121,22 +121,27 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testBasicGet() throws Exception {
+  public void testBasicGet(TestContext context) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
     String q = setupQueue(messages);
-    CountDownLatch latch = new CountDownLatch(count);
-    for (int i = 0; i < count; i++) {
-      client.basicGet(q, true, onSuccess(msg -> {
-        assertNotNull(msg);
-        String body = msg.getString("body");
-        assertTrue(messages.contains(body));
-        latch.countDown();
-      }));
-    }
+    Async async = context.async(count);
 
-    awaitLatch(latch);
-    testComplete();
+    // we have only ten seconds to get the 3 messages
+    long timeOutFailTimer = vertx.setTimer(10_000, t -> context.fail());
+
+    vertx.setPeriodic(100, t -> {
+      client.basicGet(q, true, onSuccess(msg -> {
+        if (msg != null) {
+          String body = msg.getString("body");
+          assertTrue(messages.contains(body));
+          if (async.count() == 1) {
+            vertx.cancelTimer(timeOutFailTimer);
+          }
+          async.countDown();
+        }
+      }));
+    });
   }
 
   @Test
