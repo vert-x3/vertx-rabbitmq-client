@@ -23,38 +23,23 @@ public class RabbitMQSslTest extends RabbitMQClientTestBase {
 
 	protected Integer connectionRetries = RabbitMQOptions.DEFAULT_CONNECTION_RETRIES;
 	protected long connectionRetryDelay = RabbitMQOptions.DEFAULT_CONNECTION_RETRY_DELAY;
-	private NetServer proxyServer;
-	private NetClient proxyClient;
+	private NetServer server;
 
-	private void startProxy() throws Exception {
+	/**
+	 * Start a server that will accept AMQP SSL connections.
+	 * @throws Exception when setting up the server fails
+	 */
+	private void startServer() throws Exception {
 		CompletableFuture<Void> latch = new CompletableFuture<>();
 		RabbitMQOptions config = super.config();
 		ConnectionFactory cf = new ConnectionFactory();
-		NetClientOptions clientOptions = new NetClientOptions();
 		cf.setUri(config.getUri());
-		String host = cf.getHost();
-		int port = cf.getPort();
 		NetServerOptions serverOptions = new NetServerOptions();
 		serverOptions.setSsl(true);
 		// TODO
 //		serverOptions.setKeyStoreOptions(new JksOptions().setPath(KEYSTORE).setPassword(PASSWORD));
-		proxyClient = vertx.createNetClient(clientOptions);
-		proxyServer = vertx.createNetServer(serverOptions).connectHandler(serverSocket -> {
-			serverSocket.pause();
-			proxyClient.connect(port, host, ar -> {
-				serverSocket.resume();
-				if (ar.succeeded()) {
-					NetSocket clientSocket = ar.result();
-					serverSocket.handler(clientSocket::write);
-					serverSocket.exceptionHandler(err -> serverSocket.close());
-					serverSocket.closeHandler(v -> clientSocket.close());
-					clientSocket.handler(serverSocket::write);
-					clientSocket.exceptionHandler(err -> clientSocket.close());
-					clientSocket.closeHandler(v -> serverSocket.close());
-				} else {
-					serverSocket.close();
-				}
-			});
+		server = vertx.createNetServer(serverOptions).connectHandler(serverSocket -> {
+			// TODO do we need logic here?
 		}).listen(PROXY_PORT, "localhost", ar -> {
 			if (ar.succeeded()) {
 				latch.complete(null);
@@ -68,16 +53,12 @@ public class RabbitMQSslTest extends RabbitMQClientTestBase {
 	@Override
 	protected void tearDown() throws Exception {
 		super.tearDown();
-		if (proxyServer != null) {
-			proxyServer.close();
-		}
-		if (proxyClient != null) {
-			proxyClient.close();
+		if (server != null) {
+			server.close();
 		}
 	}
 
-	@Override
-	public RabbitMQOptions config() throws Exception {
+	private RabbitMQOptions config(boolean useSsl) throws Exception {
 		RabbitMQOptions cfg = super.config();
 		String username;
 		String password;
@@ -95,24 +76,59 @@ public class RabbitMQSslTest extends RabbitMQClientTestBase {
 		}
 		String uri = "amqp://" + username + ":" + password + "@localhost:" + PROXY_PORT + vhost;
 		return new RabbitMQOptions().setUri(uri).setConnectionRetries(connectionRetries)
-				.setConnectionRetryDelay(connectionRetryDelay);
+				.setConnectionRetryDelay(connectionRetryDelay).setSsl(useSsl);
 	}
-
+	
+	/**
+	 * Try connecting a new RabbitMQClient to the server
+	 * @param useSsl whether the connection is encrypted using SSL or not
+	 * @throws Exception when the connection can not be started
+	 */
+	private void connect(boolean useSsl) throws Exception {
+	if (client != null) {
+	      throw new IllegalStateException("Client already started");
+	    }
+	    RabbitMQOptions config = config(useSsl);
+	    client = RabbitMQClient.create(vertx, config);
+	    CompletableFuture<Void> latch = new CompletableFuture<>();
+	    client.start(ar -> {
+	      if (ar.succeeded()) {
+	        latch.complete(null);
+	      } else {
+	        latch.completeExceptionally(ar.cause());
+	      }
+	    });
+	    latch.get(10L, TimeUnit.SECONDS);
+	    ConnectionFactory factory = new ConnectionFactory();
+	    if (config.getUri() != null) {
+	      factory.setUri(config.getUri());
+	    }
+	    channel = factory.newConnection().createChannel();
+	}
+	
+	/**
+	 * Try connecting a client that uses SSL
+	 * @throws Exception when something goes wrong
+	 */
 	@Test
 	public void testConnectionWithSSL() throws Exception {
-		startProxy();
+		startServer();
 		try {
-			connect();
+			connect(true);
 		} catch (Exception e) {
 			fail();
 		}
 	}
 
+	/**
+	 * Try connecting a client that does not use SSL
+	 * @throws Exception
+	 */
 	@Test
 	public void testConnectionWithoutSSL() throws Exception {
-		startProxy();
+		startServer();
 		try {
-			connect();
+			connect(false);
 			fail();
 		} catch (Exception e) {
 			// Expected
