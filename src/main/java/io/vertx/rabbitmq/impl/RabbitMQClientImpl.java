@@ -15,6 +15,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import javax.lang.model.element.UnknownAnnotationValueException;
+
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -61,7 +63,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     this.includeProperties = config.getIncludeProperties();
   }
 
-  private static Connection newConnection(RabbitMQOptions config) throws IOException, TimeoutException {
+  private static Connection newConnection(RabbitMQOptions config) throws IOException, TimeoutException, KeyManagementException, NoSuchAlgorithmException {
     ConnectionFactory cf = new ConnectionFactory();
     String uri = config.getUri();
     // Use uri if set, otherwise support individual connection parameters
@@ -79,13 +81,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       cf.setVirtualHost(config.getVirtualHost());
     }
     if (config.getSsl()) {
-	    try {
-	        cf.useSslProtocol();
-	    } catch (final KeyManagementException e) {
-	    	// FIXME
-	    } catch (final NoSuchAlgorithmException e) {
-		   // FIXME
-	    }
+	    cf.useSslProtocol();
 	}
     cf.setConnectionTimeout(config.getConnectionTimeout());
     cf.setRequestedHeartbeat(config.getRequestedHeartbeat());
@@ -385,7 +381,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       try {
         connect();
         future.complete();
-      } catch (IOException | TimeoutException e) {
+      } catch (IOException | TimeoutException | KeyManagementException | NoSuchAlgorithmException e) {
         log.error("Could not connect to rabbitmq", e);
         future.fail(e);
       }
@@ -451,7 +447,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     }, resultHandler);
   }
 
-  private void connect() throws IOException, TimeoutException {
+  private void connect() throws IOException, TimeoutException, KeyManagementException, NoSuchAlgorithmException {
     log.debug("Connecting to rabbitmq...");
     connection = newConnection(config);
     connection.addShutdownListener(this);
