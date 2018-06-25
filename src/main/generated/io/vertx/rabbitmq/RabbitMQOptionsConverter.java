@@ -72,6 +72,9 @@ public class RabbitMQOptionsConverter {
     if (json.getValue("virtualHost") instanceof String) {
       obj.setVirtualHost((String)json.getValue("virtualHost"));
     }
+    if (json.getValue("ssl") instanceof Boolean) {
+        obj.setSsl((Boolean)json.getValue("ssl"));
+      }
   }
 
   public static void toJson(RabbitMQOptions obj, JsonObject json) {
@@ -102,5 +105,6 @@ public class RabbitMQOptionsConverter {
     if (obj.getVirtualHost() != null) {
       json.put("virtualHost", obj.getVirtualHost());
     }
+    json.put("ssl", obj.getSsl());
   }
 }

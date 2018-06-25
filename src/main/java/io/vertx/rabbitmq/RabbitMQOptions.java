@@ -76,6 +76,11 @@ public class RabbitMQOptions {
    * The default connection retries = {@code null} (no retry)
    */
   public static final Integer DEFAULT_CONNECTION_RETRIES = null;
+  
+  /**
+   * The default value for encrypting the connection through SSL or not = {@code false}
+   */
+  public static final boolean DEFAULT_USE_SSL = false;
 
   private Integer connectionRetries = DEFAULT_CONNECTION_RETRIES;
   private long connectionRetryDelay = DEFAULT_CONNECTION_RETRY_DELAY;
@@ -92,6 +97,7 @@ public class RabbitMQOptions {
   private long networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
   private boolean automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
   private boolean includeProperties = false;
+  private boolean useSsl = DEFAULT_USE_SSL;
 
   public RabbitMQOptions() {
   }
@@ -117,6 +123,7 @@ public class RabbitMQOptions {
     automaticRecoveryEnabled = that.automaticRecoveryEnabled;
     includeProperties = that.includeProperties;
     requestedChannelMax = that.requestedChannelMax;
+    useSsl = that.useSsl;
   }
 
   /**
@@ -378,5 +385,21 @@ public class RabbitMQOptions {
   public RabbitMQOptions setIncludeProperties(boolean includeProperties) {
     this.includeProperties = includeProperties;
     return this;
+  }
+  
+  /**
+   * Set wether to use SSL or not
+   * @param useSsl wether to use ssl
+   * @return a reference to this, so the API can be used fluently
+   */
+  public RabbitMQOptions setSsl(boolean useSsl) {
+	  this.useSsl = useSsl;
+	  return this;
+  }
+  /**
+   * @return wether the connection use SSL encryption or not
+   */
+  public boolean getSsl() {
+	  return this.useSsl;
   }
 }

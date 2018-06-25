@@ -7,6 +7,14 @@ import static io.vertx.rabbitmq.impl.Utils.populate;
 import static io.vertx.rabbitmq.impl.Utils.put;
 import static io.vertx.rabbitmq.impl.Utils.toJson;
 
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -14,6 +22,7 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.GetResponse;
 import com.rabbitmq.client.ShutdownListener;
 import com.rabbitmq.client.ShutdownSignalException;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -25,12 +34,6 @@ import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQOptions;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -75,7 +78,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       cf.setPort(config.getPort());
       cf.setVirtualHost(config.getVirtualHost());
     }
-
+    if (config.getSsl()) {
+	    try {
+	        cf.useSslProtocol();
+	    } catch (final KeyManagementException e) {
+	    	// FIXME
+	    } catch (final NoSuchAlgorithmException e) {
+		   // FIXME
+	    }
+	}
     cf.setConnectionTimeout(config.getConnectionTimeout());
     cf.setRequestedHeartbeat(config.getRequestedHeartbeat());
     cf.setHandshakeTimeout(config.getHandshakeTimeout());
