@@ -35,41 +35,43 @@ public class RabbitMQSslTest extends RabbitMQClientTestBase {
 		CompletableFuture<Void> latch = new CompletableFuture<>();
 		RabbitMQOptions config = super.config();
 		ConnectionFactory cf = new ConnectionFactory();
-		NetClientOptions clientOptions = new NetClientOptions();
-		if (config.getUri() != null) {
-			cf.setUri(config.getUri());
-			if (cf.isSSL()) {
-				clientOptions.setSsl(true);
-				clientOptions.setTrustAll(true);
-			}
-		} else {
-			cf.setPort(config.getPort());
-			cf.setHost(config.getHost());
-		}
-		String host = cf.getHost();
-		int port = cf.getPort();
-		proxyClient = vertx.createNetClient(clientOptions);
+		// TODO find out if proxy is necessary
+//		NetClientOptions clientOptions = new NetClientOptions();
+//		if (config.getUri() != null) {
+//			cf.setUri(config.getUri());
+//			if (cf.isSSL()) {
+//				clientOptions.setSsl(true);
+//				clientOptions.setTrustAll(true);
+//			}
+//		} else {
+//			cf.setPort(config.getPort());
+//			cf.setHost(config.getHost());
+//		}
+//		String host = cf.getHost();
+//		int port = cf.getPort();
+//		proxyClient = vertx.createNetClient(clientOptions);
 		cf.setUri(config.getUri());
 		NetServerOptions serverOptions = new NetServerOptions();
 		serverOptions.setSsl(true);
 		serverOptions.setKeyStoreOptions(new JksOptions().setPath("tls/server-keystore.jks").setPassword("wibble"));
 		proxyServer = vertx.createNetServer(serverOptions).connectHandler(serverSocket -> {
-			System.out.println(serverSocket.isSsl());
-			serverSocket.pause();
-	        proxyClient.connect(port, host, ar -> {
-	          serverSocket.resume();
-	          if (ar.succeeded()) {
-	            NetSocket clientSocket = ar.result();
-	            serverSocket.handler(clientSocket::write);
-	            serverSocket.exceptionHandler(err -> serverSocket.close());
-	            serverSocket.closeHandler(v -> clientSocket.close());
-	            clientSocket.handler(serverSocket::write);
-	            clientSocket.exceptionHandler(err -> clientSocket.close());
-	            clientSocket.closeHandler(v -> serverSocket.close());
-	          } else {
-	            serverSocket.close();;
-	          }
-	        });
+			System.out.println("incoming connection");
+			// FIXME
+			//			serverSocket.pause();
+//	        proxyClient.connect(port, host, ar -> {
+//	          serverSocket.resume();
+//	          if (ar.succeeded()) {
+//	            NetSocket clientSocket = ar.result();
+//	            serverSocket.handler(clientSocket::write);
+//	            serverSocket.exceptionHandler(err -> serverSocket.close());
+//	            serverSocket.closeHandler(v -> clientSocket.close());
+//	            clientSocket.handler(serverSocket::write);
+//	            clientSocket.exceptionHandler(err -> clientSocket.close());
+//	            clientSocket.closeHandler(v -> serverSocket.close());
+//	          } else {
+//	            serverSocket.close();;
+//	          }
+//	        });
 		}).listen(PROXY_PORT, "localhost", ar -> {
 			if (ar.succeeded()) {
 				latch.complete(null);
