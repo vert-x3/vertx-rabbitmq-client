@@ -1,6 +1,9 @@
 package io.vertx.rabbitmq;
 
+import javax.net.ssl.SSLContext;
+
 import com.rabbitmq.client.ConnectionFactory;
+
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
@@ -81,6 +84,11 @@ public class RabbitMQOptions {
    * The default value for encrypting the connection through SSL or not = {@code false}
    */
   public static final boolean DEFAULT_USE_SSL = false;
+  
+  /**
+   * The default value for which specific SSLContext to use = {@code null}
+   */
+  public static final SSLContext DEFAULT_SSL_CONTEXT = null;
 
   private Integer connectionRetries = DEFAULT_CONNECTION_RETRIES;
   private long connectionRetryDelay = DEFAULT_CONNECTION_RETRY_DELAY;
@@ -98,6 +106,7 @@ public class RabbitMQOptions {
   private boolean automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
   private boolean includeProperties = false;
   private boolean useSsl = DEFAULT_USE_SSL;
+  private SSLContext sslContext = DEFAULT_SSL_CONTEXT;
 
   public RabbitMQOptions() {
   }
@@ -124,6 +133,7 @@ public class RabbitMQOptions {
     includeProperties = that.includeProperties;
     requestedChannelMax = that.requestedChannelMax;
     useSsl = that.useSsl;
+    sslContext = that.sslContext;
   }
 
   /**
@@ -370,16 +380,16 @@ public class RabbitMQOptions {
   }
 
   /**
-   * @return wether to include properties when a broker message is passed on the event bus
+   * @return whether to include properties when a broker message is passed on the event bus
    */
   public boolean getIncludeProperties() {
     return includeProperties;
   }
 
   /**
-   * Set wether to include properties when a broker message is passed on the event bus
+   * Set whether to include properties when a broker message is passed on the event bus
    *
-   * @param includeProperties wether to include properties
+   * @param includeProperties whether to include properties
    * @return a reference to this, so the API can be used fluently
    */
   public RabbitMQOptions setIncludeProperties(boolean includeProperties) {
@@ -388,8 +398,8 @@ public class RabbitMQOptions {
   }
   
   /**
-   * Set wether to use SSL or not
-   * @param useSsl wether to use ssl
+   * Set whether to use SSL or not
+   * @param useSsl if {@code true}, enables SSL
    * @return a reference to this, so the API can be used fluently
    */
   public RabbitMQOptions setSsl(boolean useSsl) {
@@ -397,9 +407,24 @@ public class RabbitMQOptions {
 	  return this;
   }
   /**
-   * @return wether the connection use SSL encryption or not
+   * @return whether the connection use SSL encryption or not
    */
   public boolean getSsl() {
 	  return this.useSsl;
+  }
+  
+  /**
+   * Set which SSLContext to use. Also enables the SSL flag for this connection.
+   * @param sslContext SSLContext to use
+   * @return a reference to this, so the API can be used fluently
+   */
+  public RabbitMQOptions setSslContext(SSLContext sslContext) {
+	  this.sslContext = sslContext;
+	  this.useSsl = true;
+	  return this;
+  }
+  
+  public SSLContext getSslContext() {
+	  return this.sslContext;
   }
 }
