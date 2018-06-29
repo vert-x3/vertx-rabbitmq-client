@@ -55,7 +55,6 @@ public class RabbitMQSslTest extends RabbitMQClientTestBase {
 		serverOptions.setSsl(true);
 		serverOptions.setKeyStoreOptions(new JksOptions().setPath("tls/server-keystore.jks").setPassword("wibble"));
 		proxyServer = vertx.createNetServer(serverOptions).connectHandler(serverSocket -> {
-			System.out.println("incoming connection");
 			// FIXME
 			//			serverSocket.pause();
 //	        proxyClient.connect(port, host, ar -> {
@@ -155,7 +154,6 @@ public class RabbitMQSslTest extends RabbitMQClientTestBase {
 	public void testConnectionWithSSL() throws Exception {
 		startServer();
 		try {
-			System.out.println("with SSL");
 			connect(true);
 		} catch (Exception e) {
 			fail();
@@ -171,7 +169,6 @@ public class RabbitMQSslTest extends RabbitMQClientTestBase {
 	public void testConnectionWithoutSSL() throws Exception {
 		startServer();
 		try {
-			System.out.println("without SSL");
 			connect(false);
 			fail();
 		} catch (Exception e) {
