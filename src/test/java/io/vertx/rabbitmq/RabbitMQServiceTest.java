@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -244,6 +246,37 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     awaitLatch(latch);
     testComplete();
+  }
+
+
+  @Test
+  public void testBasicCancel(TestContext context) throws Exception {
+    int count = 3;
+    Set<String> messages = createMessages(count);
+    String q = setupQueue(messages);
+
+    Async async = context.async();
+    AtomicInteger received = new AtomicInteger(0);
+    AtomicReference<Long> timer = new AtomicReference<>(0L);
+
+    vertx.eventBus().consumer("my.address", msg -> {
+      int receivedTotal = received.incrementAndGet();
+      log.info(String.format("received %d-th message", receivedTotal));
+      if (receivedTotal > count) {
+        context.fail();
+      }
+      synchronized (this) {
+        vertx.cancelTimer(timer.get());
+        timer.set(vertx.setTimer(1000, t -> async.countDown()));
+      }
+    });
+
+    client.basicConsume(q, "my.address", onSuccess(tag -> {
+      client.basicCancel(tag);
+      String body = randomAlphaString(100);
+      JsonObject message = new JsonObject().put("body", body);
+      client.basicPublish("", q, message, null);
+    }));
   }
 
   @Test
