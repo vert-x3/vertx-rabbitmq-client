@@ -131,18 +131,18 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler) {
     basicConsume(queue, address, true, resultHandler);
   }
 
   @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler) {
     basicConsume(queue, address, autoAck, resultHandler, null);
   }
 
   @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler) {
-    forChannel(resultHandler, channel -> {
+  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler, Handler<Throwable> errorHandler) {
+    forChannel(resultHandler, channel ->
       channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
         if (ar.succeeded()) {
           vertx.eventBus().send(address, ar.result());
@@ -152,7 +152,18 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
             errorHandler.handle(ar.cause());
           }
         }
-      }));
+      })));
+  }
+
+  @Override
+  public void basicCancel(String consumerTag) {
+    basicCancel(consumerTag, null);
+  }
+
+  @Override
+  public void basicCancel(String consumerTag, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.basicCancel(consumerTag);
       return null;
     });
   }

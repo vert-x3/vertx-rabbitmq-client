@@ -82,7 +82,7 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    */
   @Deprecated
-  void basicConsume(String queue, String address, Handler<AsyncResult<Void>> resultHandler);
+  void basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler);
 
   /**
    * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
@@ -92,7 +92,7 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
   @Deprecated
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler);
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler);
 
   /**
    * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
@@ -102,7 +102,31 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
   @Deprecated
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<Void>> resultHandler, Handler<Throwable> errorHandler);
+  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler, Handler<Throwable> errorHandler);
+
+  /**
+   * Instead of using this and {@link #basicConsume(String, String, Handler)} method,
+   * {@link #basicConsumer(String, QueueOptions, Handler)} and {@link RabbitMQConsumer#cancel(Handler)} instead
+   * <p>
+   * This method should be called when you want to cancel consumption from a queue,
+   * started by calling {@link #basicConsume(String, String, Handler)}.
+   *
+   * @see Channel#basicCancel(String)
+   */
+  @Deprecated
+  void basicCancel(String consumerTag);
+
+  /**
+   * Instead of using this and {@link #basicConsume(String, String, Handler)} method,
+   * {@link #basicConsumer(String, QueueOptions, Handler)} and {@link RabbitMQConsumer#cancel(Handler)} instead
+   * <p>
+   * This method should be called when you want to cancel consumption from a queue,
+   * started by calling {@link #basicConsume(String, String, Handler)}.
+   *
+   * @see Channel#basicCancel(String)
+   */
+  @Deprecated
+  void basicCancel(String consumerTag, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
