@@ -12,11 +12,9 @@ public class QueueOptions {
 
   private static final int DEFAULT_QUEUE_SIZE = Integer.MAX_VALUE;
   private static final boolean DEFAULT_AUTO_ACK = true;
-  private static final boolean DEFAULT_BUFFER = false;
   private static final boolean DEFAULT_KEEP_MOST_RECENT = false;
 
   private boolean autoAck = DEFAULT_AUTO_ACK;
-  private boolean buffer = DEFAULT_BUFFER;
   private boolean keepMostRecent = DEFAULT_KEEP_MOST_RECENT;
   private int maxInternalQueueSize = DEFAULT_QUEUE_SIZE;
 
@@ -36,17 +34,6 @@ public class QueueOptions {
    */
   public QueueOptions setAutoAck(boolean autoAck) {
     this.autoAck = autoAck;
-    return this;
-  }
-
-  /**
-   * @param buffer {@code true} for storing all incoming messages in a internal queue
-   *               when stream is paused and while it's fit provided size via
-   *               {@link RabbitMQConsumer#size(int)} or {@link #setMaxInternalQueueSize(int)};
-   *               {@code false} for discarding all incoming messages when stream is paused
-   */
-  public QueueOptions setBuffer(boolean buffer) {
-    this.buffer = buffer;
     return this;
   }
 
@@ -75,16 +62,6 @@ public class QueueOptions {
    */
   public boolean isAutoAck() {
     return autoAck;
-  }
-
-  /**
-   * @return {@code true} if queue will store all incoming messages in a internal queue
-   * when stream is paused and while it's fit provided size via
-   * {@link RabbitMQConsumer#size(int)} or {@link #setMaxInternalQueueSize(int)};
-   * {@code false} if all incoming messages will be discarded when stream is paused
-   */
-  public boolean isBuffer() {
-    return buffer;
   }
 
   /**

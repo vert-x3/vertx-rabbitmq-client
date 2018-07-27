@@ -6,15 +6,12 @@ import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 
-import static io.vertx.rabbitmq.impl.Utils.parse;
-import static io.vertx.rabbitmq.impl.Utils.populate;
 import static io.vertx.rabbitmq.impl.Utils.put;
 import static io.vertx.rabbitmq.impl.Utils.toJson;
 
@@ -36,13 +33,13 @@ public class QueueConsumerHandler extends DefaultConsumer {
   @Override
   public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
     RabbitMQMessage msg = new RabbitMQMessageImpl(body, consumerTag, envelope, properties);
-    this.handlerContext.runOnContext(v -> queue.push(msg));
+    this.handlerContext.runOnContext(v -> queue.handleMessage(msg));
   }
 
   @Override
   public void handleCancel(String consumerTag) {
     log.debug("consumer has been cancelled unexpectedly");
-    queue.triggerStreamEnd();
+    queue.handleEnd();
   }
 
   /**

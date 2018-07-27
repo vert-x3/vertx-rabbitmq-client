@@ -1,80 +1,103 @@
-/*
- * Copyright (c) 2014 Red Hat, Inc. and others
- *
- * Red Hat licenses this file to you under the Apache License, version 2.0
- * (the "License"); you may not use this file except in compliance with the
- * License.  You may obtain a copy of the License at:
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
- * License for the specific language governing permissions and limitations
- * under the License.
- */
-
 package io.vertx.rabbitmq;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Converter for {@link io.vertx.rabbitmq.RabbitMQOptions}.
- *
  * NOTE: This class has been automatically generated from the {@link io.vertx.rabbitmq.RabbitMQOptions} original class using Vert.x codegen.
  */
 public class RabbitMQOptionsConverter {
 
-  public static void fromJson(JsonObject json, RabbitMQOptions obj) {
-    if (json.getValue("automaticRecoveryEnabled") instanceof Boolean) {
-      obj.setAutomaticRecoveryEnabled((Boolean)json.getValue("automaticRecoveryEnabled"));
-    }
-    if (json.getValue("connectionRetries") instanceof Number) {
-      obj.setConnectionRetries(((Number)json.getValue("connectionRetries")).intValue());
-    }
-    if (json.getValue("connectionRetryDelay") instanceof Number) {
-      obj.setConnectionRetryDelay(((Number)json.getValue("connectionRetryDelay")).longValue());
-    }
-    if (json.getValue("connectionTimeout") instanceof Number) {
-      obj.setConnectionTimeout(((Number)json.getValue("connectionTimeout")).intValue());
-    }
-    if (json.getValue("handshakeTimeout") instanceof Number) {
-      obj.setHandshakeTimeout(((Number)json.getValue("handshakeTimeout")).intValue());
-    }
-    if (json.getValue("host") instanceof String) {
-      obj.setHost((String)json.getValue("host"));
-    }
-    if (json.getValue("includeProperties") instanceof Boolean) {
-      obj.setIncludeProperties((Boolean)json.getValue("includeProperties"));
-    }
-    if (json.getValue("networkRecoveryInterval") instanceof Number) {
-      obj.setNetworkRecoveryInterval(((Number)json.getValue("networkRecoveryInterval")).longValue());
-    }
-    if (json.getValue("password") instanceof String) {
-      obj.setPassword((String)json.getValue("password"));
-    }
-    if (json.getValue("port") instanceof Number) {
-      obj.setPort(((Number)json.getValue("port")).intValue());
-    }
-    if (json.getValue("requestedChannelMax") instanceof Number) {
-      obj.setRequestedChannelMax(((Number)json.getValue("requestedChannelMax")).intValue());
-    }
-    if (json.getValue("requestedHeartbeat") instanceof Number) {
-      obj.setRequestedHeartbeat(((Number)json.getValue("requestedHeartbeat")).intValue());
-    }
-    if (json.getValue("uri") instanceof String) {
-      obj.setUri((String)json.getValue("uri"));
-    }
-    if (json.getValue("user") instanceof String) {
-      obj.setUser((String)json.getValue("user"));
-    }
-    if (json.getValue("virtualHost") instanceof String) {
-      obj.setVirtualHost((String)json.getValue("virtualHost"));
+  public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, RabbitMQOptions obj) {
+    for (java.util.Map.Entry<String, Object> member : json) {
+      switch (member.getKey()) {
+        case "automaticRecoveryEnabled":
+          if (member.getValue() instanceof Boolean) {
+            obj.setAutomaticRecoveryEnabled((Boolean)member.getValue());
+          }
+          break;
+        case "connectionRetries":
+          if (member.getValue() instanceof Number) {
+            obj.setConnectionRetries(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "connectionRetryDelay":
+          if (member.getValue() instanceof Number) {
+            obj.setConnectionRetryDelay(((Number)member.getValue()).longValue());
+          }
+          break;
+        case "connectionTimeout":
+          if (member.getValue() instanceof Number) {
+            obj.setConnectionTimeout(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "handshakeTimeout":
+          if (member.getValue() instanceof Number) {
+            obj.setHandshakeTimeout(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "host":
+          if (member.getValue() instanceof String) {
+            obj.setHost((String)member.getValue());
+          }
+          break;
+        case "includeProperties":
+          if (member.getValue() instanceof Boolean) {
+            obj.setIncludeProperties((Boolean)member.getValue());
+          }
+          break;
+        case "networkRecoveryInterval":
+          if (member.getValue() instanceof Number) {
+            obj.setNetworkRecoveryInterval(((Number)member.getValue()).longValue());
+          }
+          break;
+        case "password":
+          if (member.getValue() instanceof String) {
+            obj.setPassword((String)member.getValue());
+          }
+          break;
+        case "port":
+          if (member.getValue() instanceof Number) {
+            obj.setPort(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "requestedChannelMax":
+          if (member.getValue() instanceof Number) {
+            obj.setRequestedChannelMax(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "requestedHeartbeat":
+          if (member.getValue() instanceof Number) {
+            obj.setRequestedHeartbeat(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "uri":
+          if (member.getValue() instanceof String) {
+            obj.setUri((String)member.getValue());
+          }
+          break;
+        case "user":
+          if (member.getValue() instanceof String) {
+            obj.setUser((String)member.getValue());
+          }
+          break;
+        case "virtualHost":
+          if (member.getValue() instanceof String) {
+            obj.setVirtualHost((String)member.getValue());
+          }
+          break;
+      }
     }
   }
 
   public static void toJson(RabbitMQOptions obj, JsonObject json) {
+    toJson(obj, json.getMap());
+  }
+
+  public static void toJson(RabbitMQOptions obj, java.util.Map<String, Object> json) {
     json.put("automaticRecoveryEnabled", obj.isAutomaticRecoveryEnabled());
     if (obj.getConnectionRetries() != null) {
       json.put("connectionRetries", obj.getConnectionRetries());

@@ -61,7 +61,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     Async resumed = context.async();
     Async messageReceived = context.async();
 
-    client.basicConsumer(q, new QueueOptions().setBuffer(true), consumerHandler -> {
+    client.basicConsumer(q, new QueueOptions(), consumerHandler -> {
       if (consumerHandler.succeeded()) {
         RabbitMQConsumer mqConsumer = consumerHandler.result();
         mqConsumer.pause();
@@ -129,41 +129,6 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void whenStreamIsPausedAndNoBufferingMessagesShouldNotBeStored(TestContext context) throws Exception {
-    String q = randomAlphaString(10);
-
-    channel.queueDeclare(q, false, false, true, null);
-
-    Async paused = context.async();
-    AtomicReference<RabbitMQConsumer> mqConsumer = new AtomicReference<>(null);
-    client.basicConsumer(q, new QueueOptions().setBuffer(false), consumerHandler -> {
-      if (consumerHandler.succeeded()) {
-        RabbitMQConsumer consumer = consumerHandler.result();
-        mqConsumer.set(consumer);
-        consumer.handler(msg -> context.fail());
-        consumer.pause();
-        paused.countDown();
-      } else {
-        context.fail();
-      }
-    });
-
-    paused.await();
-    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().build();
-    channel.basicPublish("", q, properties, "whatever".getBytes());
-
-    Async done = context.async();
-
-    // resume in 10 seconds, so message should be received, but not stored
-    vertx.setTimer(1000, l -> {
-      mqConsumer.get().resume();
-      // wait some time to ensure that handler will not receive any messages
-      // since when it was paused messages were not buffered
-      vertx.setTimer(1000, t -> done.countDown());
-    });
-  }
-
-  @Test
   public void keepMostRecentOptionShouldWorks(TestContext context) throws Exception {
     int count = 2;
     int queueSize = 1;
@@ -180,8 +145,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     AtomicReference<RabbitMQConsumer> mqConsumer = new AtomicReference<>(null);
     QueueOptions queueOptions = new QueueOptions()
       .setKeepMostRecent(true)
-      .setMaxInternalQueueSize(queueSize)
-      .setBuffer(true);
+      .setMaxInternalQueueSize(queueSize);
 
     client.basicConsumer(q, queueOptions, consumerHandler -> {
       if (consumerHandler.succeeded()) {

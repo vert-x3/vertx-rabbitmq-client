@@ -1,23 +1,18 @@
 package io.vertx.rabbitmq.impl;
 
 import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.queue.Queue;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 
 import java.io.IOException;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A implementation of {@link RabbitMQConsumer}
@@ -27,27 +22,19 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   private static final Logger log = LoggerFactory.getLogger(RabbitMQConsumerImpl.class);
 
   private Handler<Throwable> exceptionHandler;
-  private Handler<RabbitMQMessage> messageArrivedHandler;
   private Handler<Void> endHandler;
   private final QueueConsumerHandler consumerHandler;
-  private final Context runningContext;
-  private final Lock queueRemoveLock = new ReentrantLock();
-  private final boolean buffer;
   private final boolean keepMostRecent;
-
-  private volatile int queueSize;
-  private final AtomicInteger currentQueueSize = new AtomicInteger(0);
-  private final AtomicBoolean paused = new AtomicBoolean(false);
-
-  // a storage of all received messages
-  private Queue<RabbitMQMessage> messagesQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<RabbitMQMessage> pending;
+  private final int maxQueueSize;
 
   RabbitMQConsumerImpl(Vertx vertx, QueueConsumerHandler consumerHandler, QueueOptions options) {
-    runningContext = vertx.getOrCreateContext();
     this.consumerHandler = consumerHandler;
     this.keepMostRecent = options.isKeepMostRecent();
-    this.buffer = options.isBuffer();
-    this.queueSize = options.maxInternalQueueSize();
+    this.maxQueueSize = options.maxInternalQueueSize();
+    this.pending = Queue.queue(vertx.getOrCreateContext(), maxQueueSize);
+
+    pending.resume();
   }
 
   @Override
@@ -57,22 +44,36 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   }
 
   @Override
-  public RabbitMQConsumer handler(Handler<RabbitMQMessage> messageArrivedHandler) {
-    this.messageArrivedHandler = messageArrivedHandler;
-    flushQueue();
+  public RabbitMQConsumer handler(Handler<RabbitMQMessage> handler) {
+    if (handler != null) {
+      pending.handler(msg -> {
+        try {
+          handler.handle(msg);
+        } catch (Exception e) {
+          handleException(e);
+        }
+      });
+    } else {
+      pending.handler(null);
+    }
     return this;
   }
 
   @Override
   public RabbitMQConsumer pause() {
-    paused.set(true);
+    pending.pause();
     return this;
   }
 
   @Override
   public RabbitMQConsumer resume() {
-    paused.set(false);
-    flushQueue();
+    pending.resume();
+    return this;
+  }
+
+  @Override
+  public ReadStream<RabbitMQMessage> fetch(long amount) {
+    pending.take(amount);
     return this;
   }
 
@@ -104,12 +105,12 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
     if (cancelResult != null) {
       cancelResult.handle(operationResult);
     }
-    triggerStreamEnd();
+    handleEnd();
   }
 
   @Override
   public boolean isPaused() {
-    return paused.get();
+    return false;
   }
 
   /**
@@ -119,45 +120,23 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
    *
    * @param message received message to deliver
    */
-  void push(RabbitMQMessage message) {
+  void handleMessage(RabbitMQMessage message) {
 
-    if (paused.get() && !buffer) {
-      log.debug("Discard a received message since stream is paused and buffer flag is false");
-      return;
-    }
-
-    int expected;
-    boolean compareAndSetLoopFlag;
-    do {
-      expected = currentQueueSize.get();
-      if (expected + 1 <= queueSize) {
-        boolean compareAndSetOp = currentQueueSize.compareAndSet(expected, expected + 1);
-        if (compareAndSetOp) {
-          messagesQueue.add(message);
-        }
-        // if compare and set == false then continue CompareAndSet loop
-        compareAndSetLoopFlag = !compareAndSetOp;
+    if (pending.size() >= maxQueueSize) {
+      if (keepMostRecent) {
+        pending.poll();
       } else {
-        if (keepMostRecent) {
-          queueRemoveLock.lock();
-          messagesQueue.poll();
-          messagesQueue.add(message);
-          queueRemoveLock.unlock();
-          log.debug("Remove a old message and put a new message into the internal queue.");
-        } else {
-          log.debug("Discard a received message due to exceed queue size limit.");
-        }
-
-        compareAndSetLoopFlag = false;
+        log.debug("Discard a received message since stream is paused and buffer flag is false");
+        return;
       }
-    } while (compareAndSetLoopFlag);
-    flushQueue();
+    }
+    pending.add(message);
   }
 
   /**
    * Trigger exception handler with given exception
    */
-  void raiseException(Throwable exception) {
+  private void handleException(Throwable exception) {
     if (exceptionHandler != null) {
       exceptionHandler.handle(exception);
     }
@@ -166,31 +145,9 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   /**
    * Trigger end of stream handler
    */
-  void triggerStreamEnd() {
+  void handleEnd() {
     if (endHandler != null) {
       endHandler.handle(null);
-    }
-  }
-
-  /**
-   * Handle all messages in the queue
-   */
-  private void flushQueue() {
-    if (messageArrivedHandler != null && !paused.get()) {
-      queueRemoveLock.lock();
-      RabbitMQMessage message;
-      while ((message = messagesQueue.poll()) != null) {
-        RabbitMQMessage finalMessage = message;
-        runningContext.runOnContext(v -> {
-          try {
-            messageArrivedHandler.handle(finalMessage);
-          } catch (Exception e) {
-            raiseException(e);
-          }
-        });
-      }
-      currentQueueSize.set(messagesQueue.size());
-      queueRemoveLock.unlock();
     }
   }
 }
