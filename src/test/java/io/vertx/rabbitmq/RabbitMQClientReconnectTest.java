@@ -43,7 +43,6 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
       } else {
         serverSocket.pause();
         proxyClient.connect(port, host, ar -> {
-          serverSocket.resume();
           if (ar.succeeded()) {
             NetSocket clientSocket = ar.result();
             serverSocket.handler(clientSocket::write);
@@ -52,6 +51,7 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
             clientSocket.handler(serverSocket::write);
             clientSocket.exceptionHandler(err -> clientSocket.close());
             clientSocket.closeHandler(v -> serverSocket.close());
+            serverSocket.resume();
           } else {
             serverSocket.close();;
           }
