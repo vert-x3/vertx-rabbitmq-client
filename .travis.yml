@@ -4,11 +4,13 @@ services:
   - rabbitmq
 jdk:
   - oraclejdk8
-  - oraclejdk9
 
 before_install:
   - cp .travis.maven.settings.xml $HOME/.m2/settings.xml
 
 script:
   - set -e
-  - mvn clean verify -Prabbitmq.local
+  - mvn clean verify -Prabbitmq.local,coverage
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
