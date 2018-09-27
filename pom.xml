@@ -14,7 +14,7 @@
 
   <properties>
     <stack.version>3.6.0-SNAPSHOT</stack.version>
-    <rabbitmq.client.version>5.2.0</rabbitmq.client.version>
+    <rabbitmq.client.version>5.4.2</rabbitmq.client.version>
     <slf4j.version>1.7.21</slf4j.version>
   </properties>
 
