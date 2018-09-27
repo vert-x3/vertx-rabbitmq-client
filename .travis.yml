@@ -17,6 +17,8 @@ jobs:
       name: "Deploy to Sonatype's snapshots repository"
       if: type != pull_request
       script: bash .travis.deploy.artifacts.sh
+services:
+  - rabbitmq
 notifications:
   email:
     recipients:
