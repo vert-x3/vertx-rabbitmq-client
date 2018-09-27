@@ -1,14 +1,25 @@
-sudo: required
 language: java
-services:
-  - rabbitmq
-jdk:
-  - oraclejdk8
-  - oraclejdk9
-
-before_install:
-  - cp .travis.maven.settings.xml $HOME/.m2/settings.xml
-
-script:
-  - set -e
-  - mvn clean verify -Prabbitmq.local
+branches:
+  only:
+  - master
+  - /^\d+\.\d+$/
+jobs:
+  include:
+    - stage: test
+      name: "OracleJDK 8"
+      jdk: oraclejdk8
+      script: mvn -q clean verify -Prabbitmq.local -B
+    - if: type != pull_request
+      name: "OpenJDK 11"
+      jdk: openjdk11
+      script: mvn -q clean verify -Prabbitmq.local -B
+    - stage: deploy
+      name: "Deploy to Sonatype's snapshots repository"
+      if: type != pull_request
+      script: bash .travis.deploy.artifacts.sh
+notifications:
+  email:
+    recipients:
+      - vertx3-ci@googlegroups.com
+    on_success: always
+    on_failure: always
