@@ -15,13 +15,13 @@ jobs:
       script: mvn -q clean verify -Prabbitmq.local -B
     - stage: deploy
       name: "Deploy to Sonatype's snapshots repository"
-      if: type != pull_request
+      if: type != pull_request AND env(SONATYPE_NEXUS_USERNAME) IS present
       script: bash .travis.deploy.artifacts.sh
 services:
   - rabbitmq
 notifications:
   email:
     recipients:
-      - vertx3-ci@googlegroups.com
+      - secure: "Vlip/VwUqMQV9zN75/14H55898nwoxEzQfB7BFvYWFSLYH73OhSO6aaqVd3zwu9Rqdqzw9dBE2Rk8YG6aYTIA+xQsw43UCrOCZrVkBSdujQ1KrCaQb2KFTJ0LsTAyQnQ5rQeT8kngGnm31CDgIultNwaHPHOewORVOr3r0TGWYM="
     on_success: always
     on_failure: always
