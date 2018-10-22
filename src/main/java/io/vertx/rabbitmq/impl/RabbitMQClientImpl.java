@@ -1,19 +1,6 @@
 package io.vertx.rabbitmq.impl;
 
-import static io.vertx.rabbitmq.impl.Utils.encode;
-import static io.vertx.rabbitmq.impl.Utils.fromJson;
-import static io.vertx.rabbitmq.impl.Utils.parse;
-import static io.vertx.rabbitmq.impl.Utils.populate;
-import static io.vertx.rabbitmq.impl.Utils.put;
-import static io.vertx.rabbitmq.impl.Utils.toJson;
-
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.GetResponse;
-import com.rabbitmq.client.ShutdownListener;
-import com.rabbitmq.client.ShutdownSignalException;
+import com.rabbitmq.client.*;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -27,10 +14,10 @@ import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
+
+import static io.vertx.rabbitmq.impl.Utils.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -62,6 +49,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     ConnectionFactory cf = new ConnectionFactory();
     String uri = config.getUri();
     // Use uri if set, otherwise support individual connection parameters
+    List<Address> addresses = null;
     if (uri != null) {
       try {
         cf.setUri(uri);
@@ -71,8 +59,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     } else {
       cf.setUsername(config.getUser());
       cf.setPassword(config.getPassword());
-      cf.setHost(config.getHost());
-      cf.setPort(config.getPort());
+      addresses = config.getAddresses().isEmpty()
+                  ? Collections.singletonList(new Address(config.getHost(), config.getPort()))
+                  : config.getAddresses();
       cf.setVirtualHost(config.getVirtualHost());
     }
 
@@ -86,7 +75,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
     //TODO: Support other configurations
 
-    return cf.newConnection();
+    return addresses == null
+           ? cf.newConnection()
+           : cf.newConnection(addresses);
   }
 
   @Override
