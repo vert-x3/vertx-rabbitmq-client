@@ -6,8 +6,8 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
-import io.vertx.core.queue.Queue;
 import io.vertx.core.streams.ReadStream;
+import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
@@ -25,14 +25,14 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   private Handler<Void> endHandler;
   private final QueueConsumerHandler consumerHandler;
   private final boolean keepMostRecent;
-  private final Queue<RabbitMQMessage> pending;
+  private final InboundBuffer<RabbitMQMessage> pending;
   private final int maxQueueSize;
 
   RabbitMQConsumerImpl(Vertx vertx, QueueConsumerHandler consumerHandler, QueueOptions options) {
     this.consumerHandler = consumerHandler;
     this.keepMostRecent = options.isKeepMostRecent();
     this.maxQueueSize = options.maxInternalQueueSize();
-    this.pending = Queue.queue(vertx.getOrCreateContext(), maxQueueSize);
+    this.pending = new InboundBuffer<>(vertx.getOrCreateContext(), maxQueueSize);
 
     pending.resume();
   }
@@ -73,7 +73,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
 
   @Override
   public ReadStream<RabbitMQMessage> fetch(long amount) {
-    pending.take(amount);
+    pending.fetch(amount);
     return this;
   }
 
@@ -124,13 +124,13 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
 
     if (pending.size() >= maxQueueSize) {
       if (keepMostRecent) {
-        pending.poll();
+        pending.read();
       } else {
         log.debug("Discard a received message since stream is paused and buffer flag is false");
         return;
       }
     }
-    pending.add(message);
+    pending.write(message);
   }
 
   /**
