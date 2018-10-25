@@ -46,6 +46,13 @@ Or you can also specify individual parameters manually:
 {@link examples.RabbitMQExamples#createClientWithManualParams}
 ----
 
+You can set multiples addresses to connect to a cluster;
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#createClientWithMultipleHost}
+----
+
 === Declare exchange with additional config
 
 You can pass additional config parameters to RabbitMQ's exchangeDeclare method

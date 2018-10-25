@@ -1,5 +1,6 @@
 package examples;
 
+import com.rabbitmq.client.Address;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.QueueOptions;
@@ -7,8 +8,7 @@ import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQOptions;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
 
 public class RabbitMQExamples {
 
@@ -34,6 +34,18 @@ public class RabbitMQExamples {
     config.setRequestedChannelMax(5);
     config.setNetworkRecoveryInterval(500); // in milliseconds
     config.setAutomaticRecoveryEnabled(true);
+
+    RabbitMQClient client = RabbitMQClient.create(vertx, config);
+  }
+
+  //pass multiple hosts to client, allow to use a clustered RabbitMQ
+  public void createClientWithMultipleHost(Vertx vertx) {
+    RabbitMQOptions config = new RabbitMQOptions();
+    config.setUser("user1");
+    config.setPassword("password1");
+    config.setVirtualHost("vhost1");
+
+    config.setAddresses(Arrays.asList(Address.parseAddresses("firstHost,secondHost:5672")));
 
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
   }
@@ -216,7 +228,6 @@ public class RabbitMQExamples {
         queueResult.cause().printStackTrace();
       }
     });
-
   }
 
 }

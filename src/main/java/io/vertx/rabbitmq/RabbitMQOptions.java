@@ -1,8 +1,13 @@
 package io.vertx.rabbitmq;
 
+import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * RabbitMQ client options, most
@@ -80,6 +85,7 @@ public class RabbitMQOptions {
   private Integer connectionRetries = DEFAULT_CONNECTION_RETRIES;
   private long connectionRetryDelay = DEFAULT_CONNECTION_RETRY_DELAY;
   private String uri = null;
+  private List<Address> addresses = Collections.emptyList();
   private String user = DEFAULT_USER;
   private String password = DEFAULT_PASSWORD;
   private String host = DEFAULT_HOST;
@@ -105,6 +111,7 @@ public class RabbitMQOptions {
     connectionRetries = that.connectionRetries;
     connectionRetryDelay = that.connectionRetryDelay;
     uri = that.uri;
+    addresses = that.addresses;
     user = that.user;
     password = that.password;
     host = that.host;
@@ -152,6 +159,20 @@ public class RabbitMQOptions {
    */
   public RabbitMQOptions setConnectionRetryDelay(long connectionRetryDelay) {
     this.connectionRetryDelay = connectionRetryDelay;
+    return this;
+  }
+
+  public List<Address> getAddresses() {
+    return Collections.unmodifiableList(addresses);
+  }
+
+  /**
+   * Set multiple addresses for cluster mode.
+   * @param addresses addresses of AMQP cluster
+   * @return a reference to this, so the API can be used fluently
+   */
+  public RabbitMQOptions setAddresses(List<Address> addresses) {
+    this.addresses = new ArrayList<>(addresses);
     return this;
   }
 
