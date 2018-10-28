@@ -7,9 +7,7 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -30,7 +27,6 @@ import static io.vertx.test.core.TestUtils.randomInt;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-@RunWith(VertxUnitRunner.class)
 public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQServiceTest.class);
@@ -42,7 +38,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testMessageOrderingWhenConsuming() throws IOException {
+  public void testMessageOrderingWhenConsuming(TestContext ctx) throws IOException {
 
     String queueName = "message_ordering_test";
     String address = queueName + ".address";
@@ -53,7 +49,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     // set up queue
     AMQP.Queue.DeclareOk ok = channel.queueDeclare(queueName, false, false, true, null);
-    assertNotNull(ok.getQueue());
+    ctx.assertNotNull(ok.getQueue());
     AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().contentType("text/plain").contentEncoding("UTF-8").build();
 
     // send  messages
@@ -62,27 +58,28 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     List<String> receivedOrder = Collections.synchronizedList(new ArrayList<>());
 
+    Async async = ctx.async(sendingOrder.size());
     vertx.eventBus().consumer(address, msg -> {
-      assertNotNull(msg);
+      ctx.assertNotNull(msg);
       JsonObject json = (JsonObject) msg.body();
-      assertNotNull(json);
+      ctx.assertNotNull(json);
       String body = json.getString("body");
-      assertNotNull(body);
+      ctx.assertNotNull(body);
       receivedOrder.add(body);
+      async.countDown();
     });
 
-    client.basicConsume(queueName, address, onSuccess(v -> {
-    }));
+    client.basicConsume(queueName, address, ctx.asyncAssertSuccess());
 
+    async.awaitSuccess(15000);
 
-    assertWaitUntil(() -> receivedOrder.size() == sendingOrder.size());
     for (int i = 0; i < sendingOrder.size(); i++) {
-      assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
+      ctx.assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
     }
   }
 
   @Test
-  public void testMessageOrderingWhenConsumingNewApi() throws IOException {
+  public void testMessageOrderingWhenConsumingNewApi(TestContext ctx) throws IOException {
 
     String queueName = randomAlphaString(10);
     String address = queueName + ".address";
@@ -93,7 +90,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     // set up queue
     AMQP.Queue.DeclareOk ok = channel.queueDeclare(queueName, false, false, true, null);
-    assertNotNull(ok.getQueue());
+    ctx.assertNotNull(ok.getQueue());
     AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().contentType("text/plain").contentEncoding("UTF-8").build();
 
     // send  messages
@@ -102,176 +99,162 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     List<String> receivedOrder = Collections.synchronizedList(new ArrayList<>());
 
+    Async async = ctx.async(sendingOrder.size());
     client.basicConsumer(queueName, consumerHandler -> {
       if (consumerHandler.succeeded()) {
         consumerHandler.result().handler(msg -> {
-          assertNotNull(msg);
+          ctx.assertNotNull(msg);
           String body = msg.body().toString();
-          assertNotNull(body);
+          ctx.assertNotNull(body);
           receivedOrder.add(body);
+          async.countDown();
         });
       } else {
-        fail();
+        ctx.fail();
       }
     });
 
+    async.awaitSuccess(15000);
 
-    assertWaitUntil(() -> receivedOrder.size() == sendingOrder.size());
     for (int i = 0; i < sendingOrder.size(); i++) {
-      assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
+      ctx.assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
     }
   }
 
   @Test
-  public void testBasicGet(TestContext context) throws Exception {
+  public void testBasicGet(TestContext ctx) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages);
-    Async async = context.async(count);
+    String q = setupQueue(ctx, messages);
+    Async async = ctx.async(count);
 
     // we have only ten seconds to get the 3 messages
-    long timeOutFailTimer = vertx.setTimer(10_000, t -> context.fail());
+    long timeOutFailTimer = vertx.setTimer(10_000, t -> ctx.fail());
 
-    vertx.setPeriodic(100, t -> {
-      client.basicGet(q, true, onSuccess(msg -> {
+    vertx.setPeriodic(100, id -> {
+      client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
         if (msg != null) {
           String body = msg.getString("body");
-          assertTrue(messages.contains(body));
-          if (async.count() == 1) {
+          ctx.assertTrue(messages.contains(body));
+          async.countDown();
+          if (async.count() == 0) {
+            vertx.cancelTimer(id);
             vertx.cancelTimer(timeOutFailTimer);
           }
-          async.countDown();
         }
       }));
     });
   }
 
   @Test
-  public void testBasicPublish() throws Exception {
-    String q = setupQueue(null);
+  public void testBasicPublish(TestContext ctx) throws Exception {
+    String q = setupQueue(ctx, null);
     String body = randomAlphaString(100);
     JsonObject message = new JsonObject().put("body", body);
-    client.basicPublish("", q, message, onSuccess(v -> {
-      client.basicGet(q, true, onSuccess(msg -> {
-        assertNotNull(msg);
-        assertEquals(body, msg.getString("body"));
-        testComplete();
+    client.basicPublish("", q, message, ctx.asyncAssertSuccess(v -> {
+      client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+        ctx.assertNotNull(msg);
+        ctx.assertEquals(body, msg.getString("body"));
       }));
     }));
-
-    await();
   }
 
   @Test
-  public void testBasicPublishWithConfirm() throws Exception {
-    String q = setupQueue(null);
+  public void testBasicPublishWithConfirm(TestContext ctx) throws Exception {
+    String q = setupQueue(ctx, null);
     String body = randomAlphaString(100);
     JsonObject message = new JsonObject().put("body", body);
 
-    client.confirmSelect(onSuccess(v -> {
-      client.basicPublish("", q, message, onSuccess(vv -> {
-        client.waitForConfirms(onSuccess(vvv -> {
-          client.basicGet(q, true, onSuccess(msg -> {
-            assertNotNull(msg);
-            assertEquals(body, msg.getString("body"));
-            testComplete();
+    client.confirmSelect(ctx.asyncAssertSuccess(v -> {
+      client.basicPublish("", q, message, ctx.asyncAssertSuccess(vv -> {
+        client.waitForConfirms(ctx.asyncAssertSuccess(vvv -> {
+          client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+            ctx.assertNotNull(msg);
+            ctx.assertEquals(body, msg.getString("body"));
           }));
         }));
       }));
     }));
-
-    await();
   }
 
   @Test
-  public void testBasicPublishWithConfirmAndTimeout() throws Exception {
-    String q = setupQueue(null);
+  public void testBasicPublishWithConfirmAndTimeout(TestContext ctx) throws Exception {
+    String q = setupQueue(ctx, null);
     String body = randomAlphaString(100);
     JsonObject message = new JsonObject().put("body", body);
 
-    client.confirmSelect(onSuccess(v -> {
-      client.basicPublish("", q, message, onSuccess(vv -> {
-        client.waitForConfirms(1000, onSuccess(vvv -> {
-          client.basicGet(q, true, onSuccess(msg -> {
-            assertNotNull(msg);
-            assertEquals(body, msg.getString("body"));
-            testComplete();
+    client.confirmSelect(ctx.asyncAssertSuccess(v -> {
+      client.basicPublish("", q, message, ctx.asyncAssertSuccess(vv -> {
+        client.waitForConfirms(1000, ctx.asyncAssertSuccess(vvv -> {
+          client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+            ctx.assertNotNull(msg);
+            ctx.assertEquals(body, msg.getString("body"));
           }));
         }));
       }));
     }));
-
-    await();
   }
 
   @Test
-  public void testBasicPublishJson() throws Exception {
-    String q = setupQueue(null);
+  public void testBasicPublishJson(TestContext ctx) throws Exception {
+    String q = setupQueue(ctx, null);
     JsonObject body = new JsonObject().put("foo", randomAlphaString(5)).put("bar", randomInt());
     JsonObject message = new JsonObject().put("body", body);
     message.put("properties", new JsonObject().put("contentType", "application/json"));
-    client.basicPublish("", q, message, onSuccess(v -> {
-      client.basicGet(q, true, onSuccess(msg -> {
-        assertNotNull(msg);
+    client.basicPublish("", q, message, ctx.asyncAssertSuccess(v -> {
+      client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+        ctx.assertNotNull(msg);
         JsonObject b = msg.getJsonObject("body");
-        assertNotNull(b);
-        assertFalse(body == b);
-        assertEquals(body, b);
-        testComplete();
+        ctx.assertNotNull(b);
+        ctx.assertFalse(body == b);
+        ctx.assertEquals(body, b);
       }));
     }));
-
-    await();
   }
 
   @Test
-  public void testBasicConsume() throws Exception {
+  public void testBasicConsume(TestContext ctx) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages);
+    String q = setupQueue(ctx, messages);
 
-    CountDownLatch latch = new CountDownLatch(count);
+    Async latch = ctx.async(count);
 
     vertx.eventBus().consumer("my.address", msg -> {
       JsonObject json = (JsonObject) msg.body();
-      assertNotNull(json);
+      ctx.assertNotNull(json);
       String body = json.getString("body");
-      assertNotNull(body);
-      assertTrue(messages.contains(body));
+      ctx.assertNotNull(body);
+      ctx.assertTrue(messages.contains(body));
       latch.countDown();
     });
 
-    client.basicConsume(q, "my.address", onSuccess(v -> {
+    client.basicConsume(q, "my.address", ctx.asyncAssertSuccess(v -> {
     }));
-
-    awaitLatch(latch);
-    testComplete();
   }
 
 
   @Test
-  public void testBasicCancel(TestContext context) throws Exception {
+  public void testBasicCancel(TestContext ctx) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages);
+    String q = setupQueue(ctx, messages);
 
-    Async async = context.async();
+    Async async = ctx.async();
     AtomicInteger received = new AtomicInteger(0);
-    AtomicReference<Long> timer = new AtomicReference<>(0L);
 
     vertx.eventBus().consumer("my.address", msg -> {
       int receivedTotal = received.incrementAndGet();
       log.info(String.format("received %d-th message", receivedTotal));
-      if (receivedTotal > count) {
-        context.fail();
-      }
-      synchronized (this) {
-        vertx.cancelTimer(timer.get());
-        timer.set(vertx.setTimer(1000, t -> async.countDown()));
+      ctx.assertFalse(receivedTotal > count);
+      if (receivedTotal == 3) {
+        vertx.setTimer(1000, id -> {
+          async.complete();
+        });
       }
     });
 
-    client.basicConsume(q, "my.address", onSuccess(tag -> {
+    client.basicConsume(q, "my.address", ctx.asyncAssertSuccess(tag -> {
       client.basicCancel(tag);
       String body = randomAlphaString(100);
       JsonObject message = new JsonObject().put("body", body);
@@ -280,101 +263,87 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testBasicConsumer(TestContext context) throws Exception {
+  public void testBasicConsumer(TestContext ctx) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages);
+    String q = setupQueue(ctx, messages);
 
-    Async latch = context.async();
+    Async latch = ctx.async(count);
 
-    client.basicConsumer(q, consumerHandler -> {
-      if (consumerHandler.succeeded()) {
-        consumerHandler.result().handler(msg -> {
-          assertNotNull(msg);
-          String body = msg.body().toString();
-          assertNotNull(body);
-          assertTrue(messages.contains(body));
-          latch.countDown();
-        });
-      } else {
-        fail();
-      }
-    });
+    client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+      consumer.handler(msg -> {
+        ctx.assertNotNull(msg);
+        String body = msg.body().toString();
+        ctx.assertNotNull(body);
+        ctx.assertTrue(messages.contains(body));
+        latch.countDown();
+      });
+    }));
   }
 
   @Test
-  public void testBasicConsumeWithErrorHandler() throws Exception {
+  public void testBasicConsumeWithErrorHandler(TestContext ctx) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages, "application/json");
+    String q = setupQueue(ctx, messages, "application/json");
 
-    CountDownLatch latch = new CountDownLatch(count);
+    Async latch = ctx.async(count);
 
-    vertx.eventBus().consumer("my.address", msg -> fail("Getting message with malformed json"));
+    vertx.eventBus().consumer("my.address", msg -> ctx.fail("Getting message with malformed json"));
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
-    client.basicConsume(q, "my.address", true, onSuccess(v -> {
-    }), errorHandler);
-
-    awaitLatch(latch);
-    testComplete();
+    client.basicConsume(q, "my.address", true, ctx.asyncAssertSuccess(), errorHandler);
   }
 
   @Test
-  public void testBasicConsumerWithErrorHandler(TestContext context) throws Exception {
+  public void testBasicConsumerWithErrorHandler(TestContext ctx) throws Exception {
     int count = 1;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages, "application/json");
+    String q = setupQueue(ctx, messages, "application/json");
 
-    Async latch = context.async(count);
+    Async latch = ctx.async(count);
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
-    client.basicConsumer(q, consumerHandler -> {
-      if (consumerHandler.succeeded()) {
-        RabbitMQConsumer result = consumerHandler.result();
-        result.exceptionHandler(errorHandler);
-        result.handler(json -> {
-          throw new IllegalStateException("Getting message with malformed json");
-        });
-      } else {
-        context.fail();
-      }
-    });
+    client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+      consumer.exceptionHandler(errorHandler);
+      consumer.handler(json -> {
+        throw new IllegalStateException("Getting message with malformed json");
+      });
+    }));
   }
 
   @Test
-  public void testBasicConsumeNoAutoAck() throws Exception {
+  public void testBasicConsumeNoAutoAck(TestContext ctx) throws Exception {
 
     int count = 3;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages);
+    String q = setupQueue(ctx, messages);
 
-    CountDownLatch latch = new CountDownLatch(count);
+    Async latch = ctx.async(count);
 
     vertx.eventBus().consumer("my.address", msg -> {
       JsonObject json = (JsonObject) msg.body();
-      handleUnAckDelivery(messages, latch, json);
+      handleUnAckDelivery(ctx, messages, latch, json);
     });
 
-    client.basicConsume(q, "my.address", false, onSuccess(v -> {
+    client.basicConsume(q, "my.address", false, ctx.asyncAssertSuccess(v -> {
     }));
 
-    awaitLatch(latch);
     //assert all messages should be consumed.
-    assertTrue(messages.isEmpty());
-    testComplete();
+    latch.awaitSuccess(15000);
+    ctx.assertTrue(messages.isEmpty());
   }
 
   @Test
-  public void testBasicConsumerNoAutoAck(TestContext context) throws Exception {
+  public void testBasicConsumerNoAutoAck(TestContext ctx) throws Exception {
 
     int count = 3;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages);
+    String q = setupQueue(ctx, messages);
 
-    Async latch = context.async(count);
+    Async latch = ctx.async(count);
 
     client.basicConsumer(q, new QueueOptions().setAutoAck(false), consumerHandler -> {
       if (consumerHandler.succeeded()) {
@@ -382,200 +351,168 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
         RabbitMQConsumer result = consumerHandler.result();
         result.exceptionHandler(e -> {
           log.error(e);
-          context.fail();
+          ctx.fail();
         });
-        result.handler(msg -> handleUnAckDelivery(messages, latch, msg));
+        result.handler(msg -> handleUnAckDelivery(ctx, messages, latch, msg));
       } else {
-        context.fail();
+        ctx.fail();
       }
     });
 
-    latch.await();
+    latch.awaitSuccess(15000);
     //assert all messages should be consumed.
-    assertTrue(messages.isEmpty());
+    ctx.assertTrue(messages.isEmpty());
   }
 
-  private void handleUnAckDelivery(Set<String> messages, CountDownLatch latch, JsonObject json) {
+  private void handleUnAckDelivery(TestContext ctx, Set<String> messages, Async latch, JsonObject json) {
     String body = json.getString("body");
-    assertTrue(messages.contains(body));
+    ctx.assertTrue(messages.contains(body));
     Long deliveryTag = json.getLong("deliveryTag");
     if (json.getBoolean("isRedeliver")) {
-      client.basicAck(deliveryTag, false, onSuccess(v -> {
+      client.basicAck(deliveryTag, false, ctx.asyncAssertSuccess(v -> {
         // remove the message if is redeliver (unacked)
         messages.remove(body);
         latch.countDown();
       }));
     } else {
       // send and Nack for every ready message
-      client.basicNack(deliveryTag, false, true, onSuccess(v -> {
-      }));
+      client.basicNack(deliveryTag, false, true, ctx.asyncAssertSuccess());
     }
   }
 
-  private void handleUnAckDelivery(Set<String> messages, Async async, RabbitMQMessage message) {
+  private void handleUnAckDelivery(TestContext ctx, Set<String> messages, Async async, RabbitMQMessage message) {
     String body = message.body().toString();
-    assertTrue(messages.contains(body));
+    ctx.assertTrue(messages.contains(body));
     Long deliveryTag = message.envelope().deliveryTag();
     log.info("message arrived: " + message.body().toString(message.properties().contentEncoding()));
     log.info("redelivered? : " + message.envelope().isRedelivery());
     if (message.envelope().isRedelivery()) {
-      client.basicAck(deliveryTag, false, onSuccess(v -> {
+      client.basicAck(deliveryTag, false, ctx.asyncAssertSuccess(v -> {
         // remove the message if is redeliver (unacked)
         messages.remove(body);
         async.countDown();
       }));
     } else {
       // send and Nack for every ready message
-      client.basicNack(deliveryTag, false, true, onSuccess(v -> {
-      }));
+      client.basicNack(deliveryTag, false, true, ctx.asyncAssertSuccess());
     }
   }
 
   @Test
-  public void testQueueDeclareAndDelete() {
+  public void testQueueDeclareAndDelete(TestContext ctx) {
     String queueName = randomAlphaString(10);
 
-    client.queueDeclare(queueName, false, false, true, asyncResult -> {
-      assertTrue(asyncResult.succeeded());
-      JsonObject result = asyncResult.result();
-      assertEquals(result.getString("queue"), queueName);
+    client.queueDeclare(queueName, false, false, true, ctx.asyncAssertSuccess(result -> {
+      ctx.assertEquals(result.getString("queue"), queueName);
 
-      client.queueDelete(queueName, deleteAsyncResult -> {
-        assertTrue(deleteAsyncResult.succeeded());
-        testComplete();
-      });
-    });
-
-    await();
+      client.queueDelete(queueName, ctx.asyncAssertSuccess());
+    }));
   }
 
   @Test
-  public void testQueueDeclareAndDeleteWithConfig() {
+  public void testQueueDeclareAndDeleteWithConfig(TestContext ctx) {
     String queueName = randomAlphaString(10);
     JsonObject config = new JsonObject();
     config.put("x-message-ttl", 10_000L);
 
-    client.queueDeclare(queueName, false, false, true, config, asyncResult -> {
-      assertTrue(asyncResult.succeeded());
-      JsonObject result = asyncResult.result();
-      assertEquals(result.getString("queue"), queueName);
+    client.queueDeclare(queueName, false, false, true, config, ctx.asyncAssertSuccess(result -> {
+      ctx.assertEquals(result.getString("queue"), queueName);
 
-      client.queueDelete(queueName, deleteAsyncResult -> {
-        assertTrue(deleteAsyncResult.succeeded());
-        testComplete();
-      });
-    });
-
-    await();
+      client.queueDelete(queueName, ctx.asyncAssertSuccess());
+    }));
   }
 
   //TODO: create an integration test with a test scenario
   @Test
-  public void testDeclareExchangeWithAlternateExchange() throws Exception {
+  public void testDeclareExchangeWithAlternateExchange(TestContext ctx) throws Exception {
     String exName = randomAlphaString(10);
     Map<String, String> params = new HashMap<>();
     params.put("alternate-exchange", "alt.ex");
-    client.exchangeDeclare(exName, "direct", false, true, params, createResult -> {
-      assertTrue(createResult.succeeded());
-      testComplete();
-    });
+    client.exchangeDeclare(exName, "direct", false, true, params, ctx.asyncAssertSuccess());
 
   }
 
   //TODO: create an integration test with a test scenario
   @Test
-  public void testDeclareExchangeWithDLX() throws Exception {
+  public void testDeclareExchangeWithDLX(TestContext ctx) throws Exception {
     String exName = randomAlphaString(10);
     Map<String, String> params = new HashMap<>();
     params.put("x-dead-letter-exchange", "dlx.exchange");
-    client.exchangeDeclare(exName, "direct", false, true, params, createResult -> {
-      assertTrue(createResult.succeeded());
-      testComplete();
-    });
+    client.exchangeDeclare(exName, "direct", false, true, params, ctx.asyncAssertSuccess());
   }
 
   @Test
-  public void testIsOpenChannel() {
+  public void testIsOpenChannel(TestContext ctx) {
 
     boolean result = client.isOpenChannel();
 
-    assertTrue(result);
+    ctx.assertTrue(result);
 
-    client.stop(voidAsyncResult -> {
-      assertFalse(client.isOpenChannel());
-      testComplete();
-    });
-
-    await();
+    client.stop(ctx.asyncAssertSuccess(v -> {
+      ctx.assertFalse(client.isOpenChannel());
+    }));
   }
 
   @Test
-  public void testIsConnected() {
+  public void testIsConnected(TestContext ctx) {
 
     boolean result = client.isConnected();
 
-    assertTrue(result);
+    ctx.assertTrue(result);
 
-    client.stop(voidAsyncResult -> {
-      assertFalse(client.isConnected());
-      testComplete();
-    });
-
-    await();
+    client.stop(ctx.asyncAssertSuccess(v -> {
+      ctx.assertFalse(client.isConnected());
+    }));
   }
 
   @Test
-  public void testGetMessageCount(TestContext context) throws Exception {
+  public void testGetMessageCount(TestContext ctx) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
-    String queue = setupQueue(messages);
-    Async async = context.async();
+    String queue = setupQueue(ctx, messages);
+    Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.messageCount(queue, onSuccess(messageCount -> {
-        assertEquals(count, messageCount.intValue());
+      client.messageCount(queue, ctx.asyncAssertSuccess(messageCount -> {
+          ctx.assertEquals(count, messageCount.intValue());
 
-        // remove the queue
-        client.queueDelete(queue, deleteAsyncResult -> async.countDown());
+          // remove the queue
+          client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
         })
       )
     );
   }
 
   @Test
-  public void consumerPrefetch(TestContext context) throws Exception {
+  public void consumerPrefetch(TestContext ctx) throws Exception {
     // 1. Limit number of unack messages to 2
     // 2. Send 3 messages
     // 3. Ensure only 2 messages received
     int count = 3;
     int amountOfUnAckMessages = count - 1;
 
-    Async prefetchDone = context.async();
-    client.basicQos(amountOfUnAckMessages, done -> prefetchDone.countDown());
+    Async prefetchDone = ctx.async();
+    client.basicQos(amountOfUnAckMessages, ctx.asyncAssertSuccess(v -> prefetchDone.complete()));
     prefetchDone.await();
 
     Set<String> messages = createMessages(count);
-    String queue = setupQueue(messages);
+    String queue = setupQueue(ctx, messages);
     String address = queue + ".address";
 
-    Async receivedExpectedNumberOfMessages = context.async(amountOfUnAckMessages);
+    Async receivedExpectedNumberOfMessages = ctx.async(amountOfUnAckMessages);
 
     vertx.eventBus().consumer(address, msg -> {
-      if (receivedExpectedNumberOfMessages.isCompleted()) {
-        context.fail();
-      } else {
-        receivedExpectedNumberOfMessages.countDown();
-      }
+      ctx.assertFalse(receivedExpectedNumberOfMessages.isCompleted());
+      receivedExpectedNumberOfMessages.countDown();
     });
 
-    client.basicConsume(queue, address, false, onSuccess(v -> {
-    }));
+    client.basicConsume(queue, address, false, ctx.asyncAssertSuccess());
 
-    receivedExpectedNumberOfMessages.await();
+    receivedExpectedNumberOfMessages.awaitSuccess(15000);
 
     // At the point we are sure, that we have already received 2 messages.
     // But, if 3rd message will arrive the test will fail in the next second.
-    Async async = context.async();
+    Async async = ctx.async();
     vertx.setTimer(1000, spent -> async.countDown());
   }
 

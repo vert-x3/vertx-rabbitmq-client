@@ -26,110 +26,89 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void consumerTagShouldBeTheSameAsInAMessage(TestContext context) throws Exception {
+  public void consumerTagShouldBeTheSameAsInAMessage(TestContext ctx) throws Exception {
     int count = 1;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages);
+    String q = setupQueue(ctx, messages);
 
-    Async messagesReceived = context.async(count);
+    Async messagesReceived = ctx.async(count);
 
-    client.basicConsumer(q, consumerHandler -> {
-      if (consumerHandler.succeeded()) {
-        consumerHandler.result().handler(msg -> {
-          assertNotNull(msg);
-          String tag = msg.consumerTag();
-          assertTrue(tag.equals(consumerHandler.result().consumerTag()));
-          String body = msg.body().toString();
-          assertNotNull(body);
-          assertTrue(messages.contains(body));
-          messagesReceived.countDown();
-        });
-      } else {
-        context.fail();
-      }
-    });
+    client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+      consumer.handler(msg -> {
+        ctx.assertNotNull(msg);
+        String tag = msg.consumerTag();
+        ctx.assertTrue(tag.equals(consumer.consumerTag()));
+        String body = msg.body().toString();
+        ctx.assertNotNull(body);
+        ctx.assertTrue(messages.contains(body));
+        messagesReceived.countDown();
+      });
+    }));
   }
 
 
   @Test
-  public void pauseAndResumeShouldWork(TestContext context) throws Exception {
+  public void pauseAndResumeShouldWork(TestContext ctx) throws Exception {
     int count = 1;
     Set<String> messages = createMessages(count);
-    String q = setupQueue(messages);
+    String q = setupQueue(ctx, messages);
 
-    Async paused = context.async();
-    Async resumed = context.async();
-    Async messageReceived = context.async();
+    Async paused = ctx.async();
+    Async resumed = ctx.async();
+    Async messageReceived = ctx.async();
 
-    client.basicConsumer(q, new QueueOptions(), consumerHandler -> {
-      if (consumerHandler.succeeded()) {
-        RabbitMQConsumer mqConsumer = consumerHandler.result();
-        mqConsumer.pause();
-        mqConsumer.handler(msg -> {
-          assertNotNull(msg);
-          // if not resumed, test should fail
-          if (resumed.count() == 1) {
-            context.fail();
-          } else {
-            messageReceived.countDown();
-          }
-        });
-        paused.countDown();
-        // wait for resume command
-        resumed.await();
-        mqConsumer.resume();
-      } else {
-        context.fail();
-      }
-    });
+    client.basicConsumer(q, new QueueOptions(), ctx.asyncAssertSuccess(consumer -> {
+      consumer.pause();
+      consumer.handler(msg -> {
+        ctx.assertNotNull(msg);
+        // if not resumed, test should fail
+        if (resumed.count() == 1) {
+          ctx.fail();
+        } else {
+          messageReceived.complete();
+        }
+      });
+      paused.complete();
+      // wait for resume command
+      resumed.await();
+      consumer.resume();
+    }));
 
-    paused.await();
+    paused.awaitSuccess(15000);
 
     // wait some time to ensure that handler will not receive any messages when it is paused
-    vertx.setTimer(1000, t -> resumed.countDown());
+    vertx.setTimer(1000, t -> resumed.complete());
   }
 
 
   @Test
-  public void endHandlerAndCancelShouldWorks(TestContext context) throws Exception {
+  public void endHandlerAndCancelShouldWorks(TestContext ctx) throws Exception {
     String q = randomAlphaString(10);
 
     channel.queueDeclare(q, false, false, true, null);
 
-    Async canceled = context.async();
-    Async endOfStream = context.async();
+    Async canceled = ctx.async();
+    Async endOfStream = ctx.async();
 
-    client.basicConsumer(q, consumerHandler -> {
-      if (consumerHandler.succeeded()) {
-        RabbitMQConsumer mqConsumer = consumerHandler.result();
-        mqConsumer.endHandler(v -> endOfStream.countDown());
-        mqConsumer.cancel(v -> {
-          if (v.succeeded()) {
-            canceled.countDown();
-          } else {
-            fail();
-          }
-        });
+    client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+      consumer.endHandler(v -> endOfStream.complete());
+      consumer.handler(msg -> ctx.fail());
+      consumer.cancel(ctx.asyncAssertSuccess(v -> canceled.complete()));
+    }));
 
-        mqConsumer.handler(msg -> fail());
-      } else {
-        fail();
-      }
-    });
-
-    canceled.await();
-    endOfStream.await();
+    canceled.awaitSuccess(15000);
+    endOfStream.awaitSuccess(15000);
 
     AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().build();
     channel.basicPublish("", q, properties, "whatever".getBytes());
 
     // wait some time to ensure that handler will not receive any messages when the stream is ended
-    Async done = context.async();
-    vertx.setTimer(1000, l -> done.countDown());
+    Async done = ctx.async();
+    vertx.setTimer(1000, l -> done.complete());
   }
 
   @Test
-  public void keepMostRecentOptionShouldWorks(TestContext context) throws Exception {
+  public void keepMostRecentOptionShouldWorks(TestContext ctx) throws Exception {
     int count = 2;
     int queueSize = 1;
     Set<String> messages = createMessages(count);
@@ -138,38 +117,33 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     iterator.next();
     String secondMessage = iterator.next();
 
-    String q = setupQueue(messages);
+    String q = setupQueue(ctx, messages);
 
-    Async paused = context.async();
-    Async secondReceived = context.async();
+    Async paused = ctx.async();
+    Async secondReceived = ctx.async();
     AtomicReference<RabbitMQConsumer> mqConsumer = new AtomicReference<>(null);
     QueueOptions queueOptions = new QueueOptions()
       .setKeepMostRecent(true)
       .setMaxInternalQueueSize(queueSize);
 
-    client.basicConsumer(q, queueOptions, consumerHandler -> {
-      if (consumerHandler.succeeded()) {
-        RabbitMQConsumer consumer = consumerHandler.result();
-        mqConsumer.set(consumer);
-        consumer.pause();
-        consumer.handler(msg -> {
-          assertTrue("only second message should be stored", msg.body().toString().equals(secondMessage));
-          secondReceived.countDown();
-        });
-        paused.countDown();
-      } else {
-        context.fail();
-      }
-    });
+    client.basicConsumer(q, queueOptions, ctx.asyncAssertSuccess(consumer -> {
+      mqConsumer.set(consumer);
+      consumer.pause();
+      consumer.handler(msg -> {
+        ctx.assertTrue(msg.body().toString().equals(secondMessage), "only second message should be stored");
+        secondReceived.complete();
+      });
+      paused.complete();
+    }));
 
-    paused.await();
+    paused.awaitSuccess(15000);
 
-    Async done = context.async();
+    Async done = ctx.async();
     // resume in 10 seconds, so message should be received and stored
     vertx.setTimer(1000, l -> {
       mqConsumer.get().resume();
       // wait some time to ensure that handler will be called only with the second message
-      vertx.setTimer(1000, t -> done.countDown());
+      vertx.setTimer(1000, t -> done.complete());
     });
   }
 }

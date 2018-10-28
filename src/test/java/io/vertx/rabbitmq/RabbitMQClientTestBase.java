@@ -3,7 +3,12 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
-import io.vertx.test.core.VertxTestBase;
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,13 +17,15 @@ import java.util.concurrent.TimeUnit;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
 
-public class RabbitMQClientTestBase extends VertxTestBase {
+@RunWith(VertxUnitRunner.class)
+public class RabbitMQClientTestBase {
 
   public static final String CLOUD_AMQP_URI = "amqps://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp" +
     ".com/xvjvsrrc";
 
   protected RabbitMQClient client;
   protected Channel channel;
+  protected Vertx vertx;
 
   protected void connect() throws Exception {
     if (client != null) {
@@ -51,22 +58,29 @@ public class RabbitMQClientTestBase extends VertxTestBase {
     return config;
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @Before
+  public void setUp() throws Exception {
+    vertx = Vertx.vertx();
+  }
+
+  @After
+  public void tearDown(TestContext ctx) throws Exception {
     if (channel != null) {
       channel.close();
     }
-    super.tearDown();
+    if (vertx != null) {
+      vertx.close(ctx.asyncAssertSuccess());
+    }
   }
 
-  String setupQueue(Set<String> messages) throws Exception {
-    return setupQueue(messages, null);
+  String setupQueue(TestContext ctx, Set<String> messages) throws Exception {
+    return setupQueue(ctx, messages, null);
   }
 
-  String setupQueue(Set<String> messages, String contentType) throws Exception {
+  String setupQueue(TestContext ctx, Set<String> messages, String contentType) throws Exception {
     String queue = randomAlphaString(10);
     AMQP.Queue.DeclareOk ok = channel.queueDeclare(queue, false, false, true, null);
-    assertNotNull(ok.getQueue());
+    ctx.assertNotNull(ok.getQueue());
     AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
       .contentType(contentType).contentEncoding("UTF-8").build();
 

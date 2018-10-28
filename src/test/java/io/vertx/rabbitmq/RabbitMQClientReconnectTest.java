@@ -2,10 +2,10 @@ package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.core.net.*;
+import io.vertx.ext.unit.TestContext;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -68,8 +68,8 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
+  public void tearDown(TestContext ctx) throws Exception {
+    super.tearDown(ctx);
     if (proxyServer != null) {
       proxyServer.close();
     }
@@ -103,24 +103,22 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testReconnect() throws Exception {
+  public void testReconnect(TestContext ctx) throws Exception {
     connectionRetryDelay = 100;
     connectionRetries = 2;
     startProxy(2);
     connect();
-    CountDownLatch latch = new CountDownLatch(1);
-    client.stop(onSuccess(v -> latch.countDown()));
-    awaitLatch(latch);
+    client.stop(ctx.asyncAssertSuccess());
   }
 
   @Test
-  public void testReconnectFail() throws Exception {
+  public void testReconnectFail(TestContext ctx) throws Exception {
     connectionRetryDelay = 100;
     connectionRetries = 2;
     startProxy(3);
     try {
       connect();
-      fail();
+      ctx.fail();
     } catch (Exception ignore) {
       // Expected
     }
