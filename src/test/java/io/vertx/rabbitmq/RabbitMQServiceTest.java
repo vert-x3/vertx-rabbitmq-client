@@ -271,7 +271,9 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async latch = ctx.async(count);
 
     client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+      System.out.println("CONSUMING");
       consumer.handler(msg -> {
+        System.out.println("GOT MESSAGE");
         ctx.assertNotNull(msg);
         String body = msg.body().toString();
         ctx.assertNotNull(body);

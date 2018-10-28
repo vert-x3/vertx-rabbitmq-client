@@ -27,7 +27,7 @@ public class QueueConsumerHandler extends DefaultConsumer {
     super(channel);
     this.handlerContext = vertx.getOrCreateContext();
     this.includeProperties = includeProperties;
-    this.queue = new RabbitMQConsumerImpl(vertx, this, options);
+    this.queue = new RabbitMQConsumerImpl(handlerContext, this, options);
   }
 
   @Override
