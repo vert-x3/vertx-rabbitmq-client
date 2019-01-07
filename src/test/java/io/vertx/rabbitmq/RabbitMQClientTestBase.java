@@ -8,7 +8,10 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.runner.RunWith;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
+import org.testcontainers.containers.GenericContainer;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -20,12 +23,14 @@ import static io.vertx.test.core.TestUtils.randomAlphaString;
 @RunWith(VertxUnitRunner.class)
 public class RabbitMQClientTestBase {
 
-  public static final String CLOUD_AMQP_URI = "amqps://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp" +
-    ".com/xvjvsrrc";
-
   protected RabbitMQClient client;
   protected Channel channel;
   protected Vertx vertx;
+
+  @ClassRule
+  public static final GenericContainer rabbitmq = new FixedHostPortGenericContainer<>("rabbitmq:3.7")
+    .withCreateContainerCmdModifier(cmd -> cmd.withHostName("my-rabbit"))
+    .withExposedPorts(5672);
 
   protected void connect() throws Exception {
     if (client != null) {
@@ -51,10 +56,7 @@ public class RabbitMQClientTestBase {
 
   public RabbitMQOptions config() throws Exception {
     RabbitMQOptions config = new RabbitMQOptions();
-    if (!"true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
-      // Use CloudAMQP
-      config.setUri(CLOUD_AMQP_URI);
-    }
+    config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5672));
     return config;
   }
 
