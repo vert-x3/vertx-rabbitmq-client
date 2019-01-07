@@ -1,5 +1,6 @@
 package io.vertx.rabbitmq;
 
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -8,12 +9,16 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.runner.RunWith;
+import org.testcontainers.containers.FixedHostPortGenericContainer;
+import org.testcontainers.containers.GenericContainer;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
 
@@ -26,6 +31,17 @@ public class RabbitMQClientTestBase {
   protected RabbitMQClient client;
   protected Channel channel;
   protected Vertx vertx;
+
+  @ClassRule
+  public static final GenericContainer rabbitmq
+    = new FixedHostPortGenericContainer("rabbitmq:3.7")
+    .withCreateContainerCmdModifier(new Consumer<CreateContainerCmd>() {
+      @Override
+      public void accept(CreateContainerCmd createContainerCmd) {
+        createContainerCmd.withHostName("my-rabbit");
+      }
+    })
+    .withExposedPorts(5672);
 
   protected void connect() throws Exception {
     if (client != null) {
@@ -51,10 +67,7 @@ public class RabbitMQClientTestBase {
 
   public RabbitMQOptions config() throws Exception {
     RabbitMQOptions config = new RabbitMQOptions();
-    if (!"true".equalsIgnoreCase(System.getProperty("rabbitmq.local"))) {
-      // Use CloudAMQP
-      config.setUri(CLOUD_AMQP_URI);
-    }
+    config.setUri("amqp://localhost:" + rabbitmq.getMappedPort(5672));
     return config;
   }
 

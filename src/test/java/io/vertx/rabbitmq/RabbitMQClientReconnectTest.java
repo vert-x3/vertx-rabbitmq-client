@@ -83,19 +83,16 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
     RabbitMQOptions cfg = super.config();
     String username;
     String password;
-    String vhost;
     if (cfg.getUri() != null) {
       ConnectionFactory cf = new ConnectionFactory();
       cf.setUri(cfg.getUri());
       username = cf.getUsername();
       password = cf.getPassword();
-      vhost = "/" + cf.getVirtualHost();
     } else {
       username = "guest";
       password = "guest";
-      vhost = "";
     }
-    String uri = "amqp://" + username +  ":" + password + "@localhost:" + PROXY_PORT + vhost;
+    String uri = "amqp://" + username +  ":" + password + "@localhost:" + PROXY_PORT;
     return new RabbitMQOptions()
       .setUri(uri)
       .setConnectionRetries(connectionRetries)
