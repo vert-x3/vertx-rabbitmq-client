@@ -67,7 +67,7 @@ public class RabbitMQClientTestBase {
 
   public RabbitMQOptions config() throws Exception {
     RabbitMQOptions config = new RabbitMQOptions();
-    config.setUri("amqp://localhost:" + rabbitmq.getMappedPort(5672));
+    config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5672));
     return config;
   }
 
