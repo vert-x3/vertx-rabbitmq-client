@@ -1,6 +1,5 @@
 package io.vertx.rabbitmq;
 
-import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
@@ -18,29 +17,19 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
 
 @RunWith(VertxUnitRunner.class)
 public class RabbitMQClientTestBase {
 
-  public static final String CLOUD_AMQP_URI = "amqps://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp" +
-    ".com/xvjvsrrc";
-
   protected RabbitMQClient client;
   protected Channel channel;
   protected Vertx vertx;
 
   @ClassRule
-  public static final GenericContainer rabbitmq
-    = new FixedHostPortGenericContainer("rabbitmq:3.7")
-    .withCreateContainerCmdModifier(new Consumer<CreateContainerCmd>() {
-      @Override
-      public void accept(CreateContainerCmd createContainerCmd) {
-        createContainerCmd.withHostName("my-rabbit");
-      }
-    })
+  public static final GenericContainer rabbitmq = new FixedHostPortGenericContainer<>("rabbitmq:3.7")
+    .withCreateContainerCmdModifier(cmd -> cmd.withHostName("my-rabbit"))
     .withExposedPorts(5672);
 
   protected void connect() throws Exception {
