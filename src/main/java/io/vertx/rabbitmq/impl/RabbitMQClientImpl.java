@@ -1,23 +1,39 @@
 package io.vertx.rabbitmq.impl;
 
-import com.rabbitmq.client.*;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Address;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.GetResponse;
+import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import static io.vertx.rabbitmq.impl.Utils.*;
+import static io.vertx.rabbitmq.impl.Utils.encode;
+import static io.vertx.rabbitmq.impl.Utils.fromJson;
+import static io.vertx.rabbitmq.impl.Utils.parse;
+import static io.vertx.rabbitmq.impl.Utils.populate;
+import static io.vertx.rabbitmq.impl.Utils.put;
+import static io.vertx.rabbitmq.impl.Utils.toJson;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -60,8 +76,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       cf.setUsername(config.getUser());
       cf.setPassword(config.getPassword());
       addresses = config.getAddresses().isEmpty()
-                  ? Collections.singletonList(new Address(config.getHost(), config.getPort()))
-                  : config.getAddresses();
+        ? Collections.singletonList(new Address(config.getHost(), config.getPort()))
+        : config.getAddresses();
       cf.setVirtualHost(config.getVirtualHost());
     }
 
@@ -76,8 +92,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     //TODO: Support other configurations
 
     return addresses == null
-           ? cf.newConnection()
-           : cf.newConnection(addresses);
+      ? cf.newConnection()
+      : cf.newConnection(addresses);
   }
 
   @Override
@@ -220,7 +236,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(  resultHandler, channel -> {
+    forChannel(resultHandler, channel -> {
 
       channel.confirmSelect();
 
@@ -367,6 +383,19 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.queueBind(queue, exchange, routingKey);
+      return null;
+    });
+  }
+
+  @Override
+  public void queueUnbind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
+    queueUnbind(queue, exchange, routingKey, null, resultHandler);
+  }
+
+  @Override
+  public void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> config, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.queueUnbind(queue, exchange, routingKey, config);
       return null;
     });
   }

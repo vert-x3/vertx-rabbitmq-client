@@ -339,6 +339,20 @@ public interface RabbitMQClient {
   void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Unbinds a queue from an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueUnbind(String, String, String)
+   */
+  void queueUnbind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Unbinds a queue from an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueUnbind(String, String, String)
+   */
+  void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> config, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
    * Returns the number of messages in a queue ready to be delivered.
    *
    * @see com.rabbitmq.client.Channel#messageCount(String)
