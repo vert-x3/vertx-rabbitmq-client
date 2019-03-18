@@ -2,9 +2,9 @@ package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.Handler;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import org.junit.Test;
@@ -17,12 +17,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
 import static io.vertx.test.core.TestUtils.randomInt;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -514,6 +514,17 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     // But, if 3rd message will arrive the test will fail in the next second.
     Async async = ctx.async();
     vertx.setTimer(1000, spent -> async.countDown());
+  }
+
+  @Test
+  public void bindQueueTest(TestContext ctx) throws Exception {
+    Async bindQueueDone = ctx.async();
+    String routingKey = randomAlphaString(10);
+    String exchange = setupExchange(ctx);
+    String queue = setupQueue(ctx);
+    client.queueBind(queue, exchange, routingKey, ctx.asyncAssertSuccess(v -> bindQueueDone.complete()));
+    bindQueueDone.await();
+    assertNotNull(rabbitMQ.getHttpClient().getQueueBindingsBetween("/", exchange, queue));
   }
 
   //TODO More tests

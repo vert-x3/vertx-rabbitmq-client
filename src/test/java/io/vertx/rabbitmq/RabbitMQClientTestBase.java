@@ -1,6 +1,7 @@
 package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.core.Vertx;
@@ -10,9 +11,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
-import org.testcontainers.containers.FixedHostPortGenericContainer;
-import org.testcontainers.containers.GenericContainer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -28,9 +28,7 @@ public class RabbitMQClientTestBase {
   protected Vertx vertx;
 
   @ClassRule
-  public static final GenericContainer rabbitmq = new FixedHostPortGenericContainer<>("rabbitmq:3.7")
-    .withCreateContainerCmdModifier(cmd -> cmd.withHostName("my-rabbit"))
-    .withExposedPorts(5672);
+  public static final RabbitMQContainer rabbitMQ = new RabbitMQContainer();
 
   protected void connect() throws Exception {
     if (client != null) {
@@ -56,7 +54,7 @@ public class RabbitMQClientTestBase {
 
   public RabbitMQOptions config() throws Exception {
     RabbitMQOptions config = new RabbitMQOptions();
-    config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5672));
+    config.setUri("amqp://" + rabbitMQ.getContainerIpAddress() + ":" + rabbitMQ.getMappedPort(5672));
     return config;
   }
 
@@ -75,6 +73,17 @@ public class RabbitMQClientTestBase {
     }
   }
 
+  String setupExchange(TestContext ctx) throws Exception {
+    String exchange = randomAlphaString(10);
+    AMQP.Exchange.DeclareOk ok = channel.exchangeDeclare(exchange, BuiltinExchangeType.DIRECT, false, true, null);
+    ctx.assertNotNull(ok);
+    return exchange;
+  }
+
+  String setupQueue(TestContext ctx) throws Exception {
+    return setupQueue(ctx, null, null);
+  }
+
   String setupQueue(TestContext ctx, Set<String> messages) throws Exception {
     return setupQueue(ctx, messages, null);
   }
@@ -88,7 +97,7 @@ public class RabbitMQClientTestBase {
 
     if (messages != null) {
       for (String msg : messages) {
-        channel.basicPublish("", queue, properties, msg.getBytes("UTF-8"));
+        channel.basicPublish("", queue, properties, msg.getBytes(StandardCharsets.UTF_8));
       }
     }
     return queue;
