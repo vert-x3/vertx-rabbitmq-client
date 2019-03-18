@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 public class RabbitMQContainer extends GenericContainer {
   private Integer managementPort = 15672;
   private Integer connectionPort = 5672;
+  private String defaultVHost = "/";
 
   RabbitMQContainer() {
     super("rabbitmq:3-management");
@@ -25,6 +26,10 @@ public class RabbitMQContainer extends GenericContainer {
       .append("/api/")
       .toString();
     return new Client(url, "guest", "guest");
+  }
+
+  public String getDefaultVHost() {
+    return defaultVHost;
   }
 }
 

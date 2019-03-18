@@ -1,6 +1,7 @@
 package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.http.client.domain.BindingInfo;
 import io.vertx.core.Handler;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -22,7 +23,8 @@ import java.util.stream.IntStream;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
 import static io.vertx.test.core.TestUtils.randomInt;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -524,8 +526,27 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     String queue = setupQueue(ctx);
     client.queueBind(queue, exchange, routingKey, ctx.asyncAssertSuccess(v -> bindQueueDone.complete()));
     bindQueueDone.await();
-    assertNotNull(rabbitMQ.getHttpClient().getQueueBindingsBetween("/", exchange, queue));
+    List<BindingInfo> bindingInfo = rabbitMQ.getHttpClient().getQueueBindingsBetween(rabbitMQ.getDefaultVHost(), exchange, queue);
+    assertFalse(bindingInfo.isEmpty());
   }
+
+  @Test
+  public void unbindQueueTest(TestContext ctx) throws Exception {
+    Async bindQueueDone = ctx.async();
+    Async unbindQueueDone = ctx.async();
+    String routingKey = randomAlphaString(10);
+    String exchange = setupExchange(ctx);
+    String queue = setupQueue(ctx);
+    client.queueBind(queue, exchange, routingKey, ctx.asyncAssertSuccess(v -> bindQueueDone.complete()));
+    bindQueueDone.await();
+    assertFalse(rabbitMQ.getHttpClient().getQueueBindingsBetween(rabbitMQ.getDefaultVHost(), exchange, queue).isEmpty());
+
+    client.queueUnbind(queue, exchange, routingKey, ctx.asyncAssertSuccess(v -> unbindQueueDone.complete()));
+    unbindQueueDone.await();
+    List<BindingInfo> bindingInfo = rabbitMQ.getHttpClient().getQueueBindingsBetween(rabbitMQ.getDefaultVHost(), exchange, queue);
+    assertTrue(bindingInfo.isEmpty());
+  }
+
 
   //TODO More tests
 }
