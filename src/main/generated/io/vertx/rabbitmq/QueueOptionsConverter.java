@@ -4,12 +4,19 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import io.vertx.core.spi.json.JsonDecoder;
 
 /**
- * Converter for {@link io.vertx.rabbitmq.QueueOptions}.
+ * Converter and Codec for {@link io.vertx.rabbitmq.QueueOptions}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.rabbitmq.QueueOptions} original class using Vert.x codegen.
  */
-public class QueueOptionsConverter {
+public class QueueOptionsConverter implements JsonDecoder<QueueOptions, JsonObject> {
+
+  public static final QueueOptionsConverter INSTANCE = new QueueOptionsConverter();
+
+  @Override public QueueOptions decode(JsonObject value) { return (value != null) ? new QueueOptions(value) : null; }
+
+  @Override public Class<QueueOptions> getTargetClass() { return QueueOptions.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, QueueOptions obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
