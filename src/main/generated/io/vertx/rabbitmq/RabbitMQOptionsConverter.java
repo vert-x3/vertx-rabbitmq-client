@@ -4,19 +4,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import io.vertx.core.spi.json.JsonDecoder;
 
 /**
- * Converter and Codec for {@link io.vertx.rabbitmq.RabbitMQOptions}.
+ * Converter and mapper for {@link io.vertx.rabbitmq.RabbitMQOptions}.
  * NOTE: This class has been automatically generated from the {@link io.vertx.rabbitmq.RabbitMQOptions} original class using Vert.x codegen.
  */
-public class RabbitMQOptionsConverter implements JsonDecoder<RabbitMQOptions, JsonObject> {
+public class RabbitMQOptionsConverter {
 
-  public static final RabbitMQOptionsConverter INSTANCE = new RabbitMQOptionsConverter();
-
-  @Override public RabbitMQOptions decode(JsonObject value) { return (value != null) ? new RabbitMQOptions(value) : null; }
-
-  @Override public Class<RabbitMQOptions> getTargetClass() { return RabbitMQOptions.class; }
 
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, RabbitMQOptions obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
