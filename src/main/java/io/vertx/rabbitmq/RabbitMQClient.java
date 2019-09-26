@@ -58,14 +58,14 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicAck(long, boolean)
    */
-  void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<JsonObject>> resultHandler);
+  void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Reject one or several received messages.
    *
    * @see com.rabbitmq.client.Channel#basicNack(long, boolean, boolean)
    */
-  void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<JsonObject>> resultHandler);
+  void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Retrieve a message from a queue using AMQP.Basic.Get
