@@ -14,8 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+  import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
@@ -35,48 +34,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testMessageOrderingWhenConsuming(TestContext ctx) throws IOException {
-
-    String queueName = "message_ordering_test";
-    String address = queueName + ".address";
-
-    int count = 1000;
-
-    List<String> sendingOrder = IntStream.range(1, count).boxed().map(Object::toString).collect(Collectors.toList());
-
-    // set up queue
-    AMQP.Queue.DeclareOk ok = channel.queueDeclare(queueName, false, false, true, null);
-    ctx.assertNotNull(ok.getQueue());
-    AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder().contentType("text/plain").contentEncoding("UTF-8").build();
-
-    // send  messages
-    for (String msg : sendingOrder)
-      channel.basicPublish("", queueName, properties, msg.getBytes("UTF-8"));
-
-    List<String> receivedOrder = Collections.synchronizedList(new ArrayList<>());
-
-    Async async = ctx.async(sendingOrder.size());
-    vertx.eventBus().consumer(address, msg -> {
-      ctx.assertNotNull(msg);
-      JsonObject json = (JsonObject) msg.body();
-      ctx.assertNotNull(json);
-      String body = json.getString("body");
-      ctx.assertNotNull(body);
-      receivedOrder.add(body);
-      async.countDown();
-    });
-
-    client.basicConsume(queueName, address, ctx.asyncAssertSuccess());
-
-    async.awaitSuccess(15000);
-
-    for (int i = 0; i < sendingOrder.size(); i++) {
-      ctx.assertTrue(sendingOrder.get(i).equals(receivedOrder.get(i)));
-    }
-  }
-
-  @Test
-  public void testMessageOrderingWhenConsumingNewApi(TestContext ctx) throws IOException {
+  public void testMessageOrdering(TestContext ctx) throws IOException {
 
     String queueName = randomAlphaString(10);
     String address = queueName + ".address";
@@ -210,56 +168,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testBasicConsume(TestContext ctx) throws Exception {
-    int count = 3;
-    Set<String> messages = createMessages(count);
-    String q = setupQueue(ctx, messages);
-
-    Async latch = ctx.async(count);
-
-    vertx.eventBus().consumer("my.address", msg -> {
-      JsonObject json = (JsonObject) msg.body();
-      ctx.assertNotNull(json);
-      String body = json.getString("body");
-      ctx.assertNotNull(body);
-      ctx.assertTrue(messages.contains(body));
-      latch.countDown();
-    });
-
-    client.basicConsume(q, "my.address", ctx.asyncAssertSuccess(v -> {
-    }));
-  }
-
-
-  @Test
-  public void testBasicCancel(TestContext ctx) throws Exception {
-    int count = 3;
-    Set<String> messages = createMessages(count);
-    String q = setupQueue(ctx, messages);
-
-    Async async = ctx.async();
-    AtomicInteger received = new AtomicInteger(0);
-
-    vertx.eventBus().consumer("my.address", msg -> {
-      int receivedTotal = received.incrementAndGet();
-      log.info(String.format("received %d-th message", receivedTotal));
-      ctx.assertFalse(receivedTotal > count);
-      if (receivedTotal == 3) {
-        vertx.setTimer(1000, id -> {
-          async.complete();
-        });
-      }
-    });
-
-    client.basicConsume(q, "my.address", ctx.asyncAssertSuccess(tag -> {
-      client.basicCancel(tag);
-      String body = randomAlphaString(100);
-      JsonObject message = new JsonObject().put("body", body);
-      client.basicPublish("", q, message, null);
-    }));
-  }
-
-  @Test
   public void testBasicConsumer(TestContext ctx) throws Exception {
     int count = 3;
     Set<String> messages = createMessages(count);
@@ -276,21 +184,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
         latch.countDown();
       });
     }));
-  }
-
-  @Test
-  public void testBasicConsumeWithErrorHandler(TestContext ctx) throws Exception {
-    int count = 3;
-    Set<String> messages = createMessages(count);
-    String q = setupQueue(ctx, messages, "application/json");
-
-    Async latch = ctx.async(count);
-
-    vertx.eventBus().consumer("my.address", msg -> ctx.fail("Getting message with malformed json"));
-
-    Handler<Throwable> errorHandler = throwable -> latch.countDown();
-
-    client.basicConsume(q, "my.address", true, ctx.asyncAssertSuccess(), errorHandler);
   }
 
   @Test
@@ -456,16 +349,15 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Set<String> messages = createMessages(count);
     String queue = setupQueue(ctx, messages);
-    String address = queue + ".address";
 
     Async receivedExpectedNumberOfMessages = ctx.async(amountOfUnAckMessages);
 
-    vertx.eventBus().consumer(address, msg -> {
-      ctx.assertFalse(receivedExpectedNumberOfMessages.isCompleted());
-      receivedExpectedNumberOfMessages.countDown();
-    });
-
-    client.basicConsume(queue, address, false, ctx.asyncAssertSuccess());
+    client.basicConsumer(queue, new QueueOptions().setAutoAck(false), ctx.asyncAssertSuccess(consumer -> {
+      consumer.handler(msg -> {
+        ctx.assertFalse(receivedExpectedNumberOfMessages.isCompleted());
+        receivedExpectedNumberOfMessages.countDown();
+      });
+    }));
 
     receivedExpectedNumberOfMessages.awaitSuccess(15000);
 

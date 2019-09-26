@@ -74,61 +74,7 @@ public interface RabbitMQClient {
    */
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
 
-  /**
-   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
-   * <p>
-   * Start a non-nolocal, non-exclusive consumer, with auto acknowledgement and a server-generated consumerTag.
-   *
-   * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
-   */
-  @Deprecated
-  void basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler);
-
-  /**
-   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
-   * <p>
-   * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag.
-   *
-   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
-   */
-  @Deprecated
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler);
-
-  /**
-   * Use {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)} instead
-   * <p>
-   * Start a non-nolocal, non-exclusive consumer, with a server-generated consumerTag and error handler
-   *
-   * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
-   */
-  @Deprecated
-  void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler, Handler<Throwable> errorHandler);
-
-  /**
-   * Instead of using this and {@link #basicConsume(String, String, Handler)} method,
-   * {@link #basicConsumer(String, QueueOptions, Handler)} and {@link RabbitMQConsumer#cancel(Handler)} instead
-   * <p>
-   * This method should be called when you want to cancel consumption from a queue,
-   * started by calling {@link #basicConsume(String, String, Handler)}.
-   *
-   * @see Channel#basicCancel(String)
-   */
-  @Deprecated
-  void basicCancel(String consumerTag);
-
-  /**
-   * Instead of using this and {@link #basicConsume(String, String, Handler)} method,
-   * {@link #basicConsumer(String, QueueOptions, Handler)} and {@link RabbitMQConsumer#cancel(Handler)} instead
-   * <p>
-   * This method should be called when you want to cancel consumption from a queue,
-   * started by calling {@link #basicConsume(String, String, Handler)}.
-   *
-   * @see Channel#basicCancel(String)
-   */
-  @Deprecated
-  void basicCancel(String consumerTag, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
+ /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    * @see RabbitMQClient#basicConsumer(String, Handler)
    */
@@ -242,19 +188,6 @@ public interface RabbitMQClient {
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler);
 
   /**
-   * Declare an exchange with additional parameters such as dead lettering or an alternate exchnage.
-   *
-   * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
-   * @see #exchangeDeclare(String, String, boolean, boolean, JsonObject, Handler)
-   * @deprecated Use {@link #exchangeDeclare(String, String, boolean, boolean, JsonObject, Handler)} instead for
-   * support for more than just String config values
-   */
-  @GenIgnore
-  @Deprecated
-  void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<Void>> resultHandler);
-
-
-  /**
    * Declare an exchange with additional parameters such as dead lettering, an alternate exchange or TTL.
    *
    * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
@@ -296,18 +229,6 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
    */
   void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler);
-
-  /**
-   * Declare a queue with config options
-   *
-   * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
-   * @see #queueDeclare(String, boolean, boolean, boolean, JsonObject, Handler)
-   * @deprecated See {@link #queueDeclare(String, boolean, boolean, boolean, JsonObject, Handler)} instead for
-   * support for more than just String config values
-   */
-  @GenIgnore
-  @Deprecated
-  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
    * Declare a queue with config options

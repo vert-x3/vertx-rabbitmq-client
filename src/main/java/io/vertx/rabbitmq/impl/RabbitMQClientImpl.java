@@ -133,44 +133,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicConsume(String queue, String address, Handler<AsyncResult<String>> resultHandler) {
-    basicConsume(queue, address, true, resultHandler);
-  }
-
-  @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler) {
-    basicConsume(queue, address, autoAck, resultHandler, null);
-  }
-
-  @Override
-  public void basicConsume(String queue, String address, boolean autoAck, Handler<AsyncResult<String>> resultHandler, Handler<Throwable> errorHandler) {
-    forChannel(resultHandler, channel ->
-      channel.basicConsume(queue, autoAck, new ConsumerHandler(vertx, channel, includeProperties, ar -> {
-        if (ar.succeeded()) {
-          vertx.eventBus().send(address, ar.result());
-        } else {
-          log.error("Exception occurred inside rabbitmq service consumer.", ar.cause());
-          if (errorHandler != null) {
-            errorHandler.handle(ar.cause());
-          }
-        }
-      })));
-  }
-
-  @Override
-  public void basicCancel(String consumerTag) {
-    basicCancel(consumerTag, null);
-  }
-
-  @Override
-  public void basicCancel(String consumerTag, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.basicCancel(consumerTag);
-      return null;
-    });
-  }
-
-  @Override
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler) {
     forChannel(resultHandler, (channel) -> {
       GetResponse response = channel.basicGet(queue, autoAck);
@@ -261,15 +223,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     exchangeDeclare(exchange, type, durable, autoDelete, emptyConfig, resultHandler);
   }
 
-  @Deprecated
-  @Override
-  public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Map<String, String> config,
-                              Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.exchangeDeclare(exchange, type, durable, autoDelete, toArgumentsMap(config));
-      return null;
-    });
-  }
 
   @Override
   public void exchangeDeclare(
@@ -321,15 +274,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler) {
     queueDeclare(queue, durable, exclusive, autoDelete, emptyConfig, resultHandler);
-  }
-
-  @Deprecated
-  @Override
-  public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Map<String, String> config, Handler<AsyncResult<JsonObject>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, toArgumentsMap(config));
-      return toJson(result);
-    });
   }
 
   @Override
