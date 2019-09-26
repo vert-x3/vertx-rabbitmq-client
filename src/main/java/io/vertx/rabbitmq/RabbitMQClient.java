@@ -7,6 +7,7 @@ import com.rabbitmq.client.Consumer;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
@@ -63,6 +64,11 @@ public interface RabbitMQClient {
   void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Like {@link #basicAck(long, boolean, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> basicAck(long deliveryTag, boolean multiple);
+
+  /**
    * Reject one or several received messages.
    *
    * @see com.rabbitmq.client.Channel#basicNack(long, boolean, boolean)
@@ -70,11 +76,21 @@ public interface RabbitMQClient {
   void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Like {@link #basicNack(long, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> basicNack(long deliveryTag, boolean multiple, boolean requeue);
+
+  /**
    * Retrieve a message from a queue using AMQP.Basic.Get
    *
    * @see com.rabbitmq.client.Channel#basicGet(String, boolean)
    */
   void basicGet(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQMessage>> resultHandler);
+
+  /**
+   * Like {@link #basicGet(String, boolean, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<RabbitMQMessage> basicGet(String queue, boolean autoAck);
 
  /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
@@ -97,12 +113,22 @@ public interface RabbitMQClient {
   void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler);
 
   /**
+   * Like {@link #basicConsumer(String, QueueOptions, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<RabbitMQConsumer> basicConsumer(String queue, QueueOptions options);
+
+  /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
    * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
    *
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #basicPublish(String, String, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> basicPublish(String exchange, String routingKey, Buffer body);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
@@ -114,6 +140,12 @@ public interface RabbitMQClient {
   void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Like {@link #basicPublish(String, String, BasicProperties, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body);
+
+  /**
    * Enables publisher acknowledgements on this channel. Can be called once during client initialisation. Calls to basicPublish()
    * will have to be confirmed.
    *
@@ -121,6 +153,11 @@ public interface RabbitMQClient {
    * @see http://www.rabbitmq.com/confirms.html
    */
   void confirmSelect(Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #confirmSelect(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> confirmSelect();
 
   /**
    * Wait until all messages published since the last call have been either ack'd or nack'd by the broker.
@@ -135,6 +172,11 @@ public interface RabbitMQClient {
   void waitForConfirms(Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Like {@link #waitForConfirms(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> waitForConfirms();
+
+  /**
    * Wait until all messages published since the last call have been either ack'd or nack'd by the broker; or until timeout elapses. If the timeout expires a TimeoutException is thrown.
    *
    * @param timeout
@@ -145,6 +187,11 @@ public interface RabbitMQClient {
    * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
   void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #waitForConfirms(long, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> waitForConfirms(long timeout);
 
   /**
    * Request a specific prefetchCount "quality of service" settings
@@ -160,6 +207,13 @@ public interface RabbitMQClient {
   }
 
   /**
+   * Like {@link #basicQos(int, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  default Future<Void> basicQos(int prefetchCount) {
+    return basicQos(prefetchCount, false);
+  }
+
+  /**
    * Request a specific prefetchCount "quality of service" settings
    * for this channel.
    *
@@ -172,6 +226,13 @@ public interface RabbitMQClient {
    */
   default void basicQos(int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler) {
     basicQos(0, prefetchCount, global, resultHandler);
+  }
+
+  /**
+   * Like {@link #basicQos(int, boolean, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  default Future<Void> basicQos(int prefetchCount, boolean global) {
+    return basicQos(0, prefetchCount, global);
   }
 
   /**
@@ -192,11 +253,21 @@ public interface RabbitMQClient {
   void basicQos(int prefetchSize, int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Like {@link #basicQos(int, int, boolean, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> basicQos(int prefetchSize, int prefetchCount, boolean global);
+
+  /**
    * Declare an exchange.
    *
    * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
    */
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #exchangeDeclare(String, String, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete);
 
   /**
    * Declare an exchange with additional parameters such as dead lettering, an alternate exchange or TTL.
@@ -206,11 +277,21 @@ public interface RabbitMQClient {
   void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Like {@link #exchangeDeclare(String, String, boolean, boolean, JsonObject, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config);
+
+  /**
    * Delete an exchange, without regard for whether it is in use or not.
    *
    * @see com.rabbitmq.client.Channel#exchangeDelete(String)
    */
   void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #exchangeDelete(String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> exchangeDelete(String exchange);
 
   /**
    * Bind an exchange to an exchange.
@@ -220,11 +301,21 @@ public interface RabbitMQClient {
   void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Like {@link #exchangeBind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> exchangeBind(String destination, String source, String routingKey);
+
+  /**
    * Unbind an exchange from an exchange.
    *
    * @see com.rabbitmq.client.Channel#exchangeUnbind(String, String, String)
    */
   void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #exchangeUnbind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> exchangeUnbind(String destination, String source, String routingKey);
 
   /**
    * Actively declare a server-named exclusive, autodelete, non-durable queue.
@@ -235,12 +326,22 @@ public interface RabbitMQClient {
   void queueDeclareAuto(Handler<AsyncResult<JsonObject>> resultHandler);
 
   /**
+   * Like {@link #queueDeclareAuto(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<JsonObject> queueDeclareAuto();
+
+  /**
    * Declare a queue
    *
    * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler);
+
+  /**
+   * Like {@link #queueDeclare(String, boolean, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete);
 
   /**
    * Declare a queue with config options
@@ -251,12 +352,23 @@ public interface RabbitMQClient {
   void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler);
 
   /**
+   * Like {@link #queueDeclare(String, boolean, boolean, boolean, JsonObject, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config);
+
+  /**
    * Delete a queue, without regard for whether it is in use or has messages on it
    *
    * @see com.rabbitmq.client.Channel#queueDelete(String)
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   void queueDelete(String queue, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler);
+
+  /**
+   * Like {@link #queueDelete(String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<AMQP.Queue.DeleteOk> queueDelete(String queue);
 
   /**
    * Delete a queue
@@ -267,11 +379,21 @@ public interface RabbitMQClient {
   void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler);
 
   /**
+   * Like {@link #queueDeleteIf(String, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<AMQP.Queue.DeleteOk> queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty);
+
+  /**
    * Bind a queue to an exchange
    *
    * @see com.rabbitmq.client.Channel#queueBind(String, String, String)
    */
   void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #queueBind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> queueBind(String queue, String exchange, String routingKey);
 
   /**
    * Returns the number of messages in a queue ready to be delivered.
@@ -281,6 +403,11 @@ public interface RabbitMQClient {
   void messageCount(String queue, Handler<AsyncResult<Long>> resultHandler);
 
   /**
+   * Like {@link #messageCount(String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Long> messageCount(String queue);
+
+  /**
    * Start the rabbitMQ client. Create the connection and the chanel.
    *
    * @see com.rabbitmq.client.Connection#createChannel()
@@ -288,11 +415,21 @@ public interface RabbitMQClient {
   void start(Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Like {@link #start(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> start();
+
+  /**
    * Stop the rabbitMQ client. Close the connection and its chanel.
    *
    * @see com.rabbitmq.client.Connection#close()
    */
   void stop(Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #stop(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> stop();
 
   /**
    * Check if a connection is open

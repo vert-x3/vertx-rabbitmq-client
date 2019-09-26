@@ -4,6 +4,7 @@ import com.rabbitmq.client.*;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -103,11 +104,25 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<Void> basicAck(long deliveryTag, boolean multiple) {
+    Promise<Void> promise = Promise.promise();
+    basicAck(deliveryTag, multiple, promise);
+    return promise.future();
+  }
+
+  @Override
   public void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, (channel) -> {
       channel.basicNack(deliveryTag, multiple, requeue);
       return null;
     });
+  }
+
+  @Override
+  public Future<Void> basicNack(long deliveryTag, boolean multiple, boolean requeue) {
+    Promise<Void> promise = Promise.promise();
+    basicNack(deliveryTag, multiple, requeue, promise);
+    return promise.future();
   }
 
   @Override
@@ -131,6 +146,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<RabbitMQConsumer> basicConsumer(String queue, QueueOptions options) {
+    Promise<RabbitMQConsumer> promise = Promise.promise();
+    basicConsumer(queue, options, promise);
+    return promise.future();
+  }
+
+  @Override
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQMessage>> resultHandler) {
     forChannel(resultHandler, (channel) -> {
       GetResponse response = channel.basicGet(queue, autoAck);
@@ -143,8 +165,22 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<RabbitMQMessage> basicGet(String queue, boolean autoAck) {
+    Promise<RabbitMQMessage> promise = Promise.promise();
+    basicGet(queue, autoAck, promise);
+    return promise.future();
+  }
+
+  @Override
   public void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
     basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body, resultHandler);
+  }
+
+  @Override
+  public Future<Void> basicPublish(String exchange, String routingKey, Buffer body) {
+    Promise<Void> promise = Promise.promise();
+    basicPublish(exchange, routingKey, body, promise);
+    return promise.future();
   }
 
   @Override
@@ -152,7 +188,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     forChannel(resultHandler, channel -> {
       channel.basicPublish(exchange, routingKey, (AMQP.BasicProperties) properties, body.getBytes());
       return null;
-    });  }
+    });
+  }
+
+  @Override
+  public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
+    Promise<Void> promise = Promise.promise();
+    basicPublish(exchange, routingKey, properties, body, promise);
+    return promise.future();
+  }
 
   @Override
   public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
@@ -167,12 +211,26 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<Void> confirmSelect() {
+    Promise<Void> promise = Promise.promise();
+    confirmSelect(promise);
+    return promise.future();
+  }
+
+  @Override
   public void waitForConfirms(Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.waitForConfirmsOrDie();
 
       return null;
     });
+  }
+
+  @Override
+  public Future<Void> waitForConfirms() {
+    Promise<Void> promise = Promise.promise();
+    waitForConfirms(promise);
+    return promise.future();
   }
 
   @Override
@@ -185,6 +243,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<Void> waitForConfirms(long timeout) {
+    Promise<Void> promise = Promise.promise();
+    waitForConfirms(timeout, promise);
+    return promise.future();
+  }
+
+  @Override
   public void basicQos(int prefetchSize, int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.basicQos(prefetchSize, prefetchCount, global);
@@ -193,10 +258,23 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<Void> basicQos(int prefetchSize, int prefetchCount, boolean global) {
+    Promise<Void> promise = Promise.promise();
+    basicQos(prefetchSize, prefetchCount, global, promise);
+    return promise.future();
+  }
+
+  @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
     exchangeDeclare(exchange, type, durable, autoDelete, emptyConfig, resultHandler);
   }
 
+  @Override
+  public Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete) {
+    Promise<Void> promise = Promise.promise();
+    exchangeDeclare(exchange, type, durable, autoDelete, promise);
+    return promise.future();
+  }
 
   @Override
   public void exchangeDeclare(
@@ -214,11 +292,25 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config) {
+    Promise<Void> promise = Promise.promise();
+    exchangeDeclare(exchange, type, durable, autoDelete, config, promise);
+    return promise.future();
+  }
+
+  @Override
   public void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeDelete(exchange);
       return null;
     });
+  }
+
+  @Override
+  public Future<Void> exchangeDelete(String exchange) {
+    Promise<Void> promise = Promise.promise();
+    exchangeDelete(exchange, promise);
+    return promise.future();
   }
 
   @Override
@@ -230,11 +322,25 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<Void> exchangeBind(String destination, String source, String routingKey) {
+    Promise<Void> promise = Promise.promise();
+    exchangeBind(destination, source, routingKey, promise);
+    return promise.future();
+  }
+
+  @Override
   public void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeUnbind(destination, source, routingKey);
       return null;
     });
+  }
+
+  @Override
+  public Future<Void> exchangeUnbind(String destination, String source, String routingKey) {
+    Promise<Void> promise = Promise.promise();
+    exchangeUnbind(destination, source, routingKey, promise);
+    return promise.future();
   }
 
   @Override
@@ -246,8 +352,22 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<JsonObject> queueDeclareAuto() {
+    Promise<JsonObject> promise = Promise.promise();
+    queueDeclareAuto(promise);
+    return promise.future();
+  }
+
+  @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler) {
     queueDeclare(queue, durable, exclusive, autoDelete, emptyConfig, resultHandler);
+  }
+
+  @Override
+  public Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete) {
+    Promise<AMQP.Queue.DeclareOk> promise = Promise.promise();
+    queueDeclare(queue, durable, exclusive, autoDelete, promise);
+    return promise.future();
   }
 
   @Override
@@ -263,13 +383,34 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config) {
+    Promise<AMQP.Queue.DeclareOk> promise = Promise.promise();
+    queueDeclare(queue, durable, exclusive, autoDelete, config, promise);
+    return promise.future();
+  }
+
+  @Override
   public void queueDelete(String queue, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler) {
     forChannel(resultHandler, channel -> channel.queueDelete(queue));
   }
 
   @Override
+  public Future<AMQP.Queue.DeleteOk> queueDelete(String queue) {
+    Promise<AMQP.Queue.DeleteOk> promise = Promise.promise();
+    queueDelete(queue, promise);
+    return promise.future();
+  }
+
+  @Override
   public void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler) {
     forChannel(resultHandler, channel -> channel.queueDelete(queue, ifUnused, ifEmpty));
+  }
+
+  @Override
+  public Future<AMQP.Queue.DeleteOk> queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty) {
+    Promise<AMQP.Queue.DeleteOk> promise = Promise.promise();
+    queueDeleteIf(queue, ifUnused, ifEmpty, promise);
+    return promise.future();
   }
 
   @Override
@@ -281,14 +422,35 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public Future<Void> queueBind(String queue, String exchange, String routingKey) {
+    Promise<Void> promise = Promise.promise();
+    queueBind(queue, exchange, routingKey, promise);
+    return promise.future();
+  }
+
+  @Override
   public void messageCount(String queue, Handler<AsyncResult<Long>> resultHandler) {
     forChannel(resultHandler, channel -> channel.messageCount(queue));
+  }
+
+  @Override
+  public Future<Long> messageCount(String queue) {
+    Promise<Long> promise = Promise.promise();
+    messageCount(queue, promise);
+    return promise.future();
   }
 
   @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
     log.info("Starting rabbitmq client");
     start(0, resultHandler);
+  }
+
+  @Override
+  public Future<Void> start() {
+    Promise<Void> promise = Promise.promise();
+    start(promise);
+    return promise.future();
   }
 
   private void start(int attempts, Handler<AsyncResult<Void>> resultHandler) {
@@ -328,6 +490,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         future.fail(e);
       }
     }, resultHandler);
+  }
+
+  @Override
+  public Future<Void> stop() {
+    Promise<Void> promise = Promise.promise();
+    stop(promise);
+    return promise.future();
   }
 
   private <T> void forChannel(Handler<AsyncResult<T>> resultHandler, ChannelHandler<T> channelHandler) {
