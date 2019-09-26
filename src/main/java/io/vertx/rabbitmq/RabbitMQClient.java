@@ -1,6 +1,7 @@
 package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Consumer;
 import io.vertx.codegen.annotations.GenIgnore;
@@ -8,6 +9,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 
@@ -72,7 +74,7 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicGet(String, boolean)
    */
-  void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler);
+  void basicGet(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQMessage>> resultHandler);
 
  /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
@@ -100,7 +102,16 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
-  void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler);
+  void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
+   * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
+   *
+   * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Enables publisher acknowledgements on this channel. Can be called once during client initialisation. Calls to basicPublish()
@@ -228,29 +239,32 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
    */
-  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler);
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler);
 
   /**
    * Declare a queue with config options
    *
    * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
    */
-  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config, Handler<AsyncResult<JsonObject>> resultHandler);
-
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler);
 
   /**
    * Delete a queue, without regard for whether it is in use or has messages on it
    *
    * @see com.rabbitmq.client.Channel#queueDelete(String)
    */
-  void queueDelete(String queue, Handler<AsyncResult<JsonObject>> resultHandler);
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void queueDelete(String queue, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler);
 
   /**
    * Delete a queue
    *
    * @see com.rabbitmq.client.Channel#queueDelete(String, boolean, boolean)
    */
-  void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<JsonObject>> resultHandler);
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler);
 
   /**
    * Bind a queue to an exchange

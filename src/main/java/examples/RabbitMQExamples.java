@@ -1,11 +1,14 @@
 package examples;
 
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Address;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConsumer;
+import io.vertx.rabbitmq.RabbitMQMessage;
 import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.util.Arrays;
@@ -51,7 +54,7 @@ public class RabbitMQExamples {
   }
 
   public void basicPublish(RabbitMQClient client) {
-    JsonObject message = new JsonObject().put("body", "Hello RabbitMQ, from Vert.x !");
+    Buffer message = Buffer.buffer("body", "Hello RabbitMQ, from Vert.x !");
     client.basicPublish("", "my.queue", message, pubResult -> {
       if (pubResult.succeeded()) {
         System.out.println("Message published !");
@@ -62,7 +65,7 @@ public class RabbitMQExamples {
   }
 
   public void basicPublishWithConfirm(RabbitMQClient client) {
-    JsonObject message = new JsonObject().put("body", "Hello RabbitMQ, from Vert.x !");
+    Buffer message = Buffer.buffer("body", "Hello RabbitMQ, from Vert.x !");
 
     // Put the channel in confirm mode. This can be done once at init.
     client.confirmSelect(confirmResult -> {
@@ -152,8 +155,8 @@ public class RabbitMQExamples {
   public void getMessage(RabbitMQClient client) {
     client.basicGet("my.queue", true, getResult -> {
       if (getResult.succeeded()) {
-        JsonObject msg = getResult.result();
-        System.out.println("Got message: " + msg.getString("body"));
+        RabbitMQMessage msg = getResult.result();
+        System.out.println("Got message: " + msg.body());
       } else {
         getResult.cause().printStackTrace();
       }

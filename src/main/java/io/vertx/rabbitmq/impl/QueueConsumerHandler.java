@@ -18,21 +18,19 @@ import static io.vertx.rabbitmq.impl.Utils.toJson;
 public class QueueConsumerHandler extends DefaultConsumer {
 
   private final RabbitMQConsumerImpl queue;
-  private final boolean includeProperties;
   private final Context handlerContext;
 
   private static final Logger log = LoggerFactory.getLogger(ConsumerHandler.class);
 
-  QueueConsumerHandler(Vertx vertx, Channel channel, boolean includeProperties, QueueOptions options) {
+  QueueConsumerHandler(Vertx vertx, Channel channel, QueueOptions options) {
     super(channel);
     this.handlerContext = vertx.getOrCreateContext();
-    this.includeProperties = includeProperties;
     this.queue = new RabbitMQConsumerImpl(handlerContext, this, options);
   }
 
   @Override
   public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
-    RabbitMQMessage msg = new RabbitMQMessageImpl(body, consumerTag, envelope, properties);
+    RabbitMQMessage msg = new RabbitMQMessageImpl(body, consumerTag, envelope, properties, null);
     this.handlerContext.runOnContext(v -> queue.handleMessage(msg));
   }
 

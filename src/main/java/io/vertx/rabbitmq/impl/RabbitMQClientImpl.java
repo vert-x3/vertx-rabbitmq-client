@@ -5,12 +5,14 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConsumer;
+import io.vertx.rabbitmq.RabbitMQMessage;
 import io.vertx.rabbitmq.RabbitMQOptions;
 
 import java.io.IOException;
@@ -30,7 +32,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private final Vertx vertx;
   private final RabbitMQOptions config;
   private final Integer retries;
-  private final boolean includeProperties;
 
   private Connection connection;
   private Channel channel;
@@ -40,9 +41,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     this.vertx = vertx;
     this.config = config;
     this.retries = config.getConnectionRetries();
-    //TODO: includeProperties isn't really intuitive
-    //TODO: Think about allowing this at a method level ?
-    this.includeProperties = config.getIncludeProperties();
   }
 
   private static Connection newConnection(RabbitMQOptions config) throws IOException, TimeoutException {
@@ -126,59 +124,35 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         resultHandler.handle(Future.failedFuture(ar.cause()));
       }
     }, channel -> {
-      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, includeProperties, options);
+      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options);
       String consumerTag = channel.basicConsume(queue, options.isAutoAck(), handler);
       return handler;
     });
   }
 
   @Override
-  public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<JsonObject>> resultHandler) {
+  public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQMessage>> resultHandler) {
     forChannel(resultHandler, (channel) -> {
       GetResponse response = channel.basicGet(queue, autoAck);
       if (response == null) {
         return null;
       } else {
-        JsonObject json = new JsonObject();
-        populate(json, response.getEnvelope());
-        if (includeProperties) {
-          put("properties", Utils.toJson(response.getProps()), json);
-        }
-        put("body", parse(response.getProps(), response.getBody()), json);
-        Utils.put("messageCount", response.getMessageCount(), json);
-        return json;
+        return new RabbitMQMessageImpl(response.getBody(), null, response.getEnvelope(), response.getProps(), response.getMessageCount());
       }
     });
   }
 
   @Override
-  public void basicPublish(String exchange, String routingKey, JsonObject message, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      //TODO: Really need an SPI / Interface to decouple this and allow pluggable implementations
-      JsonObject properties = message.getJsonObject("properties");
-      String contentType = properties == null ? null : properties.getString("contentType");
-      String encoding = properties == null ? null : properties.getString("contentEncoding");
-      byte[] body;
-      if (contentType != null) {
-        switch (contentType) {
-          case "application/json":
-            body = encode(encoding, message.getJsonObject("body").toString());
-            break;
-          case "application/octet-stream":
-            body = message.getBinary("body");
-            break;
-          case "text/plain":
-          default:
-            body = encode(encoding, message.getString("body"));
-        }
-      } else {
-        body = encode(encoding, message.getString("body"));
-      }
-
-      channel.basicPublish(exchange, routingKey, fromJson(properties), body);
-      return null;
-    });
+  public void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
+    basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body, resultHandler);
   }
+
+  @Override
+  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.basicPublish(exchange, routingKey, (AMQP.BasicProperties) properties, body.getBytes());
+      return null;
+    });  }
 
   @Override
   public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
@@ -272,7 +246,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<JsonObject>> resultHandler) {
+  public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler) {
     queueDeclare(queue, durable, exclusive, autoDelete, emptyConfig, resultHandler);
   }
 
@@ -283,28 +257,19 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     boolean exclusive,
     boolean autoDelete,
     JsonObject config,
-    Handler<AsyncResult<JsonObject>> resultHandler
+    Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler
   ) {
-    forChannel(resultHandler, channel -> {
-      AMQP.Queue.DeclareOk result = channel.queueDeclare(queue, durable, exclusive, autoDelete, new LinkedHashMap<>(config.getMap()));
-      return toJson(result);
-    });
+    forChannel(resultHandler, channel -> channel.queueDeclare(queue, durable, exclusive, autoDelete, new LinkedHashMap<>(config.getMap())));
   }
 
   @Override
-  public void queueDelete(String queue, Handler<AsyncResult<JsonObject>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      AMQP.Queue.DeleteOk result = channel.queueDelete(queue);
-      return toJson(result);
-    });
+  public void queueDelete(String queue, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler) {
+    forChannel(resultHandler, channel -> channel.queueDelete(queue));
   }
 
   @Override
-  public void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<JsonObject>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      AMQP.Queue.DeleteOk result = channel.queueDelete(queue, ifUnused, ifEmpty);
-      return toJson(result);
-    });
+  public void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler) {
+    forChannel(resultHandler, channel -> channel.queueDelete(queue, ifUnused, ifEmpty));
   }
 
   @Override

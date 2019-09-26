@@ -2,6 +2,7 @@ package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -89,7 +90,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     vertx.setPeriodic(100, id -> {
       client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
         if (msg != null) {
-          String body = msg.getString("body");
+          String body = msg.body().toString();
           ctx.assertTrue(messages.contains(body));
           async.countDown();
           if (async.count() == 0) {
@@ -105,11 +106,11 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   public void testBasicPublish(TestContext ctx) throws Exception {
     String q = setupQueue(ctx, null);
     String body = randomAlphaString(100);
-    JsonObject message = new JsonObject().put("body", body);
+    Buffer message = Buffer.buffer(body);
     client.basicPublish("", q, message, ctx.asyncAssertSuccess(v -> {
       client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
         ctx.assertNotNull(msg);
-        ctx.assertEquals(body, msg.getString("body"));
+        ctx.assertEquals(body, msg.body().toString());
       }));
     }));
   }
@@ -118,14 +119,14 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   public void testBasicPublishWithConfirm(TestContext ctx) throws Exception {
     String q = setupQueue(ctx, null);
     String body = randomAlphaString(100);
-    JsonObject message = new JsonObject().put("body", body);
+    Buffer message = Buffer.buffer(body);
 
     client.confirmSelect(ctx.asyncAssertSuccess(v -> {
       client.basicPublish("", q, message, ctx.asyncAssertSuccess(vv -> {
         client.waitForConfirms(ctx.asyncAssertSuccess(vvv -> {
           client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
             ctx.assertNotNull(msg);
-            ctx.assertEquals(body, msg.getString("body"));
+            ctx.assertEquals(body, msg.body().toString());
           }));
         }));
       }));
@@ -136,14 +137,14 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   public void testBasicPublishWithConfirmAndTimeout(TestContext ctx) throws Exception {
     String q = setupQueue(ctx, null);
     String body = randomAlphaString(100);
-    JsonObject message = new JsonObject().put("body", body);
+    Buffer message = Buffer.buffer(body);
 
     client.confirmSelect(ctx.asyncAssertSuccess(v -> {
       client.basicPublish("", q, message, ctx.asyncAssertSuccess(vv -> {
         client.waitForConfirms(1000, ctx.asyncAssertSuccess(vvv -> {
           client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
             ctx.assertNotNull(msg);
-            ctx.assertEquals(body, msg.getString("body"));
+            ctx.assertEquals(body, msg.body().toString());
           }));
         }));
       }));
@@ -154,12 +155,14 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   public void testBasicPublishJson(TestContext ctx) throws Exception {
     String q = setupQueue(ctx, null);
     JsonObject body = new JsonObject().put("foo", randomAlphaString(5)).put("bar", randomInt());
-    JsonObject message = new JsonObject().put("body", body);
-    message.put("properties", new JsonObject().put("contentType", "application/json"));
-    client.basicPublish("", q, message, ctx.asyncAssertSuccess(v -> {
+    Buffer message = body.toBuffer();
+    AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
+      .contentType("application/json")
+      .build();
+    client.basicPublish("", q, props, message, ctx.asyncAssertSuccess(v -> {
       client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
         ctx.assertNotNull(msg);
-        JsonObject b = msg.getJsonObject("body");
+        JsonObject b = msg.body().toJsonObject();
         ctx.assertNotNull(b);
         ctx.assertFalse(body == b);
         ctx.assertEquals(body, b);
@@ -235,10 +238,10 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   private void handleUnAckDelivery(TestContext ctx, Set<String> messages, Async async, RabbitMQMessage message) {
     String body = message.body().toString();
     ctx.assertTrue(messages.contains(body));
-    Long deliveryTag = message.envelope().deliveryTag();
-    log.info("message arrived: " + message.body().toString(message.properties().contentEncoding()));
-    log.info("redelivered? : " + message.envelope().isRedelivery());
-    if (message.envelope().isRedelivery()) {
+    Long deliveryTag = message.envelope().getDeliveryTag();
+    log.info("message arrived: " + message.body().toString(message.properties().getContentEncoding()));
+    log.info("redelivered? : " + message.envelope().isRedeliver());
+    if (message.envelope().isRedeliver()) {
       client.basicAck(deliveryTag, false, ctx.asyncAssertSuccess(v -> {
         // remove the message if is redeliver (unacked)
         messages.remove(body);
@@ -255,7 +258,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     String queueName = randomAlphaString(10);
 
     client.queueDeclare(queueName, false, false, true, ctx.asyncAssertSuccess(result -> {
-      ctx.assertEquals(result.getString("queue"), queueName);
+      ctx.assertEquals(result.getQueue(), queueName);
 
       client.queueDelete(queueName, ctx.asyncAssertSuccess());
     }));
@@ -268,7 +271,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     config.put("x-message-ttl", 10_000L);
 
     client.queueDeclare(queueName, false, false, true, config, ctx.asyncAssertSuccess(result -> {
-      ctx.assertEquals(result.getString("queue"), queueName);
+      ctx.assertEquals(result.getQueue(), queueName);
 
       client.queueDelete(queueName, ctx.asyncAssertSuccess());
     }));

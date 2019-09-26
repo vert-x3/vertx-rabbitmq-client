@@ -1,9 +1,9 @@
 package io.vertx.rabbitmq.impl;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.BasicProperties;
+import com.rabbitmq.client.Envelope;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.rabbitmq.BasicProperties;
-import io.vertx.rabbitmq.Envelope;
 import io.vertx.rabbitmq.RabbitMQMessage;
 
 public class RabbitMQMessageImpl implements RabbitMQMessage {
@@ -12,6 +12,7 @@ public class RabbitMQMessageImpl implements RabbitMQMessage {
   private String consumerTag;
   private Envelope envelope;
   private BasicProperties properties;
+  private Integer messageCount;
 
   /**
    * Construct a new message
@@ -21,26 +22,12 @@ public class RabbitMQMessageImpl implements RabbitMQMessage {
    * @param properties  content header data for the message
    * @param body        the message body (opaque, client-specific byte array)
    */
-  RabbitMQMessageImpl(byte[] body, String consumerTag, com.rabbitmq.client.Envelope envelope, AMQP.BasicProperties properties) {
+  RabbitMQMessageImpl(byte[] body, String consumerTag, com.rabbitmq.client.Envelope envelope, AMQP.BasicProperties properties, Integer messageCount) {
     this.body = Buffer.buffer(body);
     this.consumerTag = consumerTag;
-    this.envelope = new EnvelopeImpl(envelope.getDeliveryTag(), envelope.isRedeliver(), envelope.getExchange(), envelope.getRoutingKey());
-    this.properties = new BasicPropertiesImpl(
-      properties.getContentType(),
-      properties.getContentEncoding(),
-      properties.getHeaders(),
-      properties.getDeliveryMode(),
-      properties.getPriority(),
-      properties.getCorrelationId(),
-      properties.getReplyTo(),
-      properties.getExpiration(),
-      properties.getMessageId(),
-      properties.getTimestamp(),
-      properties.getType(),
-      properties.getUserId(),
-      properties.getAppId(),
-      properties.getClusterId()
-    );
+    this.envelope = envelope;
+    this.properties = properties;
+    this.messageCount = messageCount;
   }
 
   @Override
@@ -61,5 +48,10 @@ public class RabbitMQMessageImpl implements RabbitMQMessage {
   @Override
   public BasicProperties properties() {
     return properties;
+  }
+
+  @Override
+  public Integer messageCount() {
+    return messageCount;
   }
 }
