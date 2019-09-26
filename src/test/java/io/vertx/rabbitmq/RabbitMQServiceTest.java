@@ -12,12 +12,9 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -315,28 +312,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
-  public void testBasicConsumeNoAutoAck(TestContext ctx) throws Exception {
-
-    int count = 3;
-    Set<String> messages = createMessages(count);
-    String q = setupQueue(ctx, messages);
-
-    Async latch = ctx.async(count);
-
-    vertx.eventBus().consumer("my.address", msg -> {
-      JsonObject json = (JsonObject) msg.body();
-      handleUnAckDelivery(ctx, messages, latch, json);
-    });
-
-    client.basicConsume(q, "my.address", false, ctx.asyncAssertSuccess(v -> {
-    }));
-
-    //assert all messages should be consumed.
-    latch.awaitSuccess(15000);
-    ctx.assertTrue(messages.isEmpty());
-  }
-
-  @Test
   public void testBasicConsumerNoAutoAck(TestContext ctx) throws Exception {
 
     int count = 3;
@@ -362,22 +337,6 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     latch.awaitSuccess(15000);
     //assert all messages should be consumed.
     ctx.assertTrue(messages.isEmpty());
-  }
-
-  private void handleUnAckDelivery(TestContext ctx, Set<String> messages, Async latch, JsonObject json) {
-    String body = json.getString("body");
-    ctx.assertTrue(messages.contains(body));
-    Long deliveryTag = json.getLong("deliveryTag");
-    if (json.getBoolean("isRedeliver")) {
-      client.basicAck(deliveryTag, false, ctx.asyncAssertSuccess(v -> {
-        // remove the message if is redeliver (unacked)
-        messages.remove(body);
-        latch.countDown();
-      }));
-    } else {
-      // send and Nack for every ready message
-      client.basicNack(deliveryTag, false, true, ctx.asyncAssertSuccess());
-    }
   }
 
   private void handleUnAckDelivery(TestContext ctx, Set<String> messages, Async async, RabbitMQMessage message) {
@@ -426,7 +385,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   @Test
   public void testDeclareExchangeWithAlternateExchange(TestContext ctx) throws Exception {
     String exName = randomAlphaString(10);
-    Map<String, String> params = new HashMap<>();
+    JsonObject params = new JsonObject();
     params.put("alternate-exchange", "alt.ex");
     client.exchangeDeclare(exName, "direct", false, true, params, ctx.asyncAssertSuccess());
 
@@ -436,7 +395,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   @Test
   public void testDeclareExchangeWithDLX(TestContext ctx) throws Exception {
     String exName = randomAlphaString(10);
-    Map<String, String> params = new HashMap<>();
+    JsonObject params = new JsonObject();
     params.put("x-dead-letter-exchange", "dlx.exchange");
     client.exchangeDeclare(exName, "direct", false, true, params, ctx.asyncAssertSuccess());
   }

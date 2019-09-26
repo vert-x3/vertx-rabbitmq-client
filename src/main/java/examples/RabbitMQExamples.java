@@ -87,24 +87,6 @@ public class RabbitMQExamples {
 
   }
 
-
-  public void basicConsume(Vertx vertx, RabbitMQClient client) {
-    // Create the event bus handler which messages will be sent to
-    vertx.eventBus().consumer("my.address", msg -> {
-      JsonObject json = (JsonObject) msg.body();
-      System.out.println("Got message: " + json.getString("body"));
-    });
-
-    // Setup the link between rabbitmq consumer and event bus address
-    client.basicConsume("my.queue", "my.address", consumeResult -> {
-      if (consumeResult.succeeded()) {
-        System.out.println("RabbitMQ consumer created !");
-      } else {
-        consumeResult.cause().printStackTrace();
-      }
-    });
-  }
-
   public void basicConsumer(Vertx vertx, RabbitMQClient client) {
     client.basicConsumer("my.queue", rabbitMQConsumerAsyncResult -> {
       if (rabbitMQConsumerAsyncResult.succeeded()) {
@@ -196,19 +178,20 @@ public class RabbitMQExamples {
   }
 
   public void consumeWithManualAck(Vertx vertx, RabbitMQClient client) {
-    // Create the event bus handler which messages will be sent to
-    vertx.eventBus().consumer("my.address", msg -> {
-      JsonObject json = (JsonObject) msg.body();
-      System.out.println("Got message: " + json.getString("body"));
-      // ack
-      client.basicAck(json.getLong("deliveryTag"), false, asyncResult -> {
-      });
-    });
-
-    // Setup the link between rabbitmq consumer and event bus address
-    client.basicConsume("my.queue", "my.address", false, consumeResult -> {
+    // Setup the rabbitmq consumer
+    client.basicConsumer("my.queue", new QueueOptions().setAutoAck(false), consumeResult -> {
       if (consumeResult.succeeded()) {
         System.out.println("RabbitMQ consumer created !");
+        RabbitMQConsumer consumer = consumeResult.result();
+
+        // Set the handler which messages will be sent to
+        consumer.handler(msg -> {
+          JsonObject json = (JsonObject) msg.body();
+          System.out.println("Got message: " + json.getString("body"));
+          // ack
+          client.basicAck(json.getLong("deliveryTag"), false, asyncResult -> {
+          });
+        });
       } else {
         consumeResult.cause().printStackTrace();
       }
