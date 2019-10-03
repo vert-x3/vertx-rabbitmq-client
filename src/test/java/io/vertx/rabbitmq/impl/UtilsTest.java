@@ -2,10 +2,8 @@ package io.vertx.rabbitmq.impl;
 
 import static org.junit.Assert.*;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 
 import org.junit.Test;
 import com.rabbitmq.client.AMQP;
@@ -36,18 +34,47 @@ public class UtilsTest {
   @Test
   public void testConvertWithHeaders() {
 
+    Map<String, Object> customListMap = new HashMap<>();
+    customListMap.put( "count", 4L);
+    customListMap.put( "exchange", LongStringHelper.asLongString( "exchange1" ) );
+    customListMap.put( "reason", LongStringHelper.asLongString( "expired" ) );
+    customListMap.put( "routing-keys", Arrays.asList(
+      LongStringHelper.asLongString( "key1" ),
+      LongStringHelper.asLongString( "key2" )
+    ));
+    customListMap.put( "time", Date.from( Instant.ofEpochSecond( 1570140666 ) ) );
+
+    List<Map<String, Object>> customList = new ArrayList<>();
+    customList.add(customListMap);
+
     Map<String, Object> headers = new HashMap<>();
     headers.put( "customId", 123 );
     headers.put( "customQualifier", "qualifier1" );
     headers.put( "customQualifierLongString", LongStringHelper.asLongString( "qualifier2" ) );
+    headers.put( "customList", customList );
 
     JsonObject result = Utils.toJson( new BasicPropertiesTestBuilder().setHeaders( headers ).build() );
     Map<String, Object> headersConverted = result.getJsonObject( "headers" ).getMap();
     assertNotNull( headersConverted );
-    assertEquals( 3, headersConverted.entrySet().size() );
+    assertEquals( 4, headersConverted.entrySet().size() );
     assertEquals( 123, headersConverted.get( "customId" ) );
     assertEquals( "qualifier1", headersConverted.get( "customQualifier" ) );
     assertEquals( "qualifier2", headersConverted.get( "customQualifierLongString" ) );
+    assertNotNull( headersConverted.get( "customList" ) );
+
+    List<Map<String, Object>> headersConvertedCustomList = (List<Map<String, Object>>) headersConverted.get( "customList");
+    assertEquals( 1, headersConvertedCustomList.size() );
+    assertEquals( 4L, headersConvertedCustomList.get(0).get("count") );
+    assertEquals( "exchange1", headersConvertedCustomList.get(0).get("exchange") );
+    assertEquals( "expired", headersConvertedCustomList.get(0).get("reason") );
+    assertEquals( Instant.parse("2019-10-03T22:11:06Z"), headersConvertedCustomList.get(0).get("time") );
+
+    List<String> headersConvertedCustomListMapRoutingKeys = (List<String>) headersConvertedCustomList.get(0).get("routing-keys");
+
+    assertNotNull( headersConvertedCustomListMapRoutingKeys );
+    assertEquals( 2, headersConvertedCustomListMapRoutingKeys.size() );
+    assertEquals( "key1", headersConvertedCustomListMapRoutingKeys.get(0) );
+    assertEquals( "key2", headersConvertedCustomListMapRoutingKeys.get(1) );
   }
 
   /**
