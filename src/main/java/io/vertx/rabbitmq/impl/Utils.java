@@ -96,6 +96,10 @@ class Utils {
    */
   private static Object convertLongStringToString( Object value ) {
 
+    if ( value instanceof Date ) {
+      return ((Date) value).toInstant();
+    }
+
     if ( value instanceof LongString ) {
       return value.toString();
     }
@@ -106,6 +110,10 @@ class Utils {
         newList.add( convertLongStringToString( item ) );
       }
       return newList;
+    }
+
+    if ( value instanceof Map) {
+      return convertMapLongStringToString((Map<String, Object>) value);
     }
 
     return value;
