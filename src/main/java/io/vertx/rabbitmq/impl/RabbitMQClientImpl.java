@@ -12,6 +12,7 @@ import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQConfirmListener;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 import io.vertx.rabbitmq.RabbitMQOptions;
@@ -172,29 +173,51 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Long>> resultHandler) {
     basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body, resultHandler);
   }
 
   @Override
-  public Future<Void> basicPublish(String exchange, String routingKey, Buffer body) {
-    Promise<Void> promise = Promise.promise();
+  public Future<Long> basicPublish(String exchange, String routingKey, Buffer body) {
+    Promise<Long> promise = Promise.promise();
     basicPublish(exchange, routingKey, body, promise);
     return promise.future();
   }
 
   @Override
-  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Long>> resultHandler) {
     forChannel(resultHandler, channel -> {
+      long deliveryTag = channel.getNextPublishSeqNo();
       channel.basicPublish(exchange, routingKey, (AMQP.BasicProperties) properties, body.getBytes());
-      return null;
+      return deliveryTag;
     });
   }
 
   @Override
-  public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
-    Promise<Void> promise = Promise.promise();
+  public Future<Long> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
+    Promise<Long> promise = Promise.promise();
     basicPublish(exchange, routingKey, properties, body, promise);
+    return promise.future();
+  }
+
+  @Override
+  public void addConfirmListener(QueueOptions options, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler) {
+    forChannel(  resultHandler, channel -> {
+
+      ChannelConfirmHandler handler = new ChannelConfirmHandler(vertx, channel, options);
+      channel.addConfirmListener(handler);
+      channel.confirmSelect();
+
+      channelConfirms = true;
+
+      return handler.getListener();
+    });
+  }
+
+  @Override
+  public Future<RabbitMQConfirmListener> addConfirmListener(QueueOptions options) {
+    Promise<RabbitMQConfirmListener> promise = Promise.promise();
+    addConfirmListener(options, promise);
     return promise.future();
   }
 

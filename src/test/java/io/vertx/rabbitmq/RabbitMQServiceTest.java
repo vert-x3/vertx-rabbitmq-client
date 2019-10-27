@@ -134,6 +134,37 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   }
 
   @Test
+  public void testBasicPublishWithConfirmListener(TestContext ctx) throws Exception {
+    String q = setupQueue(ctx, null);
+    String body = randomAlphaString(100);
+    Buffer message = Buffer.buffer(body);
+
+    Async async = ctx.async();
+    long deliveryTag[] = {0};
+    
+    client.addConfirmListener(new QueueOptions(), v -> {
+      log.info("Confirm listener added");
+      v.result().handler(conf -> {
+        long dt = conf.getDeliveryTag();
+        log.info("Confirmation of " + dt);
+        ctx.assertTrue(dt > 0);
+        ctx.assertEquals(deliveryTag[0], dt);
+        client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+          log.info("Got message " + msg);
+          ctx.assertNotNull(msg);
+          ctx.assertEquals(body, msg.body().toString());
+          async.complete();
+         }));
+      });
+      log.info("Publishing");
+      client.basicPublish("", q, message, ctx.asyncAssertSuccess(dt -> { 
+        deliveryTag[0] = dt;
+        log.info("Published " + deliveryTag[0]);
+      }));
+    });
+  }
+
+  @Test
   public void testBasicPublishWithConfirmAndTimeout(TestContext ctx) throws Exception {
     String q = setupQueue(ctx, null);
     String body = randomAlphaString(100);

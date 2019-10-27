@@ -123,12 +123,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
-  void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler);
+  void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Long>> resultHandler);
 
   /**
-   * Like {@link #basicPublish(String, String, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
+   * Like {@link #basicPublish(String, String, Buffer, Handler)} but returns a {@code Future} of the asynchronous result containing the delivery tag
    */
-  Future<Void> basicPublish(String exchange, String routingKey, Buffer body);
+  Future<Long> basicPublish(String exchange, String routingKey, Buffer body);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
@@ -137,13 +137,38 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler);
+  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Long>> resultHandler);
 
   /**
    * Like {@link #basicPublish(String, String, BasicProperties, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body);
+  Future<Long> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body);
+
+  /**
+   * Add a Confirm Listener to the channel.
+   * Note that this will automatically call confirmSelect, it is not necessary to call that too.
+   *
+   * @param options        options for queue
+   * @param resultHandler  a handler through which you can find out the operation status;
+   *                       if the operation succeeds you can begin to receive confirmations 
+   *                       through an instance of {@link RabbitMQConfirmListener}
+   * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
+   */
+  void addConfirmListener(QueueOptions options, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler);
+
+  /**
+   * Add a Confirm Listener to the channel.
+   * Like {@link #addConfirmListener(Handler)} but returns a {@code Future} of the asynchronous result
+   * Note that this will automatically call confirmSelect, it is not necessary to call that too.
+   *
+   * @param options        options for queue
+   * @return a future through which you can find out the operation status;
+   *                       if the operation succeeds you can begin to receive confirmations 
+   *                       through an instance of {@link RabbitMQConfirmListener}
+   * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
+   */
+  Future<RabbitMQConfirmListener> addConfirmListener(QueueOptions options);
 
   /**
    * Enables publisher acknowledgements on this channel. Can be called once during client initialisation. Calls to basicPublish()
