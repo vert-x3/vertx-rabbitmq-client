@@ -101,7 +101,11 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
     Promise<Void> promise = startForPromise();
+<<<<<<< HEAD
     promise.future().onComplete(resultHandler);
+=======
+    promise.future().setHandler(resultHandler);
+>>>>>>> Support ConfirmListeners in what I hope is a suitable vertx way.
   }
 
   @Override
