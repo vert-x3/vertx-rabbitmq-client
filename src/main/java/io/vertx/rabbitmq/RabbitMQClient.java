@@ -3,17 +3,20 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.BasicProperties;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConfirmListener;
 import com.rabbitmq.client.Consumer;
 import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
-
 import java.util.Map;
 
 /**
@@ -21,7 +24,7 @@ import java.util.Map;
  */
 @VertxGen
 public interface RabbitMQClient {
-
+  
   /**
    * Create and return a client configured with the default options.
    *
@@ -43,6 +46,31 @@ public interface RabbitMQClient {
     return new RabbitMQClientImpl(vertx, config);
   }
 
+
+  /**
+   * Set a callback to be called whenever a new connection is established.
+   * This callback must be idempotent - it will be called each time a connection is established, which may be multiple times against the same instance.
+   * Callbacks will be added to a list and called in the order they were added, the only way to remove callbacks is to create a new client.
+   * 
+   * These callbacks should be used to establish any Rabbit MQ server objects that are required - exchanges, queues, bindings, etc.
+   * Each callback will receive a Promise<Void> that it must complete in order to pass control to the next callback (or back to the RabbitMQClient).
+   * If the callback fails the promise the RabbitMQClient will be unable to make a connection (it will attempt to connect again according to its retry configuration).
+   * If the promise is not completed or failed by a callback the RabbitMQClient will not start (it will hang indefinitely).
+   * 
+   * Other methods on the client may be used in the callback -
+   * it is specifically expected that RabbitMQ objects will be declared, but the publish and consume methods must not be used.
+   * 
+   * The connection established callbacks are particularly important with the RabbitMQPublisher and RabbitMQConsumer when they are used with 
+   * servers that may failover to another instance of the server that does not have the same exchanges/queues configured on it.
+   * In this situation these callbacks are the only opportunity to create exchanges, queues and bindings before the client will attempt to use them when it 
+   * re-establishes connection.
+   * If your failover cluster is guaranteed to have the appropriate objects already configured then it is not necessary to use the callbacks.
+   * 
+   * @param connectionEstablishedCallback  callback to be called whenever a new connection is established.
+   */
+  @GenIgnore
+  void addConnectionEstablishedCallback(Handler<Promise<Void>> connectionEstablishedCallback);
+  
   /**
    * Like {@link #create(Vertx, RabbitMQOptions)} but with a {@link JsonObject} config object.
    */
@@ -144,6 +172,55 @@ public interface RabbitMQClient {
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body);
+
+  /**
+   * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
+   * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
+   *
+   * The deliveryTagHandler will be called before the message is sent, which is necessary because the confirmation may arrive
+   * asynchronously before the resultHandler is called.
+   * 
+   * @param deliveryTagHandler callback to capture the deliveryTag for this message.  
+   *        Note that this will be called synchronously in the context of the client before the result is known.
+   * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
+   * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
+   *
+   * @param deliveryTagHandler callback to capture the deliveryTag for this message.  Note that this will be called synchronously in the context of the client.
+   * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Future<Void> basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler);
+
+  /**
+   * Add a Confirm Listener to the channel.
+   * Note that this will automatically call confirmSelect, it is not necessary to call that too.
+   *
+   * @param maxQueueSize   maximum size of the queue of confirmations
+   * @param resultHandler  a handler through which you can find out the operation status;
+   *                       if the operation succeeds you can begin to receive confirmations 
+   *                       through an instance of {@link RabbitMQConfirmListener}
+   * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
+   */
+  void addConfirmListener(int maxQueueSize, Handler<AsyncResult<ReadStream<RabbitMQConfirmation>>> resultHandler);
+
+  /**
+   * Add a Confirm Listener to the channel.
+   * Like {@link #addConfirmListener(Handler)} but returns a {@code Future} of the asynchronous result
+   * Note that this will automatically call confirmSelect, it is not necessary to call that too.
+   *
+   * @param maxQueueSize   maximum size of the queue of confirmations
+   * @return a future through which you can find out the operation status;
+   *                       if the operation succeeds you can begin to receive confirmations 
+   *                       through an instance of {@link RabbitMQConfirmListener}
+   * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
+   */
+  Future<ReadStream<RabbitMQConfirmation>> addConfirmListener(int maxQueueSize);
 
   /**
    * Enables publisher acknowledgements on this channel. Can be called once during client initialisation. Calls to basicPublish()

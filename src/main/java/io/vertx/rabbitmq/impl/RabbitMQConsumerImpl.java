@@ -3,7 +3,6 @@ package io.vertx.rabbitmq.impl;
 import io.vertx.core.*;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
-import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
@@ -24,6 +23,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   private final boolean keepMostRecent;
   private final InboundBuffer<RabbitMQMessage> pending;
   private final int maxQueueSize;
+  private volatile boolean cancelled;
 
   RabbitMQConsumerImpl(Context context, QueueConsumerHandler consumerHandler, QueueOptions options) {
     this.consumerHandler = consumerHandler;
@@ -67,7 +67,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   }
 
   @Override
-  public ReadStream<RabbitMQMessage> fetch(long amount) {
+  public RabbitMQConsumer fetch(long amount) {
     pending.fetch(amount);
     return this;
   }
@@ -84,14 +84,18 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   }
 
   @Override
-  public void cancel() {
-    cancel(null);
+  public Future<Void> cancel() {
+    Promise<Void> promise = Promise.promise();
+    cancel(promise);
+    return promise.future();
   }
 
   @Override
   public void cancel(Handler<AsyncResult<Void>> cancelResult) {
     AsyncResult<Void> operationResult;
     try {
+      log.debug("Cancelling " + consumerTag());
+      cancelled = true;
       consumerHandler.getChannel().basicCancel(consumerTag());
       operationResult = Future.succeededFuture();
     } catch (IOException e) {
@@ -101,6 +105,11 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
       cancelResult.handle(operationResult);
     }
     handleEnd();
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return cancelled;
   }
 
   @Override
