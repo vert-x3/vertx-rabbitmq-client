@@ -15,6 +15,7 @@
  */
 package io.vertx.rabbitmq.impl;
 
+import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.streams.impl.InboundBuffer;
@@ -27,16 +28,15 @@ import io.vertx.rabbitmq.RabbitMQConfirmListener;
  */
 public class RabbitMQConfirmListenerImpl implements RabbitMQConfirmListener {
 
-  private final ChannelConfirmHandler handler;
-
+  private final RabbitMQClientImpl client;
   private final InboundBuffer<RabbitMQConfirmation> pending;
   private final int maxQueueSize;
 
   private Handler<Throwable> exceptionHandler;
   
   
-  public RabbitMQConfirmListenerImpl(Context context, ChannelConfirmHandler handler, QueueOptions options) {
-    this.handler = handler;
+  public RabbitMQConfirmListenerImpl(RabbitMQClientImpl client, Context context, QueueOptions options) {
+    this.client = client;
     this.maxQueueSize = options.maxInternalQueueSize();
     this.pending = new InboundBuffer<>(context, maxQueueSize);
   }
@@ -46,7 +46,7 @@ public class RabbitMQConfirmListenerImpl implements RabbitMQConfirmListener {
     if (pending.size() >= maxQueueSize) {
       pending.read();
     }
-    pending.write(new RabbitMQConfirmation(deliveryTag, multiple, succeeded));
+    pending.write(new RabbitMQConfirmation(client.getChannelInstance(), deliveryTag, multiple, succeeded));
   }  
 
   @Override

@@ -18,7 +18,6 @@ package io.vertx.rabbitmq;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
-import io.vertx.rabbitmq.impl.RabbitMQConfirmation;
 
 /**
  *

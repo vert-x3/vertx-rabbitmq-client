@@ -37,12 +37,17 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private Connection connection;
   private Channel channel;
+  private long channelInstance;
   private boolean channelConfirms = false;
 
   public RabbitMQClientImpl(Vertx vertx, RabbitMQOptions config) {
     this.vertx = vertx;
     this.config = config;
     this.retries = config.getConnectionRetries();
+  }
+
+  public long getChannelInstance() {
+    return channelInstance;
   }
 
   private static Connection newConnection(RabbitMQOptions config) throws IOException, TimeoutException {
@@ -204,7 +209,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public void addConfirmListener(QueueOptions options, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler) {
     forChannel(  resultHandler, channel -> {
 
-      ChannelConfirmHandler handler = new ChannelConfirmHandler(vertx, channel, options);
+      ChannelConfirmHandler handler = new ChannelConfirmHandler(vertx, this, options);
       channel.addConfirmListener(handler);
       channel.confirmSelect();
 
@@ -534,6 +539,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         // change
         log.debug("channel is close, try create Channel");
 
+        ++channelInstance;
         channel = connection.createChannel();
 
         if(channelConfirms)
@@ -558,6 +564,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     log.debug("Connecting to rabbitmq...");
     connection = newConnection(config);
     connection.addShutdownListener(this);
+    ++channelInstance;
     channel = connection.createChannel();
     log.debug("Connected to rabbitmq !");
   }

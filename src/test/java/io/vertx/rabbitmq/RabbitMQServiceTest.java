@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-  import java.util.stream.Collectors;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
@@ -144,6 +144,8 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     
     client.addConfirmListener(new QueueOptions(), v -> {
       v.result().handler(conf -> {
+        long channelInstance = conf.getChannelInstance();
+        ctx.assertEquals(1L, channelInstance);
         long dt = conf.getDeliveryTag();
         ctx.assertTrue(dt > 0);
         ctx.assertEquals(deliveryTag[0], dt);

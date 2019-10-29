@@ -31,9 +31,9 @@ public class ChannelConfirmHandler implements ConfirmListener {
   private final RabbitMQConfirmListenerImpl listener;
   private final Context handlerContext;
 
-  ChannelConfirmHandler(Vertx vertx, Channel channel, QueueOptions options) {
+  ChannelConfirmHandler(Vertx vertx, RabbitMQClientImpl client, QueueOptions options) {
     this.handlerContext = vertx.getOrCreateContext();
-    this.listener = new RabbitMQConfirmListenerImpl(handlerContext, this, options);
+    this.listener = new RabbitMQConfirmListenerImpl(client, handlerContext, options);
   }
   
   @Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.vertx.rabbitmq.impl;
+package io.vertx.rabbitmq;
 
 /**
  *
@@ -21,14 +21,20 @@ package io.vertx.rabbitmq.impl;
  */
 public class RabbitMQConfirmation {
   
+  private final long channelInstance;
   private final long deliveryTag;
   private final boolean multiple;
   private final boolean succeeded;
 
-  public RabbitMQConfirmation(long deliveryTag, boolean multiple, boolean succeeded) {
+  public RabbitMQConfirmation(long channelInstance, long deliveryTag, boolean multiple, boolean succeeded) {
+    this.channelInstance = channelInstance;
     this.deliveryTag = deliveryTag;
     this.multiple = multiple;
     this.succeeded = succeeded;
+  }
+
+  public long getChannelInstance() {
+    return channelInstance;
   }
 
   public long getDeliveryTag() {
