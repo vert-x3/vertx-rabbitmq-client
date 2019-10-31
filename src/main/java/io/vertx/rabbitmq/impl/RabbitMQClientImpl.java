@@ -20,6 +20,7 @@ import io.vertx.rabbitmq.RabbitMQOptions;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.function.LongConsumer;
 
 import static io.vertx.rabbitmq.impl.Utils.*;
 
@@ -39,6 +40,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private Channel channel;
   private long channelInstance;
   private boolean channelConfirms = false;
+  
+  private List<Runnable> connectionEstablishedCallbacks = new ArrayList<>();
 
   public RabbitMQClientImpl(Vertx vertx, RabbitMQOptions config) {
     this.vertx = vertx;
@@ -50,6 +53,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     return channelInstance;
   }
 
+  @Override
+  public void addConnectionEstablishedCallback(Runnable connectionEstablishedCallback) {
+    this.connectionEstablishedCallbacks.add(connectionEstablishedCallback);
+  }
+  
   private static Connection newConnection(RabbitMQOptions config) throws IOException, TimeoutException {
     ConnectionFactory cf = new ConnectionFactory();
     String uri = config.getUri();
@@ -57,6 +65,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     List<Address> addresses = null;
     if (uri != null) {
       try {
+        log.info("Connecting to " + uri);
         cf.setUri(uri);
       } catch (Exception e) {
         throw new IllegalArgumentException("Invalid rabbitmq connection uri " + uri);
@@ -178,38 +187,46 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Long>> resultHandler) {
+  public void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
     basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body, resultHandler);
   }
 
   @Override
-  public Future<Long> basicPublish(String exchange, String routingKey, Buffer body) {
-    Promise<Long> promise = Promise.promise();
-    basicPublish(exchange, routingKey, body, promise);
+  public Future<Void> basicPublish(String exchange, String routingKey, Buffer body) {
+    Promise<Void> promise = Promise.promise();
+    basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body, null, promise);
     return promise.future();
   }
-
+  
   @Override
-  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Long>> resultHandler) {
+  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, LongConsumer deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
-      long deliveryTag = channel.getNextPublishSeqNo();
+      if (deliveryTagHandler != null) {
+        long deliveryTag = channel.getNextPublishSeqNo();
+        deliveryTagHandler.accept(deliveryTag);
+      }
       channel.basicPublish(exchange, routingKey, (AMQP.BasicProperties) properties, body.getBytes());
-      return deliveryTag;
+      return null;
     });
   }
 
   @Override
-  public Future<Long> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
-    Promise<Long> promise = Promise.promise();
-    basicPublish(exchange, routingKey, properties, body, promise);
+  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
+    basicPublish(exchange, routingKey, properties, body, null, resultHandler);
+  }
+    
+  @Override
+  public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
+    Promise<Void> promise = Promise.promise();
+    basicPublish(exchange, routingKey, properties, body, null, promise);
     return promise.future();
   }
 
   @Override
-  public void addConfirmListener(QueueOptions options, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler) {
-    forChannel(  resultHandler, channel -> {
+  public void addConfirmListener(int maxQueueSize, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler) {
+    forChannel(resultHandler, channel -> {
 
-      ChannelConfirmHandler handler = new ChannelConfirmHandler(vertx, this, options);
+      ChannelConfirmHandler handler = new ChannelConfirmHandler(vertx, this, maxQueueSize);
       channel.addConfirmListener(handler);
       channel.confirmSelect();
 
@@ -220,9 +237,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public Future<RabbitMQConfirmListener> addConfirmListener(QueueOptions options) {
+  public Future<RabbitMQConfirmListener> addConfirmListener(int maxQueueSize) {
     Promise<RabbitMQConfirmListener> promise = Promise.promise();
-    addConfirmListener(options, promise);
+    addConfirmListener(maxQueueSize, promise);
     return promise.future();
   }
 
@@ -566,6 +583,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     connection.addShutdownListener(this);
     ++channelInstance;
     channel = connection.createChannel();
+    if (!connectionEstablishedCallbacks.isEmpty()) {
+      connectionEstablishedCallbacks.forEach(c -> {
+        try {
+          c.run();
+        } catch(Throwable ex) {
+          log.error("Exception whilst running connection stablished callback: ", ex);
+        }
+      });
+    }
     log.debug("Connected to rabbitmq !");
   }
 
@@ -575,6 +601,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       // This will close all channels related to this connection
       connection.close();
       log.debug("Disconnected from rabbitmq !");
+    } catch(AlreadyClosedException ex) {
+      log.debug("Already disconnected from rabbitmq !");
     } finally {
       connection = null;
       channel = null;

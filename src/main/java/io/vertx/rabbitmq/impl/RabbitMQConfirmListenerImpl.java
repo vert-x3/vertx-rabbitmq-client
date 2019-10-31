@@ -1,25 +1,9 @@
-/*
- * Copyright 2019 Eclipse.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.vertx.rabbitmq.impl;
 
 import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.streams.impl.InboundBuffer;
-import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConfirmListener;
 
 /**
@@ -35,9 +19,9 @@ public class RabbitMQConfirmListenerImpl implements RabbitMQConfirmListener {
   private Handler<Throwable> exceptionHandler;
   
   
-  public RabbitMQConfirmListenerImpl(RabbitMQClientImpl client, Context context, QueueOptions options) {
+  public RabbitMQConfirmListenerImpl(RabbitMQClientImpl client, Context context, int maxQueueSize) {
     this.client = client;
-    this.maxQueueSize = options.maxInternalQueueSize();
+    this.maxQueueSize = maxQueueSize;
     this.pending = new InboundBuffer<>(context, maxQueueSize);
   }
 

@@ -142,7 +142,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
     long deliveryTag[] = {0};
     
-    client.addConfirmListener(new QueueOptions(), v -> {
+    client.addConfirmListener(1000, v -> {
       v.result().handler(conf -> {
         long channelInstance = conf.getChannelInstance();
         ctx.assertEquals(1L, channelInstance);
@@ -155,8 +155,12 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
           async.complete();
          }));
       });
-      client.basicPublish("", q, message, ctx.asyncAssertSuccess(dt -> { 
-        deliveryTag[0] = dt;
+      client.basicPublish("", q, new AMQP.BasicProperties()
+          , message
+          , dt -> {
+            deliveryTag[0] = dt;
+          }
+          , ctx.asyncAssertSuccess(dt -> {         
       }));
     });
   }

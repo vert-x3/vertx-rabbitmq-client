@@ -80,3 +80,26 @@ Set the virtual host to use when connecting to the broker.
 +++
 |===
 
+[[RabbitMQPublisherOptions]]
+== RabbitMQPublisherOptions
+
+++++
+ RabbitMQ client options, most
+++++
+'''
+
+[cols=">25%,25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[connectionRetries]]`@connectionRetries`|`Number (Integer)`|+++
+Set the number of connection retries to attempt when connecting, the <code>null</code> value disables it.
++++
+|[[connectionRetryDelay]]`@connectionRetryDelay`|`Number (long)`|+++
+Set the delay in milliseconds between connection retries.
++++
+|[[maxInternalQueueSize]]`@maxInternalQueueSize`|`Number (int)`|+++
+
++++
+|===
+

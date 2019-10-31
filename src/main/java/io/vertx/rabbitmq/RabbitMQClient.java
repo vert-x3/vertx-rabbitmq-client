@@ -3,8 +3,10 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.BasicProperties;
 import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.ConfirmListener;
 import com.rabbitmq.client.Consumer;
 import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -15,13 +17,14 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 
 import java.util.Map;
+import java.util.function.LongConsumer;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
 @VertxGen
 public interface RabbitMQClient {
-
+  
   /**
    * Create and return a client configured with the default options.
    *
@@ -43,6 +46,15 @@ public interface RabbitMQClient {
     return new RabbitMQClientImpl(vertx, config);
   }
 
+
+  /**
+   * Set a callback to be called whenever a new connection is established.
+   * This callback must be idempotent - it will be called each time a connection is established, which may be multiple times against the same instance.
+   * @param connectionEstablishedCallback 
+   */
+  @GenIgnore
+  void addConnectionEstablishedCallback(Runnable connectionEstablishedCallback);
+  
   /**
    * Like {@link #create(Vertx, RabbitMQOptions)} but with a {@link JsonObject} config object.
    */
@@ -123,12 +135,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
-  void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Long>> resultHandler);
+  void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler);
 
   /**
-   * Like {@link #basicPublish(String, String, Buffer, Handler)} but returns a {@code Future} of the asynchronous result containing the delivery tag
+   * Like {@link #basicPublish(String, String, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
    */
-  Future<Long> basicPublish(String exchange, String routingKey, Buffer body);
+  Future<Void> basicPublish(String exchange, String routingKey, Buffer body);
 
   /**
    * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
@@ -137,38 +149,48 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Long>> resultHandler);
+  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Like {@link #basicPublish(String, String, BasicProperties, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  Future<Long> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body);
+  Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body);
+
+  /**
+   * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
+   * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
+   *
+   * @param deliveryTagHandler callback to capture the deliveryTag for this message.  Note that this will be called synchronously in the context of the client.
+   * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable LongConsumer deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Add a Confirm Listener to the channel.
    * Note that this will automatically call confirmSelect, it is not necessary to call that too.
    *
-   * @param options        options for queue
+   * @param maxQueueSize   maximum size of the queue of confirmations
    * @param resultHandler  a handler through which you can find out the operation status;
    *                       if the operation succeeds you can begin to receive confirmations 
    *                       through an instance of {@link RabbitMQConfirmListener}
    * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
    */
-  void addConfirmListener(QueueOptions options, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler);
+  void addConfirmListener(int maxQueueSize, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler);
 
   /**
    * Add a Confirm Listener to the channel.
    * Like {@link #addConfirmListener(Handler)} but returns a {@code Future} of the asynchronous result
    * Note that this will automatically call confirmSelect, it is not necessary to call that too.
    *
-   * @param options        options for queue
+   * @param maxQueueSize   maximum size of the queue of confirmations
    * @return a future through which you can find out the operation status;
    *                       if the operation succeeds you can begin to receive confirmations 
    *                       through an instance of {@link RabbitMQConfirmListener}
    * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
    */
-  Future<RabbitMQConfirmListener> addConfirmListener(QueueOptions options);
+  Future<RabbitMQConfirmListener> addConfirmListener(int maxQueueSize);
 
   /**
    * Enables publisher acknowledgements on this channel. Can be called once during client initialisation. Calls to basicPublish()
