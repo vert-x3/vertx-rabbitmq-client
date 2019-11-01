@@ -187,7 +187,7 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
         latch.completeExceptionally(ar.cause());
       }
     });
-    latch.get(10L, TimeUnit.SECONDS);
+    latch.get(100L, TimeUnit.SECONDS);
     return client;
   }
 
