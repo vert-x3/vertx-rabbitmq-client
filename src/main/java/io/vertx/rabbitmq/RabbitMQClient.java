@@ -17,7 +17,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 
 import java.util.Map;
-import java.util.function.LongConsumer;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -50,10 +49,11 @@ public interface RabbitMQClient {
   /**
    * Set a callback to be called whenever a new connection is established.
    * This callback must be idempotent - it will be called each time a connection is established, which may be multiple times against the same instance.
-   * @param connectionEstablishedCallback 
+   * Callbacks will be added to a list and called in the order they were added, the only way to remove callbacks is to create a new client.
+   * @param connectionEstablishedCallback  callback to be called whenever a new connection is established.
    */
   @GenIgnore
-  void addConnectionEstablishedCallback(Runnable connectionEstablishedCallback);
+  void addConnectionEstablishedCallback(Handler<RabbitMQClient> connectionEstablishedCallback);
   
   /**
    * Like {@link #create(Vertx, RabbitMQOptions)} but with a {@link JsonObject} config object.
@@ -165,7 +165,7 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable LongConsumer deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
+  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Add a Confirm Listener to the channel.

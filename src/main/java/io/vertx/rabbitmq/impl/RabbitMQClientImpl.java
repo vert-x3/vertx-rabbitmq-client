@@ -20,7 +20,6 @@ import io.vertx.rabbitmq.RabbitMQOptions;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.function.LongConsumer;
 
 import static io.vertx.rabbitmq.impl.Utils.*;
 
@@ -41,7 +40,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private long channelInstance;
   private boolean channelConfirms = false;
   
-  private List<Runnable> connectionEstablishedCallbacks = new ArrayList<>();
+  private List<Handler<RabbitMQClient>> connectionEstablishedCallbacks = new ArrayList<>();
 
   public RabbitMQClientImpl(Vertx vertx, RabbitMQOptions config) {
     this.vertx = vertx;
@@ -54,7 +53,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void addConnectionEstablishedCallback(Runnable connectionEstablishedCallback) {
+  public void addConnectionEstablishedCallback(Handler<RabbitMQClient> connectionEstablishedCallback) {
     this.connectionEstablishedCallbacks.add(connectionEstablishedCallback);
   }
   
@@ -155,11 +154,34 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       }
     }, channel -> {
       QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options);
-      String consumerTag = channel.basicConsume(queue, options.isAutoAck(), handler);
+      handler.setShutdownHandler(sig -> {
+        stop(ar -> {
+          if (ar.succeeded()) {
+            start(ar2 -> {
+              if (ar2.succeeded()) {
+                forChannel(ar3 -> {
+                  if (ar3.failed()) {
+                    log.error("Failed to restart consumer: ", ar3.cause());
+                  }
+                }, chan -> {
+                  RabbitMQConsumer q = handler.queue();
+                  chan.basicConsume(queue, options.isAutoAck(), handler);
+                  return q.resume();
+                });
+              } else {
+                log.error("Failed to restart client: ", ar2.cause());
+              }
+            });
+          } else {
+            log.error("Failed to stop client: ", ar.cause());
+          }
+        });
+      });
+      channel.basicConsume(queue, options.isAutoAck(), handler);
       return handler;
     });
   }
-
+  
   @Override
   public Future<RabbitMQConsumer> basicConsumer(String queue, QueueOptions options) {
     Promise<RabbitMQConsumer> promise = Promise.promise();
@@ -199,11 +221,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
   
   @Override
-  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, LongConsumer deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       if (deliveryTagHandler != null) {
         long deliveryTag = channel.getNextPublishSeqNo();
-        deliveryTagHandler.accept(deliveryTag);
+        deliveryTagHandler.handle(deliveryTag);
       }
       channel.basicPublish(exchange, routingKey, (AMQP.BasicProperties) properties, body.getBytes());
       return null;
@@ -586,7 +608,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     if (!connectionEstablishedCallbacks.isEmpty()) {
       connectionEstablishedCallbacks.forEach(c -> {
         try {
-          c.run();
+          c.handle(this);
         } catch(Throwable ex) {
           log.error("Exception whilst running connection stablished callback: ", ex);
         }

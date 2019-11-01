@@ -3,6 +3,7 @@ package io.vertx.rabbitmq;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.BasicProperties;
 import io.vertx.codegen.annotations.GenIgnore;
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -23,39 +24,23 @@ import io.vertx.rabbitmq.impl.RabbitMQPublisherImpl;
  * 
  * @author jtalbut
  */
-public interface RabbitMQPublisher {
-  
-  public class Confirmation {
-
-    private final String messageId;
-    private final boolean succeeded;
-
-    public Confirmation(String messageId, boolean succeeded) {
-      this.messageId = messageId;
-      this.succeeded = succeeded;
-    }
-
-    public String getMessageId() {
-      return messageId;
-    }
-
-    public boolean isSucceeded() {
-      return succeeded;
-    }
-
-  }
-  
+@VertxGen
+public interface RabbitMQPublisher { 
   
   /**
    * Create and return a publisher using the specified client.
    *
-   * @param client the RabbitMQClient
+   * @param vertx  the vertx instance.
+   * @param client the RabbitMQClient.
+   * @param options options for the publisher.
+   * @param connectionEstablishedCallback callback to be called each time a connection is established (it is usually a good idea to declare the exchange in this callback).
    * @return the publisher
+   * @throws Throwable if the client is unable to be configured correctly (typically because it failed to connect before running out of retries).
    */
   static RabbitMQPublisher create(Vertx vertx
           , RabbitMQClient client
           , RabbitMQPublisherOptions options
-          , Runnable connectionEstablishedCallback
+          , Handler<RabbitMQClient> connectionEstablishedCallback
   ) throws Throwable {
     return new RabbitMQPublisherImpl(vertx, client, options, connectionEstablishedCallback);
   }
@@ -67,7 +52,7 @@ public interface RabbitMQPublisher {
    * 
    * @return the ReadStream that contains the message IDs for confirmed messages.
    */
-  ReadStream<Confirmation> getConfirmationStream();
+  ReadStream<RabbitMQPublisherConfirmation> getConfirmationStream();
 
   /**
    * Publish a message. 

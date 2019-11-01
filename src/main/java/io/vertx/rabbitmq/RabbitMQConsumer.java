@@ -10,7 +10,7 @@ import io.vertx.core.streams.ReadStream;
  */
 @VertxGen
 public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
-
+  
   /**
    * Set an exception handler on the read stream.
    *

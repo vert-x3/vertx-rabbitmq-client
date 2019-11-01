@@ -23,15 +23,16 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConfirmListener;
 import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.rabbitmq.RabbitMQPublisher;
-import io.vertx.rabbitmq.RabbitMQPublisher.Confirmation;
+import io.vertx.rabbitmq.RabbitMQPublisherConfirmation;
 import io.vertx.rabbitmq.RabbitMQPublisherOptions;
-import io.vertx.rabbitmq.impl.RabbitMQPublisherImpl.MessageDetails;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -42,11 +43,13 @@ import java.util.concurrent.ExecutionException;
  *
  * @author jtalbut
  */
-public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Confirmation> {
+public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<RabbitMQPublisherConfirmation> {
+  
+  private static final Logger log = LoggerFactory.getLogger(RabbitMQPublisherImpl.class);
   
   private final Vertx vertx;
   private final RabbitMQClient client;
-  private final InboundBuffer<Confirmation> confirmations;
+  private final InboundBuffer<RabbitMQPublisherConfirmation> confirmations;
   private final Context context;
   private final RabbitMQPublisherOptions options;
   
@@ -84,7 +87,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Conf
   public RabbitMQPublisherImpl(Vertx vertx
           , RabbitMQClient client
           , RabbitMQPublisherOptions options
-          , Runnable connectionEstablishedCallback
+          , Handler<RabbitMQClient> connectionEstablishedCallback
   ) throws Throwable {
     this.vertx = vertx;
     this.client = client;
@@ -93,10 +96,12 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Conf
     this.sendQueue = new InboundBuffer<>(context);
     sendQueue.handler(md -> handleMessageSend(md));
     this.options = options;
-    this.client.addConnectionEstablishedCallback(() -> {
-      addConfirmListener(client, options, null);
+    this.client.addConnectionEstablishedCallback(cli -> {
+      addConfirmListener(cli, options, null);
     });
-    this.client.addConnectionEstablishedCallback(connectionEstablishedCallback);
+    if (connectionEstablishedCallback != null) {
+      this.client.addConnectionEstablishedCallback(connectionEstablishedCallback);
+    }
 
     CompletableFuture<Void> latch = new CompletableFuture<>();
     addConfirmListener(client, options, ar -> {
@@ -131,7 +136,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Conf
   }
 
   @Override
-  public ReadStream<Confirmation> getConfirmationStream() {
+  public ReadStream<RabbitMQPublisherConfirmation> getConfirmationStream() {
     return this;
   }
 
@@ -160,6 +165,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Conf
                 }
                 sendQueue.resume();
               } else {
+                log.info("Failed to publish message: " + publishResult.cause().toString());
                 if (md.publishHandler != null) {
                   md.publishHandler.handle(publishResult);
                 }
@@ -200,7 +206,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Conf
           MessageDetails md = iter.next();
           if (md.deliveryTag <= rawConfirmation.getDeliveryTag()) {
             String messageId = md.properties == null ?  null : md.properties.getMessageId();
-            confirmations.write(new Confirmation(messageId, rawConfirmation.isSucceeded()));
+            confirmations.write(new RabbitMQPublisherConfirmation(messageId, rawConfirmation.isSucceeded()));
             iter.remove();
           }
         }
@@ -209,7 +215,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Conf
           MessageDetails md = iter.next();
           if (md.deliveryTag == rawConfirmation.getDeliveryTag()) {
             String messageId = md.properties == null ?  null : md.properties.getMessageId();
-            confirmations.write(new Confirmation(messageId, rawConfirmation.isSucceeded()));
+            confirmations.write(new RabbitMQPublisherConfirmation(messageId, rawConfirmation.isSucceeded()));
             iter.remove();
           }
         }
@@ -238,7 +244,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Conf
   }
 
   @Override
-  public RabbitMQPublisherImpl handler(Handler<Confirmation> hndlr) {
+  public RabbitMQPublisherImpl handler(Handler<RabbitMQPublisherConfirmation> hndlr) {
     confirmations.handler(hndlr);
     return this;
   }

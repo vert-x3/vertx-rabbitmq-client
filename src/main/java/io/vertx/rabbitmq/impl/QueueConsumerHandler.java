@@ -4,7 +4,9 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
+import com.rabbitmq.client.ShutdownSignalException;
 import io.vertx.core.Context;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -12,20 +14,23 @@ import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 
-import static io.vertx.rabbitmq.impl.Utils.put;
-import static io.vertx.rabbitmq.impl.Utils.toJson;
 
 public class QueueConsumerHandler extends DefaultConsumer {
 
   private final RabbitMQConsumerImpl queue;
   private final Context handlerContext;
+  private Handler<ShutdownSignalException> shutdownHandler;
 
-  private static final Logger log = LoggerFactory.getLogger(ConsumerHandler.class);
+  private static final Logger log = LoggerFactory.getLogger(QueueConsumerHandler.class);
 
   QueueConsumerHandler(Vertx vertx, Channel channel, QueueOptions options) {
     super(channel);
     this.handlerContext = vertx.getOrCreateContext();
     this.queue = new RabbitMQConsumerImpl(handlerContext, this, options);
+  }
+
+  public void setShutdownHandler(Handler<ShutdownSignalException> shutdownHandler) {
+    this.shutdownHandler = shutdownHandler;
   }
 
   @Override
@@ -36,9 +41,19 @@ public class QueueConsumerHandler extends DefaultConsumer {
 
   @Override
   public void handleCancel(String consumerTag) {
-    log.debug("consumer has been cancelled unexpectedly");
+    log.info("consumer has been cancelled unexpectedly");
     queue.handleEnd();
   }
+
+  @Override
+  public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
+    log.info("consumer has been shutdown unexpectedly");
+    if (this.shutdownHandler != null) {
+      shutdownHandler.handle(sig);
+    }
+  }
+  
+  
 
   /**
    * @return a queue for message consumption
@@ -46,4 +61,5 @@ public class QueueConsumerHandler extends DefaultConsumer {
   public RabbitMQConsumer queue() {
     return queue;
   }
+  
 }
