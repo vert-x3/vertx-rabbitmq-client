@@ -11,6 +11,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -53,7 +54,7 @@ public interface RabbitMQClient {
    * @param connectionEstablishedCallback  callback to be called whenever a new connection is established.
    */
   @GenIgnore
-  void addConnectionEstablishedCallback(Handler<RabbitMQClient> connectionEstablishedCallback);
+  void addConnectionEstablishedCallback(Handler<Promise<Void>> connectionEstablishedCallback);
   
   /**
    * Like {@link #create(Vertx, RabbitMQOptions)} but with a {@link JsonObject} config object.

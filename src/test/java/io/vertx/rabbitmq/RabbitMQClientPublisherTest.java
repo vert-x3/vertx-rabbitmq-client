@@ -2,7 +2,7 @@ package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -11,6 +11,7 @@ import io.vertx.ext.unit.TestContext;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.ClassRule;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
@@ -32,7 +35,7 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
   private static final String EXCHANGE_NAME = "RabbitMQClientPublisherTest";
   private static final String QUEUE_NAME = "RabbitMQClientPublisherTestQueue";
   
-  static final int getFreePort() {
+  private static final int getFreePort() {
     try (ServerSocket s = new ServerSocket(0)) {
       return s.getLocalPort();
     } catch(IOException ex) {
@@ -42,7 +45,7 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
   
   @ClassRule
   public static final GenericContainer fixedRabbitmq = new FixedHostPortGenericContainer<>("rabbitmq:3.7")
-    .withCreateContainerCmdModifier(cmd -> cmd.withHostName("my-rabbit"))
+    .withCreateContainerCmdModifier(cmd -> cmd.withHostName("bouncing-rabbit"))
     .withFixedExposedPort(getFreePort(), 5672);
   
   @Override
@@ -75,39 +78,103 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
     
     Map<String, MessageDefinition> messages = new HashMap<>(count);
     for (int i = 0; i < count; ++i) {
-      String messageId = "ID-" + i;
+      String messageId = String.format("NewID-%05d", i);
       messages.put(messageId, new MessageDefinition(i, messageId, "Message " + i));
     }    
     Map<String, RabbitMQMessage> messagesReceived = new HashMap<>(count);
-    
+        
     Async latch = ctx.async(count);
+    
+    // Now that publishers start asynchronously there is a race condition where messages can be published
+    // before the connection established callbacks have run, which means that the queue doesn't exist and
+    // messages get lost.
+    CompletableFuture<Void> letConsumerStartFirst = new CompletableFuture<>();
 
-    RabbitMQClient consumerClient = connectClient(vertx, config(), cli -> {
-      cli.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false);
-      cli.queueDeclare(QUEUE_NAME, true, false, false);
-      cli.queueBind(QUEUE_NAME, EXCHANGE_NAME, "");
-      cli.basicConsumer(QUEUE_NAME
-              , new QueueOptions().setAutoAck(false)
-              , ar -> {
-        if (ar.succeeded()) {
-          ar.result().handler(m -> {
-            synchronized(messages) {
-              messagesReceived.put(m.properties().getMessageId(), m);
-              cli.basicAck(m.envelope().getDeliveryTag(), false);
-              if (messagesReceived.size() == count) {
-                latch.complete();
-              }
+    AtomicReference<RabbitMQConsumer> consumer = new AtomicReference<>();
+    RabbitMQClient consumerClient = RabbitMQClient.create(vertx, config());
+    AtomicLong duplicateCount = new AtomicLong();
+    prepareClient(consumerClient
+        , p -> {
+          consumerClient.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false, ar1 -> {
+            if (ar1.succeeded()) {
+              consumerClient.queueDeclare(QUEUE_NAME, true, false, false, ar2 -> {
+                if (ar2.succeeded()) {
+                  consumerClient.queueBind(QUEUE_NAME, EXCHANGE_NAME, "", ar3 -> {
+                    if (ar3.succeeded()) {
+                      p.complete();
+                    } else {
+                      p.fail(ar3.cause());
+                    }
+                  });
+                } else {
+                  p.fail(ar2.cause());
+                }
+              });
+            } else {
+              p.fail(ar1.cause());
             }
           });
         }
-      });          
-    });
+        , p -> {
+          consumerClient.basicConsumer(QUEUE_NAME
+                  , new QueueOptions().setAutoAck(false)
+                  , ar4 -> {
+            if (ar4.succeeded()) {
+              letConsumerStartFirst.complete(null);
+              consumer.set(ar4.result());
+              ar4.result().handler(m -> {
+                synchronized(messages) {
+                  Object prev = messagesReceived.put(m.properties().getMessageId(), m);
+                  if (prev != null) {
+                    duplicateCount.incrementAndGet();
+                  }
+                  // logger.info("Have received " + messagesReceived.size() + " messages with " + duplicateCount.get() + " duplicates");
+                  // logger.info("Have received " + messagesReceived.size() + " messages");
+                  // List<String> got = new ArrayList<>(messagesReceived.keySet());
+                  // Collections.sort(got);
+                  // logger.info("Received " + got);
+                  consumerClient.basicAck(m.envelope().getDeliveryTag(), false);
+                  if (messagesReceived.size() == count) {
+                    logger.info("Have received " + messagesReceived.size() + " messages with " + duplicateCount.get() + " duplicates");
+                    latch.complete();
+                  }
+                }
+              });
+              p.complete(null);
+            } else {
+              p.completeExceptionally(ar4.cause());
+            }
+          });
+        }
+    ); 
+    
+    letConsumerStartFirst.get(2, TimeUnit.MINUTES);
             
-    this.client = connectClient(vertx, config(), cli -> {
-      cli.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false);
-      cli.queueDeclare(QUEUE_NAME, true, false, false);
-      cli.queueBind(QUEUE_NAME, EXCHANGE_NAME, "");
-    }); 
+    this.client = RabbitMQClient.create(vertx, config());
+    prepareClient(client
+        , p -> {
+          client.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false, ar1 -> {
+            if (ar1.succeeded()) {
+              client.queueDeclare(QUEUE_NAME, true, false, false, ar2 -> {
+                if (ar2.succeeded()) {
+                  client.queueBind(QUEUE_NAME, EXCHANGE_NAME, "", ar3 -> {
+                    if (ar3.succeeded()) {
+                      p.complete();
+                    } else {
+                      p.fail(ar3.cause());
+                    }
+                  });
+                } else {
+                  p.fail(ar2.cause());
+                }
+              });
+            } else {
+              p.fail(ar1.cause());
+            }
+          });
+        }
+        , null
+    ); 
     
     vertx.setTimer(100, l -> {
       vertx.executeBlocking(f -> {
@@ -126,17 +193,19 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
             .setConnectionRetries(Integer.MAX_VALUE)
             .setConnectionRetryDelay(100)
             .setMaxInternalQueueSize(Integer.MAX_VALUE)
-        , null
     );
-    publisher.getConfirmationStream().handler(c -> {
-      synchronized(messages) {
-        messages.remove(c.getMessageId());
-      }
+    publisher.start(ar -> {
+      publisher.getConfirmationStream().handler(c -> {
+        synchronized(messages) {
+          messages.remove(c.getMessageId());
+        }
+      });
     });
     
     List<MessageDefinition> messagesCopy;
     synchronized(messages) {
       messagesCopy = new ArrayList<>(messages.values());
+      Collections.sort(messagesCopy, (l,r) -> l.messageId.compareTo(r.messageId));
     }
     for (MessageDefinition message : messagesCopy) {
       Thread.sleep(1);
@@ -151,11 +220,12 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
     }
     while (publisher.getQueueSize() > 0) {
       logger.info("Still got " + publisher.getQueueSize() + " messages in the send queue");
-      Thread.sleep(100);
+      Thread.sleep(200);
     }
-    logger.info("After the publisher has sent everything there remain " + messages.size() + " messages unconfirmed");
     synchronized(messages) {
+      logger.info("After the publisher has sent everything there remain " + messages.size() + " messages unconfirmed");
       messagesCopy = new ArrayList<>(messages.values());
+      Collections.sort(messagesCopy, (l,r) -> l.messageId.compareTo(r.messageId));
     }
     for (MessageDefinition message : messagesCopy) {
       Thread.sleep(1);
@@ -169,26 +239,44 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
       );
     }
 
-    latch.await(10000L);
+    logger.info("Waiting up to 20s for the latch");
+    latch.await(20000L);
+    logger.info("Latched, shutting down");
 
-    client.stop(ctx.asyncAssertSuccess());
+    logger.info("Shutting down");
+    consumer.get().cancel(ar1 -> {
+      logger.info("Consumer cancelled");
+      consumerClient.stop(ar2 -> {
+        logger.info("Consumer client stopped");
+        client.stop(ar3 -> {
+          logger.info("Producer client stopped");
+          ctx.async().complete();
+        });
+      });
+    });
   }
 
-  static RabbitMQClient connectClient(Vertx vertx, RabbitMQOptions options, Handler<RabbitMQClient> connectionEstablishedCallback) throws InterruptedException, Exception, TimeoutException, ExecutionException {
-    RabbitMQClient client = RabbitMQClient.create(vertx, options);
+  static void prepareClient(
+      RabbitMQClient client
+      , Handler<Promise<Void>> connectionEstablishedCallback
+      , Handler<CompletableFuture<Void>> startHandler
+  ) throws InterruptedException, Exception, TimeoutException, ExecutionException {
     if (connectionEstablishedCallback != null) {
       client.addConnectionEstablishedCallback(connectionEstablishedCallback);
     }
     CompletableFuture<Void> latch = new CompletableFuture<>();
     client.start(ar -> {
       if (ar.succeeded()) {
-        latch.complete(null);
+        if (startHandler != null) {
+          startHandler.handle(latch);
+        } else {
+          latch.complete(null);
+        }
       } else {
         latch.completeExceptionally(ar.cause());
       }
     });
     latch.get(100L, TimeUnit.SECONDS);
-    return client;
   }
 
 }

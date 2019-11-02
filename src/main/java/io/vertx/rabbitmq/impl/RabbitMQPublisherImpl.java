@@ -28,7 +28,6 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.rabbitmq.RabbitMQClient;
-import io.vertx.rabbitmq.RabbitMQConfirmListener;
 import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.rabbitmq.RabbitMQPublisher;
 import io.vertx.rabbitmq.RabbitMQPublisherConfirmation;
@@ -36,8 +35,6 @@ import io.vertx.rabbitmq.RabbitMQPublisherOptions;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  *
@@ -87,8 +84,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   public RabbitMQPublisherImpl(Vertx vertx
           , RabbitMQClient client
           , RabbitMQPublisherOptions options
-          , Handler<RabbitMQClient> connectionEstablishedCallback
-  ) throws Throwable {
+  ) {
     this.vertx = vertx;
     this.client = client;
     this.context = vertx.getOrCreateContext();
@@ -96,31 +92,32 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
     this.sendQueue = new InboundBuffer<>(context);
     sendQueue.handler(md -> handleMessageSend(md));
     this.options = options;
-    this.client.addConnectionEstablishedCallback(cli -> {
-      addConfirmListener(cli, options, null);
+    this.client.addConnectionEstablishedCallback(p -> {
+      addConfirmListener(client, options, p);
     });
-    if (connectionEstablishedCallback != null) {
-      this.client.addConnectionEstablishedCallback(connectionEstablishedCallback);
-    }
-
-    CompletableFuture<Void> latch = new CompletableFuture<>();
-    addConfirmListener(client, options, ar -> {
-      if (ar.succeeded()) {
-        latch.complete(null);
-      } else {
-        latch.completeExceptionally(ar.cause());
-      }
-    });
-    try {
-      latch.get();
-    } catch(ExecutionException ex) {
-      throw ex.getCause();
-    }
   }
 
+  @Override
+  public void start(Handler<AsyncResult<Void>> resultHandler) {
+    Promise<Void> promise = startForPromise();
+    promise.future().setHandler(resultHandler);
+  }
+
+  @Override
+  public Future<Void> start() {
+    Promise<Void> promise = startForPromise();
+    return promise.future();
+  }
+
+  private Promise<Void> startForPromise() {
+    Promise<Void> promise = Promise.promise();
+    addConfirmListener(client, options, promise);
+    return promise;
+  }
+  
   protected final void addConfirmListener(RabbitMQClient client1
           , RabbitMQPublisherOptions options1
-          , Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler
+          , Promise<Void> promise
   ) {    
     client1.addConfirmListener(options1.getMaxInternalQueueSize(),
             ar -> {
@@ -128,9 +125,10 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
                 ar.result().handler(confirmation -> {
                   handleConfirmation(confirmation);
                 });
-              }
-              if (resultHandler != null) {
-                resultHandler.handle(ar);
+                promise.complete();
+              } else {
+                log.error("Failed to add confirmListener: ", ar.cause());
+                promise.fail(ar.cause());
               }
             });
   }

@@ -40,7 +40,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private long channelInstance;
   private boolean channelConfirms = false;
   
-  private List<Handler<RabbitMQClient>> connectionEstablishedCallbacks = new ArrayList<>();
+  private List<Handler<Promise<Void>>> connectionEstablishedCallbacks = new ArrayList<>();
 
   public RabbitMQClientImpl(Vertx vertx, RabbitMQOptions config) {
     this.vertx = vertx;
@@ -51,9 +51,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public long getChannelInstance() {
     return channelInstance;
   }
-
+  
   @Override
-  public void addConnectionEstablishedCallback(Handler<RabbitMQClient> connectionEstablishedCallback) {
+  public void addConnectionEstablishedCallback(Handler<Promise<Void>> connectionEstablishedCallback) {
     this.connectionEstablishedCallbacks.add(connectionEstablishedCallback);
   }
   
@@ -153,27 +153,30 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         resultHandler.handle(Future.failedFuture(ar.cause()));
       }
     }, channel -> {
+      log.info("Created new QueueConsumer");
       QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options);
       handler.setShutdownHandler(sig -> {
         stop(ar -> {
-          if (ar.succeeded()) {
-            start(ar2 -> {
-              if (ar2.succeeded()) {
-                forChannel(ar3 -> {
-                  if (ar3.failed()) {
-                    log.error("Failed to restart consumer: ", ar3.cause());
-                  }
-                }, chan -> {
-                  RabbitMQConsumer q = handler.queue();
-                  chan.basicConsume(queue, options.isAutoAck(), handler);
-                  return q.resume();
-                });
-              } else {
-                log.error("Failed to restart client: ", ar2.cause());
-              }
-            });
-          } else {
-            log.error("Failed to stop client: ", ar.cause());
+          if (!handler.queue().isCancelled()) {
+            if (ar.succeeded()) {
+              start(ar2 -> {
+                if (ar2.succeeded()) {
+                  forChannel(ar3 -> {
+                    if (ar3.failed()) {
+                      log.error("Failed to restart consumer: ", ar3.cause());
+                    }
+                  }, chan -> {
+                    RabbitMQConsumer q = handler.queue();
+                    chan.basicConsume(queue, options.isAutoAck(), handler);
+                    return q.resume();
+                  });
+                } else {
+                  log.error("Failed to restart client: ", ar2.cause());
+                }
+              });
+            } else {
+              log.error("Failed to stop client: ", ar.cause());
+            }
           }
         });
       });
@@ -523,8 +526,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private void start(int attempts, Handler<AsyncResult<Void>> resultHandler) {
     vertx.<Void>executeBlocking(future -> {
       try {
-        connect();
-        future.complete();
+        connect(future);
       } catch (IOException | TimeoutException e) {
         log.error("Could not connect to rabbitmq", e);
         future.fail(e);
@@ -599,29 +601,50 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     }, resultHandler);
   }
 
-  private void connect() throws IOException, TimeoutException {
+  private Future connect(Promise<Void> promise) throws IOException, TimeoutException {
     log.debug("Connecting to rabbitmq...");
     connection = newConnection(config);
     connection.addShutdownListener(this);
     ++channelInstance;
     channel = connection.createChannel();
-    if (!connectionEstablishedCallbacks.isEmpty()) {
-      connectionEstablishedCallbacks.forEach(c -> {
-        try {
-          c.handle(this);
-        } catch(Throwable ex) {
-          log.error("Exception whilst running connection stablished callback: ", ex);
-        }
-      });
+    Future result = promise.future();
+    if (connectionEstablishedCallbacks.isEmpty()) {
+      promise.complete();
+    } else {
+      Iterator<Handler<Promise<Void>>> iter = connectionEstablishedCallbacks.iterator();
+      connectCallbackHandler(Future.succeededFuture(), iter, promise);
     }
     log.debug("Connected to rabbitmq !");
+    return result;
+  }
+
+  private void connectCallbackHandler(AsyncResult<Void> prevResult, Iterator<Handler<Promise<Void>>> iter, Promise<Void> connectPromise) {
+    try {
+      if (prevResult.failed()) {
+        connectPromise.fail(prevResult.cause());
+      } else {
+        if (iter.hasNext()) {        
+          Handler<Promise<Void>> next = iter.next();
+          Promise<Void> callbackPromise = Promise.promise();
+          next.handle(connectPromise);
+          callbackPromise.future().setHandler(result -> connectCallbackHandler(result, iter, connectPromise));
+        } else {
+          connectPromise.complete();
+        }
+      }
+    } catch(Throwable ex) {
+      log.error("Exception whilst running connection stablished callback: ", ex);
+      connectPromise.fail(ex);
+    }
   }
 
   private void disconnect() throws IOException {
     try {
       log.debug("Disconnecting from rabbitmq...");
       // This will close all channels related to this connection
-      connection.close();
+      if (connection != null) {
+        connection.close();
+      }
       log.debug("Disconnected from rabbitmq !");
     } catch(AlreadyClosedException ex) {
       log.debug("Already disconnected from rabbitmq !");

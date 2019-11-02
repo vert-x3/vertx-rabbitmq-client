@@ -35,15 +35,25 @@ public interface RabbitMQPublisher {
    * @param options options for the publisher.
    * @param connectionEstablishedCallback callback to be called each time a connection is established (it is usually a good idea to declare the exchange in this callback).
    * @return the publisher
-   * @throws Throwable if the client is unable to be configured correctly (typically because it failed to connect before running out of retries).
    */
   static RabbitMQPublisher create(Vertx vertx
           , RabbitMQClient client
           , RabbitMQPublisherOptions options
-          , Handler<RabbitMQClient> connectionEstablishedCallback
-  ) throws Throwable {
-    return new RabbitMQPublisherImpl(vertx, client, options, connectionEstablishedCallback);
+  ) {
+    return new RabbitMQPublisherImpl(vertx, client, options);
   }
+  
+  /**
+   * Start the rabbitMQ publisher.
+   * The RabbitMQClient should have been started before this.
+   *
+   */
+  void start(Handler<AsyncResult<Void>> resultHandler);
+  
+  /**
+   * Like {@link #start(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> start();
   
   /**
    * Get the ReadStream that contains the message IDs for confirmed messages.

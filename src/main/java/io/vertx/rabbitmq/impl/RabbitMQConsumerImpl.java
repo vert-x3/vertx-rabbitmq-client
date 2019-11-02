@@ -24,6 +24,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   private final boolean keepMostRecent;
   private final InboundBuffer<RabbitMQMessage> pending;
   private final int maxQueueSize;
+  private volatile boolean cancelled;
 
   RabbitMQConsumerImpl(Context context, QueueConsumerHandler consumerHandler, QueueOptions options) {
     this.consumerHandler = consumerHandler;
@@ -92,6 +93,8 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   public void cancel(Handler<AsyncResult<Void>> cancelResult) {
     AsyncResult<Void> operationResult;
     try {
+      log.info("Cancelling " + consumerTag());
+      cancelled = true;
       consumerHandler.getChannel().basicCancel(consumerTag());
       operationResult = Future.succeededFuture();
     } catch (IOException e) {
@@ -101,6 +104,11 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
       cancelResult.handle(operationResult);
     }
     handleEnd();
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return cancelled;
   }
 
   @Override

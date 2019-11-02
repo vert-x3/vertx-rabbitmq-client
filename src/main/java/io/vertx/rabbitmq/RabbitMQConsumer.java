@@ -68,6 +68,12 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
   void cancel();
 
   /**
+   * Return true if cancel() has been called.
+   * @return true if cancel() has been called. 
+   */
+  boolean isCancelled();
+  
+  /**
    * Stop message consumption from a queue.
    * <p>
    * The operation is asynchronous. When consumption will be stopped, you can by notified via {@link RabbitMQConsumer#endHandler(Handler)}

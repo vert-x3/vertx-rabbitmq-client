@@ -40,15 +40,21 @@ public class QueueConsumerHandler extends DefaultConsumer {
   }
 
   @Override
+  public void handleConsumeOk(String consumerTag) {
+    super.handleConsumeOk(consumerTag);
+    log.info("Consumer tag is now " + consumerTag);
+  }
+
+  @Override
   public void handleCancel(String consumerTag) {
-    log.info("consumer has been cancelled unexpectedly");
+    log.info("consumer has been cancelled unexpectedly: " + consumerTag);
     queue.handleEnd();
   }
 
   @Override
   public void handleShutdownSignal(String consumerTag, ShutdownSignalException sig) {
-    log.info("consumer has been shutdown unexpectedly");
-    if (this.shutdownHandler != null) {
+    log.info("consumer has been shutdown unexpectedly: " + consumerTag);
+    if ((this.shutdownHandler != null) && !queue.isCancelled()) {
       shutdownHandler.handle(sig);
     }
   }
