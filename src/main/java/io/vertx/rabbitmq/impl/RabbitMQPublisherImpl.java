@@ -206,6 +206,8 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
             String messageId = md.properties == null ?  null : md.properties.getMessageId();
             confirmations.write(new RabbitMQPublisherConfirmation(messageId, rawConfirmation.isSucceeded()));
             iter.remove();
+          } else {
+            break ;
           }
         }
       } else {
@@ -215,6 +217,8 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
             String messageId = md.properties == null ?  null : md.properties.getMessageId();
             confirmations.write(new RabbitMQPublisherConfirmation(messageId, rawConfirmation.isSucceeded()));
             iter.remove();
+          } else {
+            break ;
           }
         }
       }
