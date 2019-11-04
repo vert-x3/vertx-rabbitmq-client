@@ -218,10 +218,18 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
           , null
       );
     }
-    while (publisher.getQueueSize() > 0) {
-      logger.info("Still got " + publisher.getQueueSize() + " messages in the send queue");
-      Thread.sleep(200);
-    }
+    logger.info("Still got " + publisher.getQueueSize() + " messages in the send queue, waiting for that to clear");
+    CompletableFuture<Void> emptyPublisherLatch = new CompletableFuture<>();
+    publisher.stop(ar -> {
+      if (ar.succeeded()) {
+        emptyPublisherLatch.complete(null);
+      } else {
+        emptyPublisherLatch.completeExceptionally(ar.cause());
+      }
+    });
+    emptyPublisherLatch.get();
+    publisher.restart();
+
     synchronized(messages) {
       logger.info("After the publisher has sent everything there remain " + messages.size() + " messages unconfirmed");
       messagesCopy = new ArrayList<>(messages.values());

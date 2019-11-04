@@ -53,6 +53,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   private final Deque<MessageDetails> awaitingAck = new ArrayDeque<>();
   private final InboundBuffer<MessageDetails> sendQueue;
   private long lastChannelInstance = 0;
+  private volatile boolean stopped = false;
   
   /**
    * POD for holding message details pending acknowledgement.
@@ -109,6 +110,26 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
     return promise.future();
   }
 
+  @Override
+  public void stop(Handler<AsyncResult<Void>> resultHandler) {
+    sendQueue.emptyHandler(v -> {
+      resultHandler.handle(Future.succeededFuture());
+    });
+    stopped = true;
+  }
+
+  @Override
+  public Future<Void> stop() {
+    Promise<Void> promise = Promise.promise();
+    stop(promise);
+    return promise.future();
+  }
+
+  @Override
+  public void restart() {
+    stopped = false;
+  }
+  
   private Promise<Void> startForPromise() {
     Promise<Void> promise = Promise.promise();
     addConfirmListener(client, options, promise);
@@ -227,9 +248,11 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   
   @Override
   public void publish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
-    context.runOnContext(e -> {
-      sendQueue.write(new MessageDetails(exchange, routingKey, properties, body, resultHandler));
-    });
+    if (!stopped) {
+      context.runOnContext(e -> {
+        sendQueue.write(new MessageDetails(exchange, routingKey, properties, body, resultHandler));
+      });
+    }
   }
 
   @Override

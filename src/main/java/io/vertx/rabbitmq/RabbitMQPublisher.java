@@ -56,6 +56,24 @@ public interface RabbitMQPublisher {
   Future<Void> start();
   
   /**
+   * Stop the rabbitMQ publisher.
+   * Calling this is optional, but it gives the opportunity to drain the send queue without losing messages.
+   * Future calls to publish will be ignored.
+   *
+   */
+  void stop(Handler<AsyncResult<Void>> resultHandler);
+  
+  /**
+   * Like {@link #stop(Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> stop();
+  
+  /**
+   * Undo the effects of calling {@link #stop(Handler)} so that publish may be called again. 
+   */
+  void restart();
+  
+  /**
    * Get the ReadStream that contains the message IDs for confirmed messages.
    * The message IDs in this ReadStream are taken from the message properties,
    * if these message IDs are not set then this ReadStream will contain nulls and using this publisher will be pointless.
