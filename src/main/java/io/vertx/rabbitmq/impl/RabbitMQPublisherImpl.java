@@ -112,10 +112,16 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
 
   @Override
   public void stop(Handler<AsyncResult<Void>> resultHandler) {
-    sendQueue.emptyHandler(v -> {
-      resultHandler.handle(Future.succeededFuture());
-    });
     stopped = true;
+    sendQueue.pause();
+    if (sendQueue.isEmpty()) {
+      resultHandler.handle(Future.succeededFuture());
+    } else {
+      sendQueue.emptyHandler(v -> {
+        resultHandler.handle(Future.succeededFuture());
+      });
+    }
+    sendQueue.resume();
   }
 
   @Override
@@ -128,6 +134,9 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   @Override
   public void restart() {
     stopped = false;
+    sendQueue.pause();
+    sendQueue.emptyHandler(null);
+    sendQueue.resume();
   }
   
   private Promise<Void> startForPromise() {

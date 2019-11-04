@@ -72,6 +72,32 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
   }
   
   @Test
+  public void testStopEmpty(TestContext ctx) throws Throwable {
+    
+    this.client = RabbitMQClient.create(vertx, config());
+
+    RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx
+        , client
+        , new RabbitMQPublisherOptions()
+            .setConnectionRetries(Integer.MAX_VALUE)
+            .setConnectionRetryDelay(100)
+            .setMaxInternalQueueSize(Integer.MAX_VALUE)
+    );
+    CompletableFuture startLatch = new CompletableFuture();
+    publisher.start(ar -> {
+      startLatch.complete(null);
+    });
+    startLatch.get();
+    
+    CompletableFuture stopLatch = new CompletableFuture();
+    publisher.stop(ar -> {
+      stopLatch.complete(null);
+    });
+    stopLatch.get();
+    
+  }
+  
+  @Test
   public void testPublishOverReconnect(TestContext ctx) throws Throwable {
 
     int count = 1000;
@@ -83,7 +109,7 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
     }    
     Map<String, RabbitMQMessage> messagesReceived = new HashMap<>(count);
         
-    Async latch = ctx.async(count);
+    Async receivedEnoughMessagesLatch = ctx.async(count);
     
     // Now that publishers start asynchronously there is a race condition where messages can be published
     // before the connection established callbacks have run, which means that the queue doesn't exist and
@@ -136,7 +162,7 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
                   consumerClient.basicAck(m.envelope().getDeliveryTag(), false);
                   if (messagesReceived.size() == count) {
                     logger.info("Have received " + messagesReceived.size() + " messages with " + duplicateCount.get() + " duplicates");
-                    latch.complete();
+                    receivedEnoughMessagesLatch.complete();
                   }
                 }
               });
@@ -248,7 +274,7 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
     }
 
     logger.info("Waiting up to 20s for the latch");
-    latch.await(20000L);
+    receivedEnoughMessagesLatch.await(20000L);
     logger.info("Latched, shutting down");
 
     logger.info("Shutting down");
