@@ -54,7 +54,8 @@ public interface RabbitMQClient {
    * 
    * These callbacks should be used to establish any Rabbit MQ server objects that are required - exchanges, queues, bindings, etc.
    * Each callback will receive a Promise<Void> that it must complete in order to pass control to the next callback (or back to the RabbitMQClient).
-   * If the promise is not completes by a callback the RabbitMQClient will not start.
+   * If the callback fails the promise the RabbitMQClient will be unable to make a connection (it will attempt to connect again according to its retry configuration).
+   * If the promise is not completed or failed by a callback the RabbitMQClient will not start (it will hang indefinitely).
    * 
    * Other methods on the client may be used in the callback -
    * it is specifically expected that RabbitMQ objects will be declared, but the publish and consume methods must not be used.
