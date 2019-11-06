@@ -189,13 +189,21 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
             try {              
               if (publishResult.succeeded()) {
                 if (md.publishHandler != null) {
-                  md.publishHandler.handle(publishResult);
+                  try {
+                    md.publishHandler.handle(publishResult);
+                  } catch(Throwable ex) {
+                    log.warn("Failed to handle publish result", ex);
+                  }
                 }
                 sendQueue.resume();
               } else {
                 log.info("Failed to publish message: " + publishResult.cause().toString());
                 if (md.publishHandler != null) {
-                  md.publishHandler.handle(publishResult);
+                  try {
+                    md.publishHandler.handle(publishResult);
+                  } catch(Throwable ex) {
+                    log.warn("Failed to handle unsuccessful publish result", ex);
+                  }
                 }
                 synchronized(awaitingAck) {
                   awaitingAck.remove(md);
