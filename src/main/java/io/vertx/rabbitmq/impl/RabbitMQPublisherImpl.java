@@ -189,7 +189,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
             try {              
               if (publishResult.succeeded()) {
                 if (md.publishHandler != null) {
-                  md.publishHandler.handle(null);
+                  md.publishHandler.handle(publishResult);
                 }
                 sendQueue.resume();
               } else {
