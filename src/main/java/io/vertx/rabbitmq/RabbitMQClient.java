@@ -51,6 +51,20 @@ public interface RabbitMQClient {
    * Set a callback to be called whenever a new connection is established.
    * This callback must be idempotent - it will be called each time a connection is established, which may be multiple times against the same instance.
    * Callbacks will be added to a list and called in the order they were added, the only way to remove callbacks is to create a new client.
+   * 
+   * These callbacks should be used to establish any Rabbit MQ server objects that are required - exchanges, queues, bindings, etc.
+   * Each callback will receive a Promise<Void> that it must complete in order to pass control to the next callback (or back to the RabbitMQClient).
+   * If the promise is not completes by a callback the RabbitMQClient will not start.
+   * 
+   * Other methods on the client may be used in the callback -
+   * it is specifically expected that RabbitMQ objects will be declared, but the publish and consume methods must not be used.
+   * 
+   * The connection established callbacks are particularly important with the RabbitMQPublisher and RabbitMQConsumer when they are used with 
+   * servers that may failover to another instance of the server that does not have the same exchanges/queues configured on it.
+   * In this situation these callbacks are the only opportunity to create exchanges, queues and bindings before the client will attempt to use them when it 
+   * re-establishes connection.
+   * If your failover cluster is guaranteed to have the appropriate objects already configured then it is not necessary to use the callbacks.
+   * 
    * @param connectionEstablishedCallback  callback to be called whenever a new connection is established.
    */
   @GenIgnore
