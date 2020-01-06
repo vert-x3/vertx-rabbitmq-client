@@ -93,7 +93,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   public void cancel(Handler<AsyncResult<Void>> cancelResult) {
     AsyncResult<Void> operationResult;
     try {
-      log.info("Cancelling " + consumerTag());
+      log.debug("Cancelling " + consumerTag());
       cancelled = true;
       consumerHandler.getChannel().basicCancel(consumerTag());
       operationResult = Future.succeededFuture();

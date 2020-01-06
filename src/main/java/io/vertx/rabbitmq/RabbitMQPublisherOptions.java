@@ -15,20 +15,20 @@ public class RabbitMQPublisherOptions {
   /**
    * The default connection retry delay = {@code 10000}
    */
-  public static final long DEFAULT_CONNECTION_RETRY_DELAY = 1000L;
+  public static final long DEFAULT_RECONNECT_INTERVAL = 1000L;
 
   /**
    * The default connection retries = {@code Integer.MAX_VALUE}
    */
-  public static final Integer DEFAULT_CONNECTION_RETRIES = Integer.MAX_VALUE;
+  public static final Integer DEFAULT_RECONNECT_ATTEMPTS = Integer.MAX_VALUE;
 
   /**
    * The default internal queue size = {@code Integer.MAX_VALUE}
    */
   private static final int DEFAULT_QUEUE_SIZE = Integer.MAX_VALUE;
   
-  private Integer connectionRetries = DEFAULT_CONNECTION_RETRIES;
-  private long connectionRetryDelay = DEFAULT_CONNECTION_RETRY_DELAY;
+  private Integer reconnectAttempts = 	DEFAULT_RECONNECT_ATTEMPTS;
+  private long reconnectInterval = DEFAULT_RECONNECT_INTERVAL;
   private int maxInternalQueueSize = DEFAULT_QUEUE_SIZE;
 
   
@@ -41,44 +41,44 @@ public class RabbitMQPublisherOptions {
   }
 
   public RabbitMQPublisherOptions(RabbitMQPublisherOptions that) {
-    connectionRetries = that.connectionRetries;
-    connectionRetryDelay = that.connectionRetryDelay;
+    reconnectAttempts = that.reconnectAttempts;
+    reconnectInterval = that.reconnectInterval;
     maxInternalQueueSize = that.maxInternalQueueSize;
   }
 
   /**
-   * @return the number of connection retries
+   * @return the number of reconnect attempts
    */
-  public Integer getConnectionRetries() {
-    return connectionRetries;
+  public Integer getReconnectAttempts() {
+    return reconnectAttempts;
   }
 
   /**
-   * Set the number of connection retries to attempt when connecting, the {@code null} value disables it.
+   * Set the number of reconnect attempts to attempt when connecting, the {@code null} value disables it.
    *
-   * @param connectionRetries the number of retries
+   * @param reconnectAttempts the number of retries
    * @return a reference to this, so the API can be used fluently
    */
-  public RabbitMQPublisherOptions setConnectionRetries(Integer connectionRetries) {
-    this.connectionRetries = connectionRetries;
+  public RabbitMQPublisherOptions setReconnectAttempts(Integer reconnectAttempts) {
+    this.reconnectAttempts = reconnectAttempts;
     return this;
   }
 
   /**
    * @return the delay in milliseconds between connection retries
    */
-  public long getConnectionRetryDelay() {
-    return connectionRetryDelay;
+  public long getReconnectInterval() {
+    return reconnectInterval;
   }
 
   /**
    * Set the delay in milliseconds between connection retries.
    *
-   * @param connectionRetryDelay the delay in milliseconds
+   * @param reconnectInterval the delay in milliseconds
    * @return a reference to this, so the API can be used fluently
    */
-  public RabbitMQPublisherOptions setConnectionRetryDelay(long connectionRetryDelay) {
-    this.connectionRetryDelay = connectionRetryDelay;
+  public RabbitMQPublisherOptions setReconnectInterval(long reconnectInterval) {
+    this.reconnectInterval = reconnectInterval;
     return this;
   }
 

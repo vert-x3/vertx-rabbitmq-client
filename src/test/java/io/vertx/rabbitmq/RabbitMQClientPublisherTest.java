@@ -79,8 +79,8 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
     RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx
         , client
         , new RabbitMQPublisherOptions()
-            .setConnectionRetries(Integer.MAX_VALUE)
-            .setConnectionRetryDelay(100)
+            .setReconnectAttempts(Integer.MAX_VALUE)
+            .setReconnectInterval(100)
             .setMaxInternalQueueSize(Integer.MAX_VALUE)
     );
     CompletableFuture startLatch = new CompletableFuture();
@@ -216,8 +216,8 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
     RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx
         , client
         , new RabbitMQPublisherOptions()
-            .setConnectionRetries(Integer.MAX_VALUE)
-            .setConnectionRetryDelay(100)
+            .setReconnectAttempts(Integer.MAX_VALUE)
+            .setReconnectInterval(100)
             .setMaxInternalQueueSize(Integer.MAX_VALUE)
     );
     publisher.start(ar -> {
