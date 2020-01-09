@@ -155,7 +155,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
           async.complete();
          }));
       });
-      client.basicPublish("", q, new AMQP.BasicProperties()
+      client.basicPublishWithDeliveryTag("", q, new AMQP.BasicProperties()
           , message
           , dt -> {
             deliveryTag[0] = dt;

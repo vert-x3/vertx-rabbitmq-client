@@ -15,6 +15,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
 
 import java.util.Map;
@@ -181,7 +182,17 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
+  void basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
+   * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
+   *
+   * @param deliveryTagHandler callback to capture the deliveryTag for this message.  Note that this will be called synchronously in the context of the client.
+   * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Future<Void> basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler);
 
   /**
    * Add a Confirm Listener to the channel.
@@ -193,7 +204,7 @@ public interface RabbitMQClient {
    *                       through an instance of {@link RabbitMQConfirmListener}
    * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
    */
-  void addConfirmListener(int maxQueueSize, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler);
+  void addConfirmListener(int maxQueueSize, Handler<AsyncResult<ReadStream<RabbitMQConfirmation>>> resultHandler);
 
   /**
    * Add a Confirm Listener to the channel.
@@ -206,7 +217,7 @@ public interface RabbitMQClient {
    *                       through an instance of {@link RabbitMQConfirmListener}
    * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
    */
-  Future<RabbitMQConfirmListener> addConfirmListener(int maxQueueSize);
+  Future<ReadStream<RabbitMQConfirmation>> addConfirmListener(int maxQueueSize);
 
   /**
    * Enables publisher acknowledgements on this channel. Can be called once during client initialisation. Calls to basicPublish()

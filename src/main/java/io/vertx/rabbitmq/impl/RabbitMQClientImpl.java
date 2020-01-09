@@ -1,6 +1,7 @@
 package io.vertx.rabbitmq.impl;
 
 import com.rabbitmq.client.*;
+import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -10,9 +11,10 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
-import io.vertx.rabbitmq.RabbitMQConfirmListener;
+import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 import io.vertx.rabbitmq.RabbitMQOptions;
@@ -219,12 +221,12 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public Future<Void> basicPublish(String exchange, String routingKey, Buffer body) {
     Promise<Void> promise = Promise.promise();
-    basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body, null, promise);
+    basicPublishWithDeliveryTag(exchange, routingKey, new AMQP.BasicProperties(), body, null, promise);
     return promise.future();
   }
   
   @Override
-  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler) {
+  public void basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       if (deliveryTagHandler != null) {
         long deliveryTag = channel.getNextPublishSeqNo();
@@ -234,21 +236,28 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       return null;
     });
   }
-
+  
+  @Override
+  public Future<Void> basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler) {
+    Promise<Void> promise = Promise.promise();
+    basicPublishWithDeliveryTag(exchange, routingKey, properties, body, deliveryTagHandler, promise);
+    return promise.future();
+  }
+  
   @Override
   public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
-    basicPublish(exchange, routingKey, properties, body, null, resultHandler);
+    basicPublishWithDeliveryTag(exchange, routingKey, properties, body, null, resultHandler);
   }
     
   @Override
   public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
     Promise<Void> promise = Promise.promise();
-    basicPublish(exchange, routingKey, properties, body, null, promise);
+    basicPublishWithDeliveryTag(exchange, routingKey, properties, body, null, promise);
     return promise.future();
   }
 
   @Override
-  public void addConfirmListener(int maxQueueSize, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler) {
+  public void addConfirmListener(int maxQueueSize, Handler<AsyncResult<ReadStream<RabbitMQConfirmation>>> resultHandler) {
     forChannel(resultHandler, channel -> {
 
       ChannelConfirmHandler handler = new ChannelConfirmHandler(vertx, this, maxQueueSize);
@@ -262,8 +271,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public Future<RabbitMQConfirmListener> addConfirmListener(int maxQueueSize) {
-    Promise<RabbitMQConfirmListener> promise = Promise.promise();
+  public Future<ReadStream<RabbitMQConfirmation>> addConfirmListener(int maxQueueSize) {
+    Promise<ReadStream<RabbitMQConfirmation>> promise = Promise.promise();
     addConfirmListener(maxQueueSize, promise);
     return promise.future();
   }

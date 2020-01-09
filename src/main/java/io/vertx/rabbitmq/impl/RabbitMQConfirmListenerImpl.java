@@ -3,14 +3,14 @@ package io.vertx.rabbitmq.impl;
 import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.impl.InboundBuffer;
-import io.vertx.rabbitmq.RabbitMQConfirmListener;
 
 /**
  *
  * @author jtalbut
  */
-public class RabbitMQConfirmListenerImpl implements RabbitMQConfirmListener {
+public class RabbitMQConfirmListenerImpl implements ReadStream<RabbitMQConfirmation> {
 
   private final RabbitMQClientImpl client;
   private final InboundBuffer<RabbitMQConfirmation> pending;
@@ -34,13 +34,13 @@ public class RabbitMQConfirmListenerImpl implements RabbitMQConfirmListener {
   }  
 
   @Override
-  public RabbitMQConfirmListener exceptionHandler(Handler<Throwable> exceptionHandler) {
+  public RabbitMQConfirmListenerImpl exceptionHandler(Handler<Throwable> exceptionHandler) {
     this.exceptionHandler = exceptionHandler;
     return this;
   }
   
   @Override
-  public RabbitMQConfirmListener handler(Handler<RabbitMQConfirmation> handler) {
+  public RabbitMQConfirmListenerImpl handler(Handler<RabbitMQConfirmation> handler) {
     if (handler != null) {
       pending.handler(msg -> {
         try {
@@ -65,30 +65,25 @@ public class RabbitMQConfirmListenerImpl implements RabbitMQConfirmListener {
   }
   
   @Override
-  public RabbitMQConfirmListener pause() {
+  public RabbitMQConfirmListenerImpl pause() {
     pending.pause();
     return this;
   }
 
   @Override
-  public RabbitMQConfirmListener resume() {
+  public RabbitMQConfirmListenerImpl resume() {
     pending.resume();
     return this;
   }
 
   @Override
-  public RabbitMQConfirmListener fetch(long amount) {
+  public RabbitMQConfirmListenerImpl fetch(long amount) {
     pending.fetch(amount);
     return this;
   }
 
   @Override
-  public boolean isPaused() {
-    return pending.isPaused();
-  }
-
-  @Override
-  public RabbitMQConfirmListener endHandler(Handler<Void> hndlr) {
+  public RabbitMQConfirmListenerImpl endHandler(Handler<Void> hndlr) {
     return this;
   }
   

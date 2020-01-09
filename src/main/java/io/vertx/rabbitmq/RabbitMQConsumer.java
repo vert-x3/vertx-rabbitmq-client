@@ -2,6 +2,7 @@ package io.vertx.rabbitmq;
 
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
 
@@ -65,7 +66,7 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
    * <p>
    * The operation is asynchronous. When consumption will be stopped, you can by notified via {@link RabbitMQConsumer#endHandler(Handler)}
    */
-  void cancel();
+  Future<Void> cancel();
 
   /**
    * Return true if cancel() has been called.

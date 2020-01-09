@@ -183,7 +183,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
 
   private void doSend(MessageDetails md) {
     try {
-      client.basicPublish(md.exchange, md.routingKey, md.properties, md.message
+      client.basicPublishWithDeliveryTag(md.exchange, md.routingKey, md.properties, md.message
           , dt -> { md.setDeliveryTag(dt); }
           , publishResult -> {
             try {              

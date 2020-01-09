@@ -85,8 +85,10 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   }
 
   @Override
-  public void cancel() {
-    cancel(null);
+  public Future<Void> cancel() {
+    Promise<Void> promise = Promise.promise();
+    cancel(promise);
+    return promise.future();
   }
 
   @Override
