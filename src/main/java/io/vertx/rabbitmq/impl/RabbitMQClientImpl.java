@@ -303,9 +303,25 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
+  public void exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.exchangeBind(destination, source, routingKey, arguments);
+      return null;
+    });
+  }
+
+  @Override
   public void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.exchangeUnbind(destination, source, routingKey);
+      return null;
+    });
+  }
+
+  @Override
+  public void exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.exchangeUnbind(destination, source, routingKey, arguments);
       return null;
     });
   }
@@ -367,6 +383,30 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
     forChannel(resultHandler, channel -> {
       channel.queueBind(queue, exchange, routingKey);
+      return null;
+    });
+  }
+
+  @Override
+  public void queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.queueBind(queue, exchange, routingKey, arguments);
+      return null;
+    });
+  }
+
+  @Override
+  public void queueUnbind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.queueUnbind(queue, exchange, routingKey);
+      return null;
+    });
+  }
+
+  @Override
+  public void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
+    forChannel(resultHandler, channel -> {
+      channel.queueUnbind(queue, exchange, routingKey, arguments);
       return null;
     });
   }

@@ -13,7 +13,9 @@ import org.junit.runner.RunWith;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 
+import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -26,11 +28,12 @@ public class RabbitMQClientTestBase {
   protected RabbitMQClient client;
   protected Channel channel;
   protected Vertx vertx;
+  protected RabbitMQManagementClient managementClient;
 
   @ClassRule
-  public static final GenericContainer rabbitmq = new FixedHostPortGenericContainer<>("rabbitmq:3.7")
+  public static final GenericContainer rabbitmq = new FixedHostPortGenericContainer<>("rabbitmq:3.7-management")
     .withCreateContainerCmdModifier(cmd -> cmd.withHostName("my-rabbit"))
-    .withExposedPorts(5672);
+    .withExposedPorts(5672, 15672);
 
   protected void connect() throws Exception {
     if (client != null) {
@@ -63,6 +66,8 @@ public class RabbitMQClientTestBase {
   @Before
   public void setUp() throws Exception {
     vertx = Vertx.vertx();
+    managementClient = new RabbitMQManagementClient(vertx, rabbitmq.getContainerIpAddress(),
+      rabbitmq.getMappedPort(15672), "guest", "guest");
   }
 
   @After
@@ -73,6 +78,10 @@ public class RabbitMQClientTestBase {
     if (vertx != null) {
       vertx.close(ctx.asyncAssertSuccess());
     }
+  }
+
+  String setupQueue(TestContext ctx) throws Exception {
+    return setupQueue(ctx, null, null);
   }
 
   String setupQueue(TestContext ctx, Set<String> messages) throws Exception {
@@ -100,5 +109,32 @@ public class RabbitMQClientTestBase {
       messages.add(randomAlphaString(20));
     }
     return messages;
+  }
+
+  String setupExchange(final TestContext ctx, String type) throws IOException {
+    String exchange = randomAlphaString(10);
+    channel.exchangeDeclare(exchange, type, true);
+    managementClient.getExchange(exchange, ctx.asyncAssertSuccess(exc -> ctx.assertEquals(exc.getName(), exchange)));
+    return exchange;
+  }
+
+  void setupQueueBinding(TestContext ctx, String queue, String exchange, String routingKey) throws IOException {
+    channel.queueBind(queue, exchange, routingKey);
+    managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> ctx.assertTrue(bindings.size() == 1)));
+  }
+
+  void setupQueueBinding(TestContext ctx, String queue, String exchange, String routingKey, Map<String, Object> arguments) throws IOException {
+    channel.queueBind(queue, exchange, routingKey, arguments);
+    managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> ctx.assertTrue(bindings.size() == 1)));
+  }
+
+  void setupExchangeBinding(TestContext ctx, String destination, String source, String routingKey) throws IOException {
+    channel.exchangeBind(destination, source, routingKey);
+    managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> ctx.assertTrue(bindings.size() == 1)));
+  }
+
+  void setupExchangeBinding(TestContext ctx, String destination, String source, String routingKey, Map<String, Object> arguments) throws IOException {
+    channel.exchangeBind(destination, source, routingKey, arguments);
+    managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> ctx.assertTrue(bindings.size() == 1)));
   }
 }
