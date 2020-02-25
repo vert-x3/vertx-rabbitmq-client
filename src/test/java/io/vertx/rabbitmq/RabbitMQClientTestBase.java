@@ -10,7 +10,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
-import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 
 import java.io.IOException;
@@ -31,8 +30,7 @@ public class RabbitMQClientTestBase {
   protected RabbitMQManagementClient managementClient;
 
   @ClassRule
-  public static final GenericContainer rabbitmq = new FixedHostPortGenericContainer<>("rabbitmq:3.7-management")
-    .withCreateContainerCmdModifier(cmd -> cmd.withHostName("my-rabbit"))
+  public static final GenericContainer rabbitmq = new GenericContainer("rabbitmq:3.7-management")
     .withExposedPorts(5672, 15672);
 
   protected void connect() throws Exception {
@@ -111,7 +109,7 @@ public class RabbitMQClientTestBase {
     return messages;
   }
 
-  String setupExchange(final TestContext ctx, String type) throws IOException {
+  String setupExchange(TestContext ctx, String type) throws IOException {
     String exchange = randomAlphaString(10);
     channel.exchangeDeclare(exchange, type, true);
     managementClient.getExchange(exchange, ctx.asyncAssertSuccess(exc -> ctx.assertEquals(exc.getName(), exchange)));
