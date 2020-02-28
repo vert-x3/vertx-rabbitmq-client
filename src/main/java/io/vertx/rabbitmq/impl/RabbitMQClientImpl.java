@@ -141,6 +141,44 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     return promise.future();
   }
 
+  private void restartConsumer(int attempts, QueueConsumerHandler handler, String queue, QueueOptions options) {
+    stop(ar -> {
+      if (!handler.queue().isCancelled()) {
+        if (ar.succeeded()) {              
+          if (attempts >= retries) {
+            log.error("Max number of consumer restart attempts (" + retries + ") reached. Will not attempt to restart again");
+          } else {
+            start((arStart) -> {
+            if (arStart.succeeded()) {
+              forChannel(arChan -> {
+                if (arChan.failed()) {
+                  log.error("Failed to restart consumer: ", arChan.cause());
+                  long delay = config.getConnectionRetryDelay();
+                  vertx.setTimer(delay, id -> {
+                    restartConsumer(attempts + 1, handler, queue, options);
+                  });
+                }
+              }, chan -> {
+                RabbitMQConsumer q = handler.queue();
+                chan.basicConsume(queue, options.isAutoAck(), handler);
+                return q.resume();
+              });
+            } else {
+              log.error("Failed to restart client: ", arStart.cause());
+              long delay = config.getConnectionRetryDelay();
+              vertx.setTimer(delay, id -> {
+                restartConsumer(attempts + 1, handler, queue, options);
+              });
+            }
+          });
+          }
+        } else {
+          log.error("Failed to stop client, will not attempt to restart: ", ar.cause());
+        }
+      }
+    });    
+  }
+  
   @Override
   public void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
     forChannel(ar -> {
@@ -158,29 +196,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       log.info("Created new QueueConsumer");
       QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options);
       handler.setShutdownHandler(sig -> {
-        stop(ar -> {
-          if (!handler.queue().isCancelled()) {
-            if (ar.succeeded()) {
-              start(ar2 -> {
-                if (ar2.succeeded()) {
-                  forChannel(ar3 -> {
-                    if (ar3.failed()) {
-                      log.error("Failed to restart consumer: ", ar3.cause());
-                    }
-                  }, chan -> {
-                    RabbitMQConsumer q = handler.queue();
-                    chan.basicConsume(queue, options.isAutoAck(), handler);
-                    return q.resume();
-                  });
-                } else {
-                  log.error("Failed to restart client: ", ar2.cause());
-                }
-              });
-            } else {
-              log.error("Failed to stop client: ", ar.cause());
-            }
-          }
-        });
+        restartConsumer(0, handler, queue, options);
       });
       channel.basicConsume(queue, options.isAutoAck(), handler);
       return handler;
@@ -543,16 +559,19 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     }, ar -> {
       if (ar.succeeded() || retries == null) {
         resultHandler.handle(ar);
-      } else if (attempts >= retries) {
-        log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
-        resultHandler.handle(ar);
       } else {
-        long delay = config.getConnectionRetryDelay();
-        log.info("Attempting to reconnect to rabbitmq...");
-        vertx.setTimer(delay, id -> {
-          log.debug("Reconnect attempt # " + attempts);
-          start(attempts + 1, resultHandler);
-        });
+        log.error("Failed to connect to rabbitmq: ", ar.cause());
+        if (attempts >= retries) {
+          log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
+          resultHandler.handle(ar);
+        } else {
+          long delay = config.getConnectionRetryDelay();
+          log.info("Attempting to reconnect to rabbitmq...");
+          vertx.setTimer(delay, id -> {
+            log.debug("Reconnect attempt # " + attempts);
+            start(attempts + 1, resultHandler);
+          });
+        }
       }
     });
   }

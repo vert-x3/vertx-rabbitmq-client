@@ -198,13 +198,6 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
                 sendQueue.resume();
               } else {
                 log.info("Failed to publish message: " + publishResult.cause().toString());
-                if (md.publishHandler != null) {
-                  try {
-                    md.publishHandler.handle(publishResult);
-                  } catch(Throwable ex) {
-                    log.warn("Failed to handle unsuccessful publish result", ex);
-                  }
-                }
                 synchronized(awaitingAck) {
                   awaitingAck.remove(md);
                 }

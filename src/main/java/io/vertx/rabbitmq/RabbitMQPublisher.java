@@ -84,7 +84,7 @@ public interface RabbitMQPublisher {
 
   /**
    * Publish a message. 
-   *
+   * 
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
