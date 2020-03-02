@@ -11,11 +11,8 @@ import io.vertx.ext.unit.TestContext;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-  import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
@@ -368,6 +365,211 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     // But, if 3rd message will arrive the test will fail in the next second.
     Async async = ctx.async();
     vertx.setTimer(1000, spent -> async.countDown());
+  }
+
+  @Test
+  public void testExchangeBind(TestContext ctx) throws Exception {
+
+    String source = setupExchange(ctx, "fanout");
+    String destination = setupExchange(ctx, "fanout");
+    String routingKey = randomAlphaString(2);
+
+    Async async = ctx.async();
+
+    vertx.setTimer(2000, t ->
+      client.exchangeBind(destination, source, routingKey, ctx.asyncAssertSuccess(v ->
+        managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> {
+          ctx.assertTrue(bindings.size() == 1);
+          RabbitMQManagementClient.Binding binding = bindings.get(0);
+          ctx.assertEquals(binding.getRoutingKey(), routingKey);
+          ctx.assertTrue(binding.getArguments().isEmpty());
+
+          client.exchangeDelete(source, ctx.asyncAssertSuccess());
+          client.exchangeDelete(destination, ctx.asyncAssertSuccess(json -> async.complete()));
+        })))
+      )
+    );
+  }
+
+  @Test
+  public void testExchangeBindWithArguments(TestContext ctx) throws Exception {
+
+    String source = setupExchange(ctx, "headers");
+    String destination = setupExchange(ctx, "fanout");
+    String routingKey = randomAlphaString(2);
+
+    Map<String, Object> arguments = new HashMap<>();
+    arguments.put("x-match", "any");
+    arguments.put("name", "foo");
+
+    Async async = ctx.async();
+
+    vertx.setTimer(2000, t ->
+      client.exchangeBind(destination, source, routingKey, arguments, ctx.asyncAssertSuccess(v ->
+        managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> {
+          ctx.assertTrue(bindings.size() == 1);
+          RabbitMQManagementClient.Binding binding = bindings.get(0);
+          ctx.assertEquals(binding.getRoutingKey(), routingKey);
+          ctx.assertEquals(binding.getArguments(), arguments);
+
+          client.exchangeDelete(source, ctx.asyncAssertSuccess());
+          client.exchangeDelete(destination, ctx.asyncAssertSuccess(json -> async.complete()));
+        })))
+      )
+    );
+  }
+
+  @Test
+  public void testExchangeUnbind(TestContext ctx) throws Exception {
+
+    String source = setupExchange(ctx, "fanout");
+    String destination = setupExchange(ctx, "fanout");
+    String routingKey = randomAlphaString(2);
+    setupExchangeBinding(ctx, destination, source, routingKey);
+
+    Async async = ctx.async();
+
+    vertx.setTimer(2000, t ->
+      client.exchangeUnbind(destination, source, routingKey, ctx.asyncAssertSuccess(v -> {
+          managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> {
+            ctx.assertTrue(bindings.isEmpty());
+
+            client.exchangeDelete(source, ctx.asyncAssertSuccess());
+            client.exchangeDelete(destination, ctx.asyncAssertSuccess(json -> async.complete()));
+          }));
+        })
+      )
+    );
+  }
+
+  @Test
+  public void testExchangeUnbindWithArguments(TestContext ctx) throws Exception {
+
+    String source = setupExchange(ctx, "headers");
+    String destination = setupExchange(ctx, "fanout");
+
+    String routingKey = randomAlphaString(2);
+    Map<String, Object> arguments = new HashMap<>();
+    arguments.put("x-match", "any");
+    arguments.put("name", "foo");
+    setupExchangeBinding(ctx, destination, source, routingKey, arguments);
+
+    Async async = ctx.async();
+
+    vertx.setTimer(2000, t ->
+      client.exchangeUnbind(destination, source, routingKey, arguments, ctx.asyncAssertSuccess(v -> {
+          managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> {
+            ctx.assertTrue(bindings.isEmpty());
+
+            client.exchangeDelete(source, ctx.asyncAssertSuccess());
+            client.exchangeDelete(destination, ctx.asyncAssertSuccess(json -> async.complete()));
+          }));
+        })
+      )
+    );
+  }
+
+  @Test
+  public void testQueueBind(TestContext ctx) throws Exception {
+
+    String exchange = setupExchange(ctx, "fanout");
+    String queue = setupQueue(ctx);
+    String routingKey = randomAlphaString(2);
+
+    Async async = ctx.async();
+
+    vertx.setTimer(2000, t ->
+      client.queueBind(queue, exchange, routingKey, ctx.asyncAssertSuccess(v ->
+        managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> {
+          ctx.assertTrue(bindings.size() == 1);
+          RabbitMQManagementClient.Binding binding = bindings.get(0);
+          ctx.assertEquals(binding.getRoutingKey(), routingKey);
+          ctx.assertTrue(binding.getArguments().isEmpty());
+
+          client.exchangeDelete(exchange, ctx.asyncAssertSuccess());
+          client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+        })))
+      )
+    );
+  }
+
+  @Test
+  public void testQueueBindWithArguments(TestContext ctx) throws Exception {
+
+    String exchange = setupExchange(ctx, "headers");
+    String queue = setupQueue(ctx);
+    String routingKey = randomAlphaString(2);
+
+    Map<String, Object> arguments = new HashMap<>();
+    arguments.put("x-match", "any");
+    arguments.put("name", "foo");
+
+    Async async = ctx.async();
+
+    vertx.setTimer(2000, t ->
+      client.queueBind(queue, exchange, routingKey, arguments, ctx.asyncAssertSuccess(v -> {
+          managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> {
+            ctx.assertTrue(bindings.size() == 1);
+            RabbitMQManagementClient.Binding binding = bindings.get(0);
+            ctx.assertEquals(binding.getRoutingKey(), routingKey);
+            ctx.assertEquals(binding.getArguments(), arguments);
+
+            client.exchangeDelete(exchange, ctx.asyncAssertSuccess());
+            client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+          }));
+        })
+      )
+    );
+  }
+
+  @Test
+  public void testQueueUnbind(TestContext ctx) throws Exception {
+
+    String exchange = setupExchange(ctx, "fanout");
+    String queue = setupQueue(ctx);
+    String routingKey = randomAlphaString(2);
+    setupQueueBinding(ctx, queue, exchange, routingKey);
+
+    Async async = ctx.async();
+
+    vertx.setTimer(2000, t ->
+      client.queueUnbind(queue, exchange, routingKey, ctx.asyncAssertSuccess(v -> {
+          managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> {
+            ctx.assertTrue(bindings.isEmpty());
+
+            client.exchangeDelete(exchange, ctx.asyncAssertSuccess());
+            client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+          }));
+        })
+      )
+    );
+  }
+
+  @Test
+  public void testQueueUnbindWithArguments(TestContext ctx) throws Exception {
+
+    String exchange = setupExchange(ctx, "headers");
+    String queue = setupQueue(ctx);
+
+    String routingKey = randomAlphaString(2);
+    Map<String, Object> arguments = new HashMap<>();
+    arguments.put("x-match", "any");
+    arguments.put("name", "foo");
+    setupQueueBinding(ctx, queue, exchange, routingKey, arguments);
+
+    Async async = ctx.async();
+
+    vertx.setTimer(2000, t ->
+      client.queueUnbind(queue, exchange, routingKey, arguments, ctx.asyncAssertSuccess(v -> {
+          managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> {
+            ctx.assertTrue(bindings.isEmpty());
+
+            client.exchangeDelete(exchange, ctx.asyncAssertSuccess());
+            client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+          }));
+        })
+      )
+    );
   }
 
   //TODO More tests

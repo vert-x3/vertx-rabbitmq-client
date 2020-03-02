@@ -150,7 +150,7 @@ public interface RabbitMQClient {
    * will have to be confirmed.
    *
    * @see Channel#confirmSelect()
-   * @see http://www.rabbitmq.com/confirms.html
+   * @link http://www.rabbitmq.com/confirms.html
    */
   void confirmSelect(Handler<AsyncResult<Void>> resultHandler);
 
@@ -165,7 +165,7 @@ public interface RabbitMQClient {
    * If desired, multiple calls to basicPublish() can be batched before confirming.
    *
    * @see Channel#waitForConfirms()
-   * @see http://www.rabbitmq.com/confirms.html
+   * @link http://www.rabbitmq.com/confirms.html
    *
    * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
@@ -182,7 +182,7 @@ public interface RabbitMQClient {
    * @param timeout
    *
    * @see io.vertx.rabbitmq.impl.RabbitMQClientImpl#waitForConfirms(Handler)
-   * @see http://www.rabbitmq.com/confirms.html
+   * @link http://www.rabbitmq.com/confirms.html
    *
    * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
@@ -306,6 +306,18 @@ public interface RabbitMQClient {
   Future<Void> exchangeBind(String destination, String source, String routingKey);
 
   /**
+   * Bind an exchange to an exchange.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeBind(String, String, String, Map<String, Object>)
+   */
+  void exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #exchangeBind(String, String, String, Map, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments);
+
+  /**
    * Unbind an exchange from an exchange.
    *
    * @see com.rabbitmq.client.Channel#exchangeUnbind(String, String, String)
@@ -316,6 +328,18 @@ public interface RabbitMQClient {
    * Like {@link #exchangeUnbind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> exchangeUnbind(String destination, String source, String routingKey);
+
+  /**
+   * Unbind an exchange from an exchange.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeUnbind(String, String, String, Map<String, Object>)
+   */
+  void exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #exchangeUnbind(String, String, String, Map, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments);
 
   /**
    * Actively declare a server-named exclusive, autodelete, non-durable queue.
@@ -394,6 +418,42 @@ public interface RabbitMQClient {
    * Like {@link #queueBind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> queueBind(String queue, String exchange, String routingKey);
+
+  /**
+   * Bind a queue to an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueBind(String, String, String, Map<String, Object>)
+   */
+  void queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #queueBind(String, String, String, Map, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments);
+
+  /**
+   * Unbind a queue from an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueUnbind(String, String, String)
+   */
+  void queueUnbind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #queueUnbind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> queueUnbind(String queue, String exchange, String routingKey);
+
+  /**
+   * Unbind a queue from an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueUnbind(String, String, String, Map<String, Object>)
+   */
+  void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Like {@link #queueUnbind(String, String, String, Map, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  Future<Void> queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments);
 
   /**
    * Returns the number of messages in a queue ready to be delivered.
