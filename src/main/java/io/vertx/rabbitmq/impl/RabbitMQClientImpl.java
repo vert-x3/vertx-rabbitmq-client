@@ -452,9 +452,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public Future<Void> queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments) {
+  public Future<Void> queueBind(String queue, String exchange, String routingKey) {
     return forChannel(channel -> {
-      channel.queueBind(queue, exchange, routingKey, arguments);
+      channel.queueBind(queue, exchange, routingKey);
       return null;
     });
   }
@@ -468,9 +468,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public Future<Void> queueBind(String queue, String exchange, String routingKey) {
+  public Future<Void> queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments) {
     return forChannel(channel -> {
-      channel.queueBind(queue, exchange, routingKey);
+      channel.queueBind(queue, exchange, routingKey, arguments);
       return null;
     });
   }
