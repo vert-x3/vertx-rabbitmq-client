@@ -7,6 +7,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
@@ -97,64 +98,71 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, (channel) -> {
+    Future<Void> fut = basicAck(deliveryTag, multiple);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<Void> basicAck(long deliveryTag, boolean multiple) {
+    return forChannel((channel) -> {
       channel.basicAck(deliveryTag, multiple);
       return null;
     });
   }
 
   @Override
-  public Future<Void> basicAck(long deliveryTag, boolean multiple) {
-    Promise<Void> promise = Promise.promise();
-    basicAck(deliveryTag, multiple, promise);
-    return promise.future();
+  public void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = basicNack(deliveryTag, multiple, requeue);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
-  public void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, (channel) -> {
+  public Future<Void> basicNack(long deliveryTag, boolean multiple, boolean requeue) {
+    return forChannel((channel) -> {
       channel.basicNack(deliveryTag, multiple, requeue);
       return null;
     });
   }
 
   @Override
-  public Future<Void> basicNack(long deliveryTag, boolean multiple, boolean requeue) {
-    Promise<Void> promise = Promise.promise();
-    basicNack(deliveryTag, multiple, requeue, promise);
-    return promise.future();
-  }
-
-  @Override
   public void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
-    forChannel(ar -> {
-      if (ar.succeeded()) {
-        RabbitMQConsumer q = ar.result().queue();
-        // Resume, pending elements will be delivered asynchronously providing the opportunity
-        // for the handler to set a queue consumer or pause the queue
-        q.resume();
-        // Deliver to the application
-        resultHandler.handle(Future.succeededFuture(q));
-      } else {
-        resultHandler.handle(Future.failedFuture(ar.cause()));
-      }
-    }, channel -> {
-      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options);
-      String consumerTag = channel.basicConsume(queue, options.isAutoAck(), handler);
-      return handler;
-    });
+    Future<RabbitMQConsumer> fut = basicConsumer(queue, options);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<RabbitMQConsumer> basicConsumer(String queue, QueueOptions options) {
-    Promise<RabbitMQConsumer> promise = Promise.promise();
-    basicConsumer(queue, options, promise);
-    return promise.future();
+    return forChannel(channel -> {
+      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options);
+      String consumerTag = channel.basicConsume(queue, options.isAutoAck(), handler);
+      return handler;
+    }).map(res -> {
+      RabbitMQConsumer q = res.queue();
+      // Resume, pending elements will be delivered asynchronously providing the opportunity
+      // for the handler to set a queue consumer or pause the queue
+      q.resume();
+      // Deliver to the application
+      return q;
+    });
   }
 
   @Override
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQMessage>> resultHandler) {
-    forChannel(resultHandler, (channel) -> {
+    Future<RabbitMQMessage> fut = basicGet(queue, autoAck);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<RabbitMQMessage> basicGet(String queue, boolean autoAck) {
+    return forChannel(channel -> {
       GetResponse response = channel.basicGet(queue, autoAck);
       if (response == null) {
         return null;
@@ -165,187 +173,187 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public Future<RabbitMQMessage> basicGet(String queue, boolean autoAck) {
-    Promise<RabbitMQMessage> promise = Promise.promise();
-    basicGet(queue, autoAck, promise);
-    return promise.future();
-  }
-
-  @Override
   public void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
-    basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body, resultHandler);
+    Future<Void> fut = basicPublish(exchange, routingKey, body);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<Void> basicPublish(String exchange, String routingKey, Buffer body) {
-    Promise<Void> promise = Promise.promise();
-    basicPublish(exchange, routingKey, body, promise);
-    return promise.future();
+    return basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body);
   }
 
   @Override
   public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+    Future<Void> fut = basicPublish(exchange, routingKey, properties, body);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
+    return forChannel(channel -> {
       channel.basicPublish(exchange, routingKey, (AMQP.BasicProperties) properties, body.getBytes());
       return null;
     });
   }
 
   @Override
-  public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
-    Promise<Void> promise = Promise.promise();
-    basicPublish(exchange, routingKey, properties, body, promise);
-    return promise.future();
-  }
-
-  @Override
   public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(  resultHandler, channel -> {
-
-      channel.confirmSelect();
-
-      channelConfirms = true;
-
-      return null;
-    });
+    Future<Void> fut = confirmSelect();
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<Void> confirmSelect() {
-    Promise<Void> promise = Promise.promise();
-    confirmSelect(promise);
-    return promise.future();
+    return forChannel(channel -> {
+      channel.confirmSelect();
+      channelConfirms = true;
+      return null;
+    });
   }
 
   @Override
   public void waitForConfirms(Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.waitForConfirmsOrDie();
-
-      return null;
-    });
+    Future<Void> fut = waitForConfirms();
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<Void> waitForConfirms() {
-    Promise<Void> promise = Promise.promise();
-    waitForConfirms(promise);
-    return promise.future();
-  }
-
-  @Override
-  public void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.waitForConfirmsOrDie(timeout);
-
+    return forChannel(channel -> {
+      channel.waitForConfirmsOrDie();
       return null;
     });
   }
 
   @Override
+  public void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = waitForConfirms(timeout);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
   public Future<Void> waitForConfirms(long timeout) {
-    Promise<Void> promise = Promise.promise();
-    waitForConfirms(timeout, promise);
-    return promise.future();
+    return forChannel(channel -> {
+      channel.waitForConfirmsOrDie(timeout);
+      return null;
+    });
   }
 
   @Override
   public void basicQos(int prefetchSize, int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+    Future<Void> fut = basicQos(prefetchSize, prefetchCount, global);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<Void> basicQos(int prefetchSize, int prefetchCount, boolean global) {
+    return forChannel(channel -> {
       channel.basicQos(prefetchSize, prefetchCount, global);
       return null;
     });
   }
 
   @Override
-  public Future<Void> basicQos(int prefetchSize, int prefetchCount, boolean global) {
-    Promise<Void> promise = Promise.promise();
-    basicQos(prefetchSize, prefetchCount, global, promise);
-    return promise.future();
-  }
-
-  @Override
   public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
-    exchangeDeclare(exchange, type, durable, autoDelete, emptyConfig, resultHandler);
+    Future<Void> fut = exchangeDeclare(exchange, type, durable, autoDelete);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete) {
-    Promise<Void> promise = Promise.promise();
-    exchangeDeclare(exchange, type, durable, autoDelete, promise);
-    return promise.future();
+    return exchangeDeclare(exchange, type, durable, autoDelete, emptyConfig);
   }
 
   @Override
-  public void exchangeDeclare(
-    String exchange,
-    String type,
-    boolean durable,
-    boolean autoDelete,
-    JsonObject config,
-    Handler<AsyncResult<Void>> resultHandler
-  ) {
-    forChannel(resultHandler, channel -> {
+  public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = exchangeDeclare(exchange, type, durable, autoDelete, config);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config) {
+    return forChannel(channel -> {
       channel.exchangeDeclare(exchange, type, durable, autoDelete, new LinkedHashMap<>(config.getMap()));
       return null;
     });
   }
 
   @Override
-  public Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config) {
-    Promise<Void> promise = Promise.promise();
-    exchangeDeclare(exchange, type, durable, autoDelete, config, promise);
-    return promise.future();
+  public void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = exchangeDelete(exchange);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
-  public void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+  public Future<Void> exchangeDelete(String exchange) {
+    return forChannel(channel -> {
       channel.exchangeDelete(exchange);
       return null;
     });
   }
 
   @Override
-  public Future<Void> exchangeDelete(String exchange) {
-    Promise<Void> promise = Promise.promise();
-    exchangeDelete(exchange, promise);
-    return promise.future();
+  public void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = exchangeBind(destination, source, routingKey);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
-  public void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+  public Future<Void> exchangeBind(String destination, String source, String routingKey) {
+    return forChannel(channel -> {
       channel.exchangeBind(destination, source, routingKey);
       return null;
     });
   }
 
   @Override
-  public Future<Void> exchangeBind(String destination, String source, String routingKey) {
-    Promise<Void> promise = Promise.promise();
-    exchangeBind(destination, source, routingKey, promise);
-    return promise.future();
+  public void exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = exchangeBind(destination, source, routingKey, arguments);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
-  public void exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+  public Future<Void> exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments) {
+    return forChannel(channel -> {
       channel.exchangeBind(destination, source, routingKey, arguments);
       return null;
     });
   }
 
   @Override
-  public Future<Void> exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments) {
-    Promise<Void> promise = Promise.promise();
-    exchangeBind(destination, source, routingKey, arguments, promise);
-    return promise.future();
+  public void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = exchangeUnbind(destination, source, routingKey);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
-  public void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+  public Future<Void> exchangeUnbind(String destination, String source, String routingKey) {
+    return forChannel(channel -> {
       channel.exchangeUnbind(destination, source, routingKey);
       return null;
     });
@@ -353,183 +361,181 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public void exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+    Future<Void> fut = exchangeUnbind(destination, source, routingKey, arguments);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<Void> exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments) {
+    return forChannel(channel -> {
       channel.exchangeUnbind(destination, source, routingKey, arguments);
       return null;
     });
   }
 
   @Override
-  public Future<Void> exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments) {
-    Promise<Void> promise = Promise.promise();
-    exchangeBind(destination, source, routingKey, arguments, promise);
-    return promise.future();
-  }
-
-  @Override
-  public Future<Void> exchangeUnbind(String destination, String source, String routingKey) {
-    Promise<Void> promise = Promise.promise();
-    exchangeUnbind(destination, source, routingKey, promise);
-    return promise.future();
-  }
-
-  @Override
   public void queueDeclareAuto(Handler<AsyncResult<JsonObject>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+    Future<JsonObject> fut = queueDeclareAuto();
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<JsonObject> queueDeclareAuto() {
+    return forChannel(channel -> {
       AMQP.Queue.DeclareOk result = channel.queueDeclare();
       return toJson(result);
     });
   }
 
   @Override
-  public Future<JsonObject> queueDeclareAuto() {
-    Promise<JsonObject> promise = Promise.promise();
-    queueDeclareAuto(promise);
-    return promise.future();
-  }
-
-  @Override
   public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler) {
-    queueDeclare(queue, durable, exclusive, autoDelete, emptyConfig, resultHandler);
+    Future<AMQP.Queue.DeclareOk> fut = queueDeclare(queue, durable, exclusive, autoDelete);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete) {
-    Promise<AMQP.Queue.DeclareOk> promise = Promise.promise();
-    queueDeclare(queue, durable, exclusive, autoDelete, promise);
-    return promise.future();
+    return queueDeclare(queue, durable, exclusive, autoDelete, emptyConfig);
   }
 
   @Override
-  public void queueDeclare(
-    String queue,
-    boolean durable,
-    boolean exclusive,
-    boolean autoDelete,
-    JsonObject config,
-    Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler
-  ) {
-    forChannel(resultHandler, channel -> channel.queueDeclare(queue, durable, exclusive, autoDelete, new LinkedHashMap<>(config.getMap())));
+  public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler) {
+    Future<AMQP.Queue.DeclareOk> fut = queueDeclare(queue, durable, exclusive, autoDelete, config);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config) {
-    Promise<AMQP.Queue.DeclareOk> promise = Promise.promise();
-    queueDeclare(queue, durable, exclusive, autoDelete, config, promise);
-    return promise.future();
+    return forChannel(channel -> channel.queueDeclare(queue, durable, exclusive, autoDelete, new LinkedHashMap<>(config.getMap())));
   }
 
   @Override
   public void queueDelete(String queue, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler) {
-    forChannel(resultHandler, channel -> channel.queueDelete(queue));
+    Future<AMQP.Queue.DeleteOk> fut = queueDelete(queue);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<AMQP.Queue.DeleteOk> queueDelete(String queue) {
-    Promise<AMQP.Queue.DeleteOk> promise = Promise.promise();
-    queueDelete(queue, promise);
-    return promise.future();
+    return forChannel(channel -> channel.queueDelete(queue));
   }
 
   @Override
   public void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler) {
-    forChannel(resultHandler, channel -> channel.queueDelete(queue, ifUnused, ifEmpty));
+    Future<AMQP.Queue.DeleteOk> fut = queueDeleteIf(queue, ifUnused, ifEmpty);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<AMQP.Queue.DeleteOk> queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty) {
-    Promise<AMQP.Queue.DeleteOk> promise = Promise.promise();
-    queueDeleteIf(queue, ifUnused, ifEmpty, promise);
-    return promise.future();
+    return forChannel(channel -> channel.queueDelete(queue, ifUnused, ifEmpty));
   }
 
   @Override
   public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
-      channel.queueBind(queue, exchange, routingKey);
-      return null;
-    });
+    Future<Void> fut = queueBind(queue, exchange, routingKey);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<Void> queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments) {
-    Promise<Void> promise = Promise.promise();
-    queueBind(queue, exchange, routingKey, arguments, promise);
-    return promise.future();
-  }
-
-  @Override
-  public void queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+    return forChannel(channel -> {
       channel.queueBind(queue, exchange, routingKey, arguments);
       return null;
     });
   }
 
   @Override
+  public void queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = queueBind(queue, exchange, routingKey, arguments);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<Void> queueBind(String queue, String exchange, String routingKey) {
+    return forChannel(channel -> {
+      channel.queueBind(queue, exchange, routingKey);
+      return null;
+    });
+  }
+
+  @Override
   public void queueUnbind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+    Future<Void> fut = queueUnbind(queue, exchange, routingKey);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<Void> queueUnbind(String queue, String exchange, String routingKey) {
+    return forChannel(channel -> {
       channel.queueUnbind(queue, exchange, routingKey);
       return null;
     });
   }
 
   @Override
-  public Future<Void> queueUnbind(String queue, String exchange, String routingKey) {
-    Promise<Void> promise = Promise.promise();
-    queueUnbind(queue, exchange, routingKey, promise);
-    return promise.future();
+  public void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = queueUnbind(queue, exchange, routingKey, arguments);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
-  public void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
-    forChannel(resultHandler, channel -> {
+  public Future<Void> queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments) {
+    return forChannel(channel -> {
       channel.queueUnbind(queue, exchange, routingKey, arguments);
       return null;
     });
   }
 
   @Override
-  public Future<Void> queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments) {
-    Promise<Void> promise = Promise.promise();
-    queueUnbind(queue, exchange, routingKey, arguments, promise);
-    return promise.future();
-  }
-
-  @Override
-  public Future<Void> queueBind(String queue, String exchange, String routingKey) {
-    Promise<Void> promise = Promise.promise();
-    queueBind(queue, exchange, routingKey, promise);
-    return promise.future();
-  }
-
-  @Override
   public void messageCount(String queue, Handler<AsyncResult<Long>> resultHandler) {
-    forChannel(resultHandler, channel -> channel.messageCount(queue));
+    Future<Long> fut = messageCount(queue);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<Long> messageCount(String queue) {
-    Promise<Long> promise = Promise.promise();
-    messageCount(queue, promise);
-    return promise.future();
+    return forChannel(channel -> channel.messageCount(queue));
   }
 
   @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
-    log.info("Starting rabbitmq client");
-    start(0, resultHandler);
+    Future<Void> fut = start();
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
   }
 
   @Override
   public Future<Void> start() {
-    Promise<Void> promise = Promise.promise();
-    start(promise);
-    return promise.future();
+    log.info("Starting rabbitmq client");
+    return start((ContextInternal) vertx.getOrCreateContext(), 0);
   }
 
-  private void start(int attempts, Handler<AsyncResult<Void>> resultHandler) {
-    vertx.<Void>executeBlocking(future -> {
+  private Future<Void> start(ContextInternal ctx, int attempts) {
+    return ctx.<Void>executeBlocking(future -> {
       try {
         connect();
         future.complete();
@@ -537,47 +543,48 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         log.error("Could not connect to rabbitmq", e);
         future.fail(e);
       }
-    }, ar -> {
-      if (ar.succeeded() || retries == null) {
-        resultHandler.handle(ar);
-      } else if (attempts >= retries) {
+    }).recover(err -> {
+      if (attempts >= retries) {
         log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
-        resultHandler.handle(ar);
+        return ctx.failedFuture(err);
       } else {
         long delay = config.getConnectionRetryDelay();
         log.info("Attempting to reconnect to rabbitmq...");
+        Promise<Void> promise = ctx.promise();
         vertx.setTimer(delay, id -> {
           log.debug("Reconnect attempt # " + attempts);
-          start(attempts + 1, resultHandler);
+          start(ctx, attempts + 1).setHandler(promise);
         });
+        return promise.future();
       }
     });
   }
 
   @Override
   public void stop(Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = stop();
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
+  public Future<Void> stop() {
     log.info("Stopping rabbitmq client");
-    vertx.executeBlocking(future -> {
+    return vertx.executeBlocking(future -> {
       try {
         disconnect();
         future.complete();
       } catch (IOException e) {
         future.fail(e);
       }
-    }, resultHandler);
+    });
   }
 
-  @Override
-  public Future<Void> stop() {
-    Promise<Void> promise = Promise.promise();
-    stop(promise);
-    return promise.future();
-  }
-
-  private <T> void forChannel(Handler<AsyncResult<T>> resultHandler, ChannelHandler<T> channelHandler) {
+  private <T> Future<T> forChannel(ChannelHandler<T> channelHandler) {
+    ContextInternal ctx = (ContextInternal) vertx.getOrCreateContext();
     if (connection == null || channel == null) {
-      resultHandler.handle(Future.failedFuture("Not connected"));
-      return;
+      return ctx.failedFuture("Not connected");
     }
     if (!channel.isOpen()) {
       try {
@@ -592,18 +599,17 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
           channel.confirmSelect();
       } catch (IOException e) {
         log.debug("create channel error");
-        resultHandler.handle(Future.failedFuture(e));
+        return ctx.failedFuture(e);
       }
     }
-
-    vertx.executeBlocking(future -> {
+    return vertx.executeBlocking(future -> {
       try {
         T t = channelHandler.handle(channel);
         future.complete(t);
       } catch (Throwable t) {
         future.fail(t);
       }
-    }, resultHandler);
+    });
   }
 
   private void connect() throws IOException, TimeoutException {
@@ -626,26 +632,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     }
   }
 
-  private Map<String, Object> toArgumentsMap(Map<String, String> map) {
-    Map<String, Object> transformedMap = null;
-    if (map != null) {
-      transformedMap = new HashMap<>();
-      map.forEach(transformedMap::put);
-    }
-    return transformedMap;
-  }
-
   @Override
   public void shutdownCompleted(ShutdownSignalException cause) {
     if (cause.isInitiatedByApplication()) {
       return;
     }
-
     log.info("RabbitMQ connection shutdown! The client will attempt to reconnect automatically", cause);
   }
 
   private interface ChannelHandler<T> {
-
     T handle(Channel channel) throws Exception;
   }
 }
