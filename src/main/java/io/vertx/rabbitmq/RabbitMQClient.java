@@ -276,11 +276,25 @@ public interface RabbitMQClient {
   void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
 
   /**
+   * Bind an exchange to an exchange.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeBind(String, String, String, Map<String, Object>)
+   */
+  void exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
    * Unbind an exchange from an exchange.
    *
    * @see com.rabbitmq.client.Channel#exchangeUnbind(String, String, String)
    */
   void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Unbind an exchange from an exchange.
+   *
+   * @see com.rabbitmq.client.Channel#exchangeUnbind(String, String, String, Map<String, Object>)
+   */
+  void exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Actively declare a server-named exclusive, autodelete, non-durable queue.
@@ -337,6 +351,27 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#queueBind(String, String, String)
    */
   void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Bind a queue to an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueBind(String, String, String, Map<String, Object>)
+   */
+  void queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Unbind a queue from an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueUnbind(String, String, String)
+   */
+  void queueUnbind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Unbind a queue from an exchange
+   *
+   * @see com.rabbitmq.client.Channel#queueUnbind(String, String, String, Map<String, Object>)
+   */
+  void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Returns the number of messages in a queue ready to be delivered.
