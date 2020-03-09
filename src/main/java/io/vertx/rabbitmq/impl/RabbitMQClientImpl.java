@@ -553,7 +553,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         Promise<Void> promise = ctx.promise();
         vertx.setTimer(delay, id -> {
           log.debug("Reconnect attempt # " + attempts);
-          start(ctx, attempts + 1).setHandler(promise);
+          start(ctx, attempts + 1).onComplete(promise);
         });
         return promise.future();
       }
