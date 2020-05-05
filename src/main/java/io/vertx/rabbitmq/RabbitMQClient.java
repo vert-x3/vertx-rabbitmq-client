@@ -365,6 +365,7 @@ public interface RabbitMQClient {
   /**
    * Like {@link #queueDeclare(String, boolean, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
    */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete);
 
   /**
@@ -392,6 +393,7 @@ public interface RabbitMQClient {
   /**
    * Like {@link #queueDelete(String, Handler)} but returns a {@code Future} of the asynchronous result
    */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<AMQP.Queue.DeleteOk> queueDelete(String queue);
 
   /**
@@ -405,6 +407,7 @@ public interface RabbitMQClient {
   /**
    * Like {@link #queueDeleteIf(String, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
    */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<AMQP.Queue.DeleteOk> queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty);
 
   /**
