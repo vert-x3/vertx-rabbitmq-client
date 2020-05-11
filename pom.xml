@@ -4,7 +4,7 @@
   <parent>
     <groupId>io.vertx</groupId>
     <artifactId>vertx-ext-parent</artifactId>
-    <version>34</version>
+    <version>35</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -119,7 +119,7 @@
               <systemPropertyVariables>
                 <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
               </systemPropertyVariables>
-              <argLine>-server -Xmx1200M @{surefireArgLine}</argLine>
+              <argLine>-server -Xmx1200M</argLine>
               <forkCount>1</forkCount>
               <reuseForks>true</reuseForks>
               <systemProperties>
