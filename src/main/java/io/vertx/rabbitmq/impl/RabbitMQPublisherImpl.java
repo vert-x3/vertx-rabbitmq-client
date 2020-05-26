@@ -101,7 +101,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   @Override
   public void start(Handler<AsyncResult<Void>> resultHandler) {
     Promise<Void> promise = startForPromise();
-    promise.future().setHandler(resultHandler);
+    promise.future().onComplete(resultHandler);
   }
 
   @Override

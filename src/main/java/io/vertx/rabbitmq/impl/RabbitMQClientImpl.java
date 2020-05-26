@@ -143,36 +143,30 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     });
   }
 
-  @Override
-  public void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
-    Future<RabbitMQConsumer> fut = basicConsumer(queue, options);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
   private void restartConsumer(int attempts, QueueConsumerHandler handler, String queue, QueueOptions options) {
     stop(ar -> {
       if (!handler.queue().isCancelled()) {
-        if (ar.succeeded()) {              
-          if (attempts >= retries) {
+        if (ar.succeeded()) {    
+          if (retries == null) {
+            log.error("Retries disabled. Will not attempt to restart");
+          } else if (attempts >= retries) {
             log.error("Max number of consumer restart attempts (" + retries + ") reached. Will not attempt to restart again");
           } else {
             start((arStart) -> {
-            if (arStart.succeeded()) {
-              forChannel(arChan -> {
-                if (arChan.failed()) {
-                  log.error("Failed to restart consumer: ", arChan.cause());
-                  long delay = config.getConnectionRetryDelay();
-                  vertx.setTimer(delay, id -> {
-                    restartConsumer(attempts + 1, handler, queue, options);
-                  });
-                }
-              }, chan -> {
-                RabbitMQConsumer q = handler.queue();
-                chan.basicConsume(queue, options.isAutoAck(), handler);
-                return q.resume();
-              });
+              if (arStart.succeeded()) {
+                forChannel(chan -> {
+                  RabbitMQConsumer q = handler.queue();
+                  chan.basicConsume(queue, options.isAutoAck(), handler);
+                  return q.resume();
+                }).onComplete(arChan -> {
+                  if (arChan.failed()) {
+                    log.error("Failed to restart consumer: ", arChan.cause());
+                    long delay = config.getConnectionRetryDelay();
+                    vertx.setTimer(delay, id -> {
+                      restartConsumer(attempts + 1, handler, queue, options);
+                    });
+                  }
+                });
             } else {
               log.error("Failed to restart client: ", arStart.cause());
               long delay = config.getConnectionRetryDelay();
@@ -190,13 +184,27 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
   
   @Override
+  public void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
+    Future<RabbitMQConsumer> fut = basicConsumer(queue, options);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
+
+  @Override
   public Future<RabbitMQConsumer> basicConsumer(String queue, QueueOptions options) {
     return forChannel(channel -> {
+      log.debug("Created new QueueConsumer");
       QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options);
       handler.setShutdownHandler(sig -> {
         restartConsumer(0, handler, queue, options);
       });
-      channel.basicConsume(queue, options.isAutoAck(), handler);
+      try {
+        channel.basicConsume(queue, options.isAutoAck(), handler);
+      } catch(Throwable ex) {
+        log.warn("Failed to consume: ", ex);
+        restartConsumer(0, handler, queue, options);
+      }
       return handler;
     }).map(res -> {
       RabbitMQConsumer q = res.queue();
@@ -206,7 +214,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       // Deliver to the application
       return q;
     });
-  }
+  }  
   
   @Override
   public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQMessage>> resultHandler) {
@@ -235,35 +243,50 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   @Override
   public Future<Void> basicPublish(String exchange, String routingKey, Buffer body) {
-    return basicPublish(exchange, routingKey, new AMQP.BasicProperties(), body);
-  }
-  
-  @Override
-  public Future<Void> basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler) {
-    Promise<Void> promise = Promise.promise();
-    basicPublishWithDeliveryTag(exchange, routingKey, properties, body, deliveryTagHandler, promise);
-    return promise.future();
+    return basicPublishWithDeliveryTag(exchange, routingKey, new AMQP.BasicProperties(), body, null);
   }
   
   @Override
   public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = basicPublish(exchange, routingKey, properties, body);
+    basicPublishWithDeliveryTag(exchange, routingKey, properties, body, null, resultHandler);
+  }
+    
+  @Override
+  public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
+    return basicPublishWithDeliveryTag(exchange, routingKey, properties, body, null);
+  }
+
+  @Override
+  public void basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler) {
+    Future<Void> fut = basicPublishWithDeliveryTag(exchange, routingKey, properties, body, deliveryTagHandler);
     if (resultHandler != null) {
       fut.onComplete(resultHandler);
     }
   }
   
   @Override
-  public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
+  public Future<Void> basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler) {
     return forChannel(channel -> {
+      if (deliveryTagHandler != null) {
+        long deliveryTag = channel.getNextPublishSeqNo();
+        deliveryTagHandler.handle(deliveryTag);
+      }
       channel.basicPublish(exchange, routingKey, (AMQP.BasicProperties) properties, body.getBytes());
       return null;
     });
   }
+  
+  @Override
+  public void addConfirmListener(int maxQueueSize, Handler<AsyncResult<ReadStream<RabbitMQConfirmation>>> resultHandler) {
+    Future<ReadStream<RabbitMQConfirmation>> fut = addConfirmListener(maxQueueSize);
+    if (resultHandler != null) {
+      fut.onComplete(resultHandler);
+    }
+  }
 
   @Override
-  public void addConfirmListener(QueueOptions options, Handler<AsyncResult<RabbitMQConfirmListener>> resultHandler) {
-    forChannel(  resultHandler, channel -> {
+  public Future<ReadStream<RabbitMQConfirmation>> addConfirmListener(int maxQueueSize) {
+    return forChannel(channel -> {
 
       ChannelConfirmHandler handler = new ChannelConfirmHandler(vertx, this, maxQueueSize);
       channel.addConfirmListener(handler);
@@ -274,14 +297,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       return handler.getListener();
     });
   }
-
-  @Override
-  public Future<ReadStream<RabbitMQConfirmation>> addConfirmListener(int maxQueueSize) {
-    Promise<ReadStream<RabbitMQConfirmation>> promise = Promise.promise();
-    addConfirmListener(maxQueueSize, promise);
-    return promise.future();
-  }
-
+  
   @Override
   public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
     Future<Void> fut = confirmSelect();
@@ -616,12 +632,12 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   private Future<Void> start(ContextInternal ctx, int attempts) {
-    return ctx.<Void>executeBlocking(future -> {
+    return ctx.<Void>executeBlocking(promise -> {
       try {
-        connect(future);
+        connect().onComplete(promise);
       } catch (IOException | TimeoutException e) {
         log.error("Could not connect to rabbitmq", e);
-        future.fail(e);
+        promise.fail(e);
       }
     }).recover(err -> {
       if (retries == null) {
@@ -696,13 +712,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     });
   }
 
-  private Future connect(Promise<Void> promise) throws IOException, TimeoutException {
+  private Future<Void> connect() throws IOException, TimeoutException {
     log.debug("Connecting to rabbitmq...");
     connection = newConnection(config);
     connection.addShutdownListener(this);
     ++channelInstance;
     channel = connection.createChannel();
-    Future result = promise.future();
+    Promise promise = Promise.promise();
     if (connectionEstablishedCallbacks.isEmpty()) {
       promise.complete();
     } else {
@@ -710,7 +726,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       connectCallbackHandler(Future.succeededFuture(), iter, promise);
     }
     log.debug("Connected to rabbitmq !");
-    return result;
+    return promise.future();
   }
 
   private void connectCallbackHandler(AsyncResult<Void> prevResult, Iterator<Handler<Promise<Void>>> iter, Promise<Void> connectPromise) {
@@ -721,8 +737,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         if (iter.hasNext()) {        
           Handler<Promise<Void>> next = iter.next();
           Promise<Void> callbackPromise = Promise.promise();
-          next.handle(connectPromise);
-          callbackPromise.future().setHandler(result -> connectCallbackHandler(result, iter, connectPromise));
+          next.handle(callbackPromise);
+          callbackPromise.future().onComplete(result -> connectCallbackHandler(result, iter, connectPromise));
         } else {
           connectPromise.complete();
         }
