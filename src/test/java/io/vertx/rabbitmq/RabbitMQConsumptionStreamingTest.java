@@ -77,7 +77,8 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     paused.awaitSuccess(15000);
 
     // wait some time to ensure that handler will not receive any messages when it is paused
-    vertx.setTimer(1000, t -> resumed.complete());
+    Thread.sleep(1000);
+    resumed.complete();
   }
 
 
