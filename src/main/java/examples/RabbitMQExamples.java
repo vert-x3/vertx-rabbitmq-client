@@ -10,8 +10,10 @@ import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 import io.vertx.rabbitmq.RabbitMQOptions;
-
+import io.vertx.rabbitmq.RabbitMQPublisher;
+import io.vertx.rabbitmq.RabbitMQPublisherOptions;
 import java.util.Arrays;
+import java.util.Map;
 
 public class RabbitMQExamples {
 
@@ -215,5 +217,46 @@ public class RabbitMQExamples {
       }
     });
   }
+  
+  // Use the connectionEstablishedCallback to declare an Exchange
+  public void connectionEstablishedCallback(Vertx vertx, RabbitMQOptions config) {
+    RabbitMQClient client = RabbitMQClient.create(vertx, config);
+    client.addConnectionEstablishedCallback(promise -> {
+                client.exchangeDeclare("exchange", "fanout", true, false)
+                    .compose(v -> {
+                      return client.queueDeclare("queue", false, true, true);
+                    })
+                    .compose(declareOk -> {
+                      return client.queueBind(declareOk.getQueue(), "exchange", "");                      
+                    })
+                    .onComplete(promise);
+    });
+
+    // At this point the exchange, queue and binding will have been declared even if the client connects to a new server
+    client.basicConsumer("queue", rabbitMQConsumerAsyncResult -> {
+    });
+  }
+  
+  public void rabbitMqPublisher(Vertx vertx, RabbitMQClient client, RabbitMQPublisherOptions options, Map<String, JsonObject> messages) {
+
+    RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx, client, options);
+    
+    messages.forEach((k,v) -> {
+      com.rabbitmq.client.BasicProperties properties = new AMQP.BasicProperties.Builder()
+              .messageId(k)
+              .build();
+      publisher.publish("exchange", "routingKey", properties, v.toBuffer());
+    });
+
+    publisher.getConfirmationStream().handler(conf -> {
+      if (conf.isSucceeded()) {
+        messages.remove(conf.getMessageId());
+      }
+    });
+    
+    // messages should eventually be empty
+    
+  }
+
 
 }

@@ -53,6 +53,31 @@ You can set multiples addresses to connect to a cluster;
 {@link examples.RabbitMQExamples#createClientWithMultipleHost}
 ----
 
+Reconnections
+
+The RabbitMQClient will, by default, retry connecting to the RabbitMQ server if it cannot connect.
+It will also attempt to reconnect whenever the connection to the RabbitMQ server becomes broken.
+The failure of a connection could be caused by a transient network failure (where the client would probably connect back to the same RabbitMQ server) or it could be caused by a failover scenario.
+
+The reconnection policy can be configured by setting the connectionRetries and connectionRetryDelay properties in the configuration:
+[source, java]
+----
+RabbitMQOptions config = new RabbitMQOptions();
+options.setConnectionRetries(Integer.MAX_VALUE);
+options.setConnectionRetryDelay(500);
+----
+
+As soon as the connection has been re-established users of the client may attempt to publish (or consume) messages.
+However, if the connection is to a new RabbitMQ server it is possible that objects created through this RabbitMQClient won't exist,. i.e. when exchanges and queues are created through the RabbitMQClient on startup.
+To provide an opportunity to create these objects before the connection is considered ready the RabbitMQClient provides the ConnectionEstablishedCallback.
+The ConnectionEstablishedCallback can be used to carry out any operations on the RabbitMQClient before other users (including the RabbitMQConsumer and RabbitMQPublisher) are able to access it.
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#connectionEstablishedCallback}
+----
+
+
 === Declare exchange with additional config
 
 You can pass additional config parameters to RabbitMQ's exchangeDeclare method
@@ -93,6 +118,47 @@ Publish a message to a queue and confirm the broker acknowledged it.
 ----
 {@link examples.RabbitMQExamples#basicPublishWithConfirm}
 ----
+
+=== Reliable Message Publishing
+
+In order to reliably publish messages to RabbitMQ it is necessary to handle confirmations that each message has been accepted by the server.
+The simplest approach to confirmations is to use the basicPublishWithConfirm approach, above, which synchronously confirms each message when it is sent - blocking the publishing channel until the confirmation is received.
+
+In order to achieve greater throughput RabbitMQ provides asynchronous confirmations.
+The asynchronous confirmations can confirm multiple messages in one go, so it is necessary for the client to track all messages in the order that they were published.
+Also, until messages are confirmed by the server it may be necessary to resend them, so they must be retained by the client.
+
+The RabbitMQPublisher class implements a standard approach to handling asynchronous confirmations, avoiding much of the boiler plate code that would otherwise be required.
+
+The RabbitMQPublisher works by:
+* Adding all sent messages to an internal queue.
+* Sending messages from the queue when it is able, keeping track of these messages pending acknowledgement in a separate queue.
+* Handling asynchronous confirmations from RabbitMQ, removing messages from the pendingAck queue once they are confirmed.
+* Notifying the caller for each message that is confirmed (this is always a single message at a time, not the bulk confirmation used by RabbitMQ).
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#rabbitMqPublisher}
+----
+
+
+Delivery Tags
+
+This section is an implementation detail that is useful for anyone that wants to implement their own alternative to RabbitMQPublisher.
+
+For the RabbitMQPublisher to work it has to know the delivery tag that RabbitMQ will use for each message published.
+The confirmations from RabbitMQ can arrive at the client before the call to basicPublish has completed, so it is not possible to identify the delivery tag via anything returned by basicPublish if asynchronous confirmations are being used.
+For this reason it is necessary for the RabbitMQClient to tell the RabbitMQPublisher the delivery tag of each message via a separate callback that occurs in the call to RabbitMQClient::basicPublish before the message is actually sent on the network.
+It is also possible for the delivery tag of a single message to change (delivery tags are per-channel, so the message is resent following a reconnection it will have a new delivery tag) - this means that we cannot use a Future to inform the client of the delivery tag.
+If the deliveryTagHandler is called more than once for a given message it is always safe to ignore the previous value - there can be only one valid delivery tag for a message at any time.
+
+To capture the delivery tag one of the RabbitMqClient::basicPublishWithDeliveryTag methods should be used.
+[source, java]
+----
+  void basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
+  Future<Void> basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler);
+----
+These methods 
 
 === Consume
 
@@ -166,6 +232,8 @@ Will get a message from a queue
 ----
 {@link examples.RabbitMQExamples#consumeWithManualAck}
 ----
+
+
 
 == Running the tests
 
