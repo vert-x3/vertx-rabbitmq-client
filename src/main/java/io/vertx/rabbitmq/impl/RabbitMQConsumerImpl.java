@@ -19,17 +19,30 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
 
   private Handler<Throwable> exceptionHandler;
   private Handler<Void> endHandler;
+  private String queueName;  
   private final QueueConsumerHandler consumerHandler;
   private final boolean keepMostRecent;
   private final InboundBuffer<RabbitMQMessage> pending;
   private final int maxQueueSize;
   private volatile boolean cancelled;
 
-  RabbitMQConsumerImpl(Context context, QueueConsumerHandler consumerHandler, QueueOptions options) {
+  RabbitMQConsumerImpl(Context context, QueueConsumerHandler consumerHandler, QueueOptions options, String queueName) {
     this.consumerHandler = consumerHandler;
     this.keepMostRecent = options.isKeepMostRecent();
     this.maxQueueSize = options.maxInternalQueueSize();
     this.pending = new InboundBuffer<RabbitMQMessage>(context, maxQueueSize).pause();
+    this.queueName = queueName;
+  }
+
+  @Override
+  public String queueName() {
+    return queueName;
+  }
+
+  @Override
+  public RabbitMQConsumer setQueueName(String name) {
+    this.queueName = name;
+    return this;
   }
 
   @Override

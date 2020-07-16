@@ -143,7 +143,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     });
   }
 
-  private void restartConsumer(int attempts, QueueConsumerHandler handler, String queue, QueueOptions options) {
+  private void restartConsumer(int attempts, QueueConsumerHandler handler, QueueOptions options) {
     stop(ar -> {
       if (!handler.queue().isCancelled()) {
         if (ar.succeeded()) {    
@@ -156,14 +156,14 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
               if (arStart.succeeded()) {
                 forChannel(chan -> {
                   RabbitMQConsumer q = handler.queue();
-                  chan.basicConsume(queue, options.isAutoAck(), handler);
+                  chan.basicConsume(q.queueName(), options.isAutoAck(), handler);
                   return q.resume();
                 }).onComplete(arChan -> {
                   if (arChan.failed()) {
                     log.error("Failed to restart consumer: ", arChan.cause());
                     long delay = config.getConnectionRetryDelay();
                     vertx.setTimer(delay, id -> {
-                      restartConsumer(attempts + 1, handler, queue, options);
+                      restartConsumer(attempts + 1, handler, options);
                     });
                   }
                 });
@@ -171,7 +171,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
               log.error("Failed to restart client: ", arStart.cause());
               long delay = config.getConnectionRetryDelay();
               vertx.setTimer(delay, id -> {
-                restartConsumer(attempts + 1, handler, queue, options);
+                restartConsumer(attempts + 1, handler, options);
               });
             }
           });
@@ -195,15 +195,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public Future<RabbitMQConsumer> basicConsumer(String queue, QueueOptions options) {
     return forChannel(channel -> {
       log.debug("Created new QueueConsumer");
-      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options);
+      QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options, queue);
       handler.setShutdownHandler(sig -> {
-        restartConsumer(0, handler, queue, options);
+        restartConsumer(0, handler, options);
       });
       try {
         channel.basicConsume(queue, options.isAutoAck(), handler);
       } catch(Throwable ex) {
         log.warn("Failed to consume: ", ex);
-        restartConsumer(0, handler, queue, options);
+        restartConsumer(0, handler, options);
       }
       return handler;
     }).map(res -> {

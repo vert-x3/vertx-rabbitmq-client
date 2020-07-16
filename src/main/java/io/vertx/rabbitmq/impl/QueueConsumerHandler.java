@@ -23,10 +23,10 @@ public class QueueConsumerHandler extends DefaultConsumer {
 
   private static final Logger log = LoggerFactory.getLogger(QueueConsumerHandler.class);
 
-  QueueConsumerHandler(Vertx vertx, Channel channel, QueueOptions options) {
+  QueueConsumerHandler(Vertx vertx, Channel channel, QueueOptions options, String queueName) {
     super(channel);
     this.handlerContext = vertx.getOrCreateContext();
-    this.queue = new RabbitMQConsumerImpl(handlerContext, this, options);
+    this.queue = new RabbitMQConsumerImpl(handlerContext, this, options, queueName);
   }
 
   public void setShutdownHandler(Handler<ShutdownSignalException> shutdownHandler) {

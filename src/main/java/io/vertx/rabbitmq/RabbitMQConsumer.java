@@ -1,5 +1,6 @@
 package io.vertx.rabbitmq;
 
+import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -56,6 +57,20 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
   @Override
   RabbitMQConsumer endHandler(Handler<Void> endHandler);
 
+  /**
+   * @return the name of the queue
+   */
+  String queueName();
+  
+  /**
+   * Set the name of the queue.
+   * This method is typically only required during a connectionEstablishedCallback when the queue name has changed.
+   * @param name the name of the queue
+   * @return a reference to this, so the API can be used fluently
+   */
+  @Fluent
+  RabbitMQConsumer setQueueName(String name);
+  
   /**
    * @return a consumer tag
    */
