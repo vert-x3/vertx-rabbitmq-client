@@ -77,6 +77,14 @@ The ConnectionEstablishedCallback can be used to carry out any operations on the
 {@link examples.RabbitMQExamples#connectionEstablishedCallback}
 ----
 
+If a RabbitMQConsumer is listening for messages on an auto-delete server-named queue and the broker restarts the queue will have been removed by the time the client reconnects.
+In this instance it is necessary to both recreate the queue and set the new queue name on the RabbitMQConsumer.
+
+[source,$lang]
+----
+{@link examples.RabbitMQExamples#connectionEstablishedCallbackForServerNamedAutoDeleteQueue}
+----
+
 
 === Declare exchange with additional config
 
@@ -149,7 +157,7 @@ This section is an implementation detail that is useful for anyone that wants to
 For the RabbitMQPublisher to work it has to know the delivery tag that RabbitMQ will use for each message published.
 The confirmations from RabbitMQ can arrive at the client before the call to basicPublish has completed, so it is not possible to identify the delivery tag via anything returned by basicPublish if asynchronous confirmations are being used.
 For this reason it is necessary for the RabbitMQClient to tell the RabbitMQPublisher the delivery tag of each message via a separate callback that occurs in the call to RabbitMQClient::basicPublish before the message is actually sent on the network.
-It is also possible for the delivery tag of a single message to change (delivery tags are per-channel, so the message is resent following a reconnection it will have a new delivery tag) - this means that we cannot use a Future to inform the client of the delivery tag.
+It is also possible for the delivery tag of a single message to change (delivery tags are per-channel, so if the message is resent following a reconnection it will have a new delivery tag) - this means that we cannot use a Future to inform the client of the delivery tag.
 If the deliveryTagHandler is called more than once for a given message it is always safe to ignore the previous value - there can be only one valid delivery tag for a message at any time.
 
 To capture the delivery tag one of the RabbitMqClient::basicPublishWithDeliveryTag methods should be used.
