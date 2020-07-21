@@ -33,10 +33,6 @@ public class QueueConsumerHandler extends DefaultConsumer {
     this.shutdownHandler = shutdownHandler;
   }
 
-  public void setShutdownHandler(Handler<ShutdownSignalException> shutdownHandler) {
-    this.shutdownHandler = shutdownHandler;
-  }
-
   @Override
   public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) {
     RabbitMQMessage msg = new RabbitMQMessageImpl(body, consumerTag, envelope, properties, null);
@@ -62,8 +58,6 @@ public class QueueConsumerHandler extends DefaultConsumer {
       shutdownHandler.handle(sig);
     }
   }
-  
-  
 
   /**
    * @return a queue for message consumption
