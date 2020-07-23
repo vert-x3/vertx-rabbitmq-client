@@ -10,8 +10,11 @@ import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 import io.vertx.rabbitmq.RabbitMQOptions;
-
+import io.vertx.rabbitmq.RabbitMQPublisher;
+import io.vertx.rabbitmq.RabbitMQPublisherOptions;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class RabbitMQExamples {
 
@@ -215,5 +218,80 @@ public class RabbitMQExamples {
       }
     });
   }
+  
+  // Use the connectionEstablishedCallback to declare an Exchange
+  public void connectionEstablishedCallback(Vertx vertx, RabbitMQOptions config) {
+    RabbitMQClient client = RabbitMQClient.create(vertx, config);
+    client.addConnectionEstablishedCallback(promise -> {
+                client.exchangeDeclare("exchange", "fanout", true, false)
+                    .compose(v -> {
+                      return client.queueDeclare("queue", false, true, true);
+                    })
+                    .compose(declareOk -> {
+                      return client.queueBind(declareOk.getQueue(), "exchange", "");                      
+                    })
+                    .onComplete(promise);
+    });
+
+    // At this point the exchange, queue and binding will have been declared even if the client connects to a new server
+    client.basicConsumer("queue", rabbitMQConsumerAsyncResult -> {
+    });
+  }
+  
+  public void connectionEstablishedCallbackForServerNamedAutoDeleteQueue(Vertx vertx, RabbitMQOptions config) {
+    RabbitMQClient client = RabbitMQClient.create(vertx, config);
+    AtomicReference<RabbitMQConsumer> consumer = new AtomicReference<>();
+    AtomicReference<String> queueName = new AtomicReference<>();
+    client.addConnectionEstablishedCallback(promise -> {
+          client.exchangeDeclare("exchange", "fanout", true, false)
+                  .compose(v -> client.queueDeclare("", false, true, true))
+                  .compose(dok -> {
+                      queueName.set(dok.getQueue());
+                      // The first time this runs there will be no existing consumer
+                      // on subsequent connections the consumer needs to be update with the new queue name
+                      RabbitMQConsumer currentConsumer = consumer.get();
+                      if (currentConsumer != null) {
+                        currentConsumer.setQueueName(queueName.get());
+                      }
+                      return client.queueBind(queueName.get(), "exchange", "");
+                  })
+                  .onComplete(promise);
+    });
+
+    client.start()
+            .onSuccess(v -> {
+                // At this point the exchange, queue and binding will have been declared even if the client connects to a new server
+                client.basicConsumer(queueName.get(), rabbitMQConsumerAsyncResult -> {
+                    if (rabbitMQConsumerAsyncResult.succeeded()) {
+                        consumer.set(rabbitMQConsumerAsyncResult.result());
+                    }
+                });
+            })
+            .onFailure(ex -> {
+                System.out.println("It went wrong: " + ex.getMessage());
+            });
+  }
+  
+  public void rabbitMqPublisher(Vertx vertx, RabbitMQClient client, RabbitMQPublisherOptions options, Map<String, JsonObject> messages) {
+
+    RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx, client, options);
+    
+    messages.forEach((k,v) -> {
+      com.rabbitmq.client.BasicProperties properties = new AMQP.BasicProperties.Builder()
+              .messageId(k)
+              .build();
+      publisher.publish("exchange", "routingKey", properties, v.toBuffer());
+    });
+
+    publisher.getConfirmationStream().handler(conf -> {
+      if (conf.isSucceeded()) {
+        messages.remove(conf.getMessageId());
+      }
+    });
+    
+    // messages should eventually be empty
+    
+  }
+
 
 }
