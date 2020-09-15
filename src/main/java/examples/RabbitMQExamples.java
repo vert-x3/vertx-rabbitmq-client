@@ -23,6 +23,15 @@ public class RabbitMQExamples {
     // full amqp uri
     config.setUri("amqp://xvjvsrrc:VbuL1atClKt7zVNQha0bnnScbNvGiqgb@moose.rmq.cloudamqp.com/xvjvsrrc");
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
+
+    // Connect
+    client.start(asyncResult -> {
+      if (asyncResult.succeeded()) {
+        System.out.println("RabbitMQ successfully connected!");
+      } else {
+        System.out.println("Fail to connect to RabbitMQ " + asyncResult.cause().getMessage());
+      }
+    });
   }
 
   public void createClientWithManualParams(Vertx vertx) {
@@ -42,6 +51,15 @@ public class RabbitMQExamples {
     config.setAutomaticRecoveryEnabled(true);
 
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
+
+    // Connect
+    client.start(asyncResult -> {
+      if (asyncResult.succeeded()) {
+        System.out.println("RabbitMQ successfully connected!");
+      } else {
+        System.out.println("Fail to connect to RabbitMQ " + asyncResult.cause().getMessage());
+      }
+    });
   }
 
   //pass multiple hosts to client, allow to use a clustered RabbitMQ
@@ -54,6 +72,15 @@ public class RabbitMQExamples {
     config.setAddresses(Arrays.asList(Address.parseAddresses("firstHost,secondHost:5672")));
 
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
+
+    // Connect
+    client.start(asyncResult -> {
+      if (asyncResult.succeeded()) {
+        System.out.println("RabbitMQ successfully connected!");
+      } else {
+        System.out.println("Fail to connect to RabbitMQ " + asyncResult.cause().getMessage());
+      }
+    });
   }
 
   public void basicPublish(RabbitMQClient client) {
@@ -218,7 +245,7 @@ public class RabbitMQExamples {
       }
     });
   }
-  
+
   // Use the connectionEstablishedCallback to declare an Exchange
   public void connectionEstablishedCallback(Vertx vertx, RabbitMQOptions config) {
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
@@ -228,7 +255,7 @@ public class RabbitMQExamples {
                       return client.queueDeclare("queue", false, true, true);
                     })
                     .compose(declareOk -> {
-                      return client.queueBind(declareOk.getQueue(), "exchange", "");                      
+                      return client.queueBind(declareOk.getQueue(), "exchange", "");
                     })
                     .onComplete(promise);
     });
@@ -237,7 +264,7 @@ public class RabbitMQExamples {
     client.basicConsumer("queue", rabbitMQConsumerAsyncResult -> {
     });
   }
-  
+
   public void connectionEstablishedCallbackForServerNamedAutoDeleteQueue(Vertx vertx, RabbitMQOptions config) {
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
     AtomicReference<RabbitMQConsumer> consumer = new AtomicReference<>();
@@ -271,11 +298,11 @@ public class RabbitMQExamples {
                 System.out.println("It went wrong: " + ex.getMessage());
             });
   }
-  
+
   public void rabbitMqPublisher(Vertx vertx, RabbitMQClient client, RabbitMQPublisherOptions options, Map<String, JsonObject> messages) {
 
     RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx, client, options);
-    
+
     messages.forEach((k,v) -> {
       com.rabbitmq.client.BasicProperties properties = new AMQP.BasicProperties.Builder()
               .messageId(k)
@@ -288,9 +315,9 @@ public class RabbitMQExamples {
         messages.remove(conf.getMessageId());
       }
     });
-    
+
     // messages should eventually be empty
-    
+
   }
 
 
