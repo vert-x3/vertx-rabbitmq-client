@@ -24,7 +24,7 @@ import java.util.Map;
  */
 @VertxGen
 public interface RabbitMQClient {
-  
+
   /**
    * Create and return a client configured with the default options.
    *
@@ -51,26 +51,26 @@ public interface RabbitMQClient {
    * Set a callback to be called whenever a new connection is established.
    * This callback must be idempotent - it will be called each time a connection is established, which may be multiple times against the same instance.
    * Callbacks will be added to a list and called in the order they were added, the only way to remove callbacks is to create a new client.
-   * 
+   *
    * These callbacks should be used to establish any Rabbit MQ server objects that are required - exchanges, queues, bindings, etc.
    * Each callback will receive a Promise<Void> that it must complete in order to pass control to the next callback (or back to the RabbitMQClient).
    * If the callback fails the promise the RabbitMQClient will be unable to make a connection (it will attempt to connect again according to its retry configuration).
    * If the promise is not completed or failed by a callback the RabbitMQClient will not start (it will hang indefinitely).
-   * 
+   *
    * Other methods on the client may be used in the callback -
    * it is specifically expected that RabbitMQ objects will be declared, but the publish and consume methods must not be used.
-   * 
-   * The connection established callbacks are particularly important with the RabbitMQPublisher and RabbitMQConsumer when they are used with 
+   *
+   * The connection established callbacks are particularly important with the RabbitMQPublisher and RabbitMQConsumer when they are used with
    * servers that may failover to another instance of the server that does not have the same exchanges/queues configured on it.
-   * In this situation these callbacks are the only opportunity to create exchanges, queues and bindings before the client will attempt to use them when it 
+   * In this situation these callbacks are the only opportunity to create exchanges, queues and bindings before the client will attempt to use them when it
    * re-establishes connection.
    * If your failover cluster is guaranteed to have the appropriate objects already configured then it is not necessary to use the callbacks.
-   * 
+   *
    * @param connectionEstablishedCallback  callback to be called whenever a new connection is established.
    */
   @GenIgnore
   void addConnectionEstablishedCallback(Handler<Promise<Void>> connectionEstablishedCallback);
-  
+
   /**
    * Like {@link #create(Vertx, RabbitMQOptions)} but with a {@link JsonObject} config object.
    */
@@ -179,8 +179,8 @@ public interface RabbitMQClient {
    *
    * The deliveryTagHandler will be called before the message is sent, which is necessary because the confirmation may arrive
    * asynchronously before the resultHandler is called.
-   * 
-   * @param deliveryTagHandler callback to capture the deliveryTag for this message.  
+   *
+   * @param deliveryTagHandler callback to capture the deliveryTag for this message.
    *        Note that this will be called synchronously in the context of the client before the result is known.
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
@@ -203,7 +203,7 @@ public interface RabbitMQClient {
    *
    * @param maxQueueSize   maximum size of the queue of confirmations
    * @param resultHandler  a handler through which you can find out the operation status;
-   *                       if the operation succeeds you can begin to receive confirmations 
+   *                       if the operation succeeds you can begin to receive confirmations
    *                       through an instance of {@link RabbitMQConfirmListener}
    * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
    */
@@ -216,7 +216,7 @@ public interface RabbitMQClient {
    *
    * @param maxQueueSize   maximum size of the queue of confirmations
    * @return a future through which you can find out the operation status;
-   *                       if the operation succeeds you can begin to receive confirmations 
+   *                       if the operation succeeds you can begin to receive confirmations
    *                       through an instance of {@link RabbitMQConfirmListener}
    * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
    */
@@ -548,7 +548,7 @@ public interface RabbitMQClient {
   Future<Long> messageCount(String queue);
 
   /**
-   * Start the rabbitMQ client. Create the connection and the chanel.
+   * Start the rabbitMQ client. Create the connection and the channel.
    *
    * @see com.rabbitmq.client.Connection#createChannel()
    */
@@ -560,7 +560,7 @@ public interface RabbitMQClient {
   Future<Void> start();
 
   /**
-   * Stop the rabbitMQ client. Close the connection and its chanel.
+   * Stop the rabbitMQ client. Close the connection and its channel.
    *
    * @see com.rabbitmq.client.Connection#close()
    */
