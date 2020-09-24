@@ -17,7 +17,7 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class RabbitMQClientTestBaseTLS {
-  private static final String RESOURCE_PATH = "tls/server/";
+  private static final String RESOURCE_PATH = "./tls/server/";
   private static final String KEY = RESOURCE_PATH+"localhost.key";
   private static final String CERT = RESOURCE_PATH+"localhost.pem";
   private static final String CA_CERT = RESOURCE_PATH+"rootCA.pem";
