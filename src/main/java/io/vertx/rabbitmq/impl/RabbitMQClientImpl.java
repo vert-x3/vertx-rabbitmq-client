@@ -20,8 +20,22 @@ import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 import io.vertx.rabbitmq.RabbitMQOptions;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
 import static io.vertx.rabbitmq.impl.Utils.*;
 
@@ -32,6 +46,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
   private static final JsonObject emptyConfig = new JsonObject();
+  private static final String KEYSTORE_TYPE = "jks";
 
   private final Vertx vertx;
   private final RabbitMQOptions config;
@@ -87,7 +102,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     cf.setNetworkRecoveryInterval(config.getNetworkRecoveryInterval());
     cf.setAutomaticRecoveryEnabled(config.isAutomaticRecoveryEnabled());
 
-
+    if(config.isTlsEnabled()) {
+    	setupTls(cf, config);
+    }
     //TODO: Support other configurations
 
     return addresses == null
@@ -775,5 +792,57 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private interface ChannelHandler<T> {
     T handle(Channel channel) throws Exception;
+  }
+  
+  private static void setupTls(ConnectionFactory cf, RabbitMQOptions options) throws IOException  {
+    try {
+      if(!options.isHostVerificationEnabled()) {
+    	  cf.useSslProtocol(options.getTlsAlgorithm());
+          return;  
+      }
+      
+      SSLContext context = SSLContext.getInstance(options.getTlsAlgorithm());
+      KeyManager[] keyManagers = createKeyManagers(options);
+   	  TrustManager[] trustManagers = createTrustManagers(options);
+			
+	  context.init(keyManagers, trustManagers, SecureRandom.getInstanceStrong());
+	  cf.useSslProtocol(context);
+	  if (options.isHostVerificationEnabled()) {
+		cf.enableHostnameVerification();
+	  }
+	} catch (Exception e) {
+		log.error("Unable to set up TLS", e);
+		throw new IOException(e);
+    } 
+  }
+
+  private static TrustManager[] createTrustManagers(RabbitMQOptions options) throws KeyStoreException, NoSuchAlgorithmException {
+    TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+	  
+	if(options.getTlsTrustStore() == null) {
+		trustManagerFactory.init((KeyStore) null);
+	}else {
+		String trustStore = options.getTlsTrustStore();
+		String trustStorePassword = options.getTlsTrustStorePassword();
+		String storeType = KEYSTORE_TYPE;
+		
+		trustManagerFactory.init(getKeyStore(storeType, trustStore, trustStorePassword));	
+	}
+	return trustManagerFactory.getTrustManagers();
+  }
+  
+  private static KeyStore getKeyStore(String type, String storePath, String password) throws  KeyStoreException {
+	  try(InputStream is = Files.newInputStream(Paths.get(storePath))) {
+		  KeyStore keyStore = KeyStore.getInstance(type);
+		  keyStore.load(is, password == null ? null:password.toCharArray());
+		  return keyStore;
+	  } catch (Exception e) {
+		throw new KeyStoreException(e);
+	} 
+  }
+
+  private static KeyManager[] createKeyManagers(RabbitMQOptions options) {
+	// TODO Add support for mutual auth
+	return null;
   }
 }

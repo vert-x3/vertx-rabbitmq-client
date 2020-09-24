@@ -76,11 +76,26 @@ public class RabbitMQOptions {
    * The default connection retry delay = {@code 10000}
    */
   public static final long DEFAULT_CONNECTION_RETRY_DELAY = 10000L;
-
+  
   /**
    * The default connection retries = {@code null} (no retry)
    */
   public static final Integer DEFAULT_CONNECTION_RETRIES = null;
+  
+  /**
+   * The default TLS enabled = {@code false}
+   */
+  public static final boolean DEFAULT_TLS_ENABLED = false;
+  
+  /**
+   * The default host verification enabled = {@code true}
+   */
+  public static final boolean DEFAULT_HOST_VERIFICATION_ENABLED = true;
+  
+  /**
+   * The default TLS algorithm = {@code TLSv1.2}
+   */
+  public static final String DEFAULT_TLS_ALGORITHM = "TLSv1.2";
 
   private Integer connectionRetries = DEFAULT_CONNECTION_RETRIES;
   private long connectionRetryDelay = DEFAULT_CONNECTION_RETRY_DELAY;
@@ -98,7 +113,14 @@ public class RabbitMQOptions {
   private long networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
   private boolean automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
   private boolean includeProperties = false;
-
+  private boolean isTlsEnabled = DEFAULT_TLS_ENABLED;
+  private boolean isHostVerificationEnabled = DEFAULT_HOST_VERIFICATION_ENABLED;
+  private String tlsAlgorithm = DEFAULT_TLS_ALGORITHM;
+  private String tlsKeyStrore = null;
+  private String tlsKeyStorePassword = null;
+  private String tlsTrustStore = null;
+  private String tlsTrustStorePassword = null;
+   
   public RabbitMQOptions() {
   }
 
@@ -124,6 +146,13 @@ public class RabbitMQOptions {
     automaticRecoveryEnabled = that.automaticRecoveryEnabled;
     includeProperties = that.includeProperties;
     requestedChannelMax = that.requestedChannelMax;
+    isTlsEnabled = that.isTlsEnabled;
+    isHostVerificationEnabled = that.isHostVerificationEnabled;
+    tlsAlgorithm = that.tlsAlgorithm;
+    tlsKeyStrore = that.tlsKeyStrore;
+    tlsKeyStorePassword = that.tlsKeyStorePassword;
+    tlsTrustStore = that.tlsTrustStore;
+    tlsTrustStorePassword = that.tlsTrustStorePassword;
   }
 
   /**
@@ -400,4 +429,101 @@ public class RabbitMQOptions {
     this.includeProperties = includeProperties;
     return this;
   }
+  
+  /**
+   *
+   *  @return {@code true} if TLS is to be used when connecting to broker {@code false} otherwise
+   */
+  public boolean isTlsEnabled() {
+	return isTlsEnabled;
+  }
+  
+  /**
+   * Set if host verification should take place.
+   * Should always be set to true in production
+   *
+   * @param enableTls host verification if {@code true} 
+   * @return a reference to this, so the API can be used fluently
+   */
+  public RabbitMQOptions setHostVerificationEnabled(boolean enabled) {
+	this.isHostVerificationEnabled = enabled;
+	return this;
+  }
+  
+  /**
+  *
+  *  @return {@code true} if host verification for TLS.  {@code false} for unsecure
+  */
+ public boolean isHostVerificationEnabled() {
+	return isHostVerificationEnabled;
+ }
+ 
+ /**
+  * Set if client uses TLS
+  *
+  * @param enableTls if {@code true}, enables TLS
+  * @return a reference to this, so the API can be used fluently
+  */
+ public RabbitMQOptions setTlsEnabled(boolean enableTls) {
+	this.isTlsEnabled = enableTls;
+	return this;
+ }
+ 
+ /**
+  * @return The Tls algorithm used
+  */
+  public String getTlsAlgorithm() {
+	return tlsAlgorithm;
+  }
+  
+  /**
+   * Set the TLS algorithm
+   * Default is TLSv1.2
+   *
+   * @param tlsAlgorith 
+   * @return a reference to this, so the API can be used fluently
+   */
+  public RabbitMQOptions setTlsAlgorithm(String tlsAlgorithm) {
+	this.tlsAlgorithm = tlsAlgorithm;
+	return this;
+  }
+  
+  /**
+   * @return The path to the trust store
+   */
+  public String getTlsTrustStore() {
+	return tlsTrustStore;
+  }
+  
+  /**
+   * Set the custom trust store to use
+   * Default is null meaning default trust store
+   *
+   * @param tlsTrustStore 
+   * @return a reference to this, so the API can be used fluently
+   */
+  public RabbitMQOptions setTlsTrustStore(String tlsTrustStore) {
+	this.tlsTrustStore = tlsTrustStore;
+	return this;
+  }
+  
+  /**
+   * @return The trust store password
+   */
+  public String getTlsTrustStorePassword() {
+	return tlsTrustStorePassword;
+  }
+  
+  /**
+   * Set custom trust store password
+   * Default is null 
+   *
+   * @param tlsTrustStorePassword 
+   * @return a reference to this, so the API can be used fluently
+   */
+  public RabbitMQOptions setTlsTrustStorePassword(String tlsTrustStorePassword) {
+	this.tlsTrustStorePassword = tlsTrustStorePassword;
+	return this;
+  }
+  
 }

@@ -46,6 +46,11 @@ public class RabbitMQOptionsConverter {
             obj.setHost((String)member.getValue());
           }
           break;
+        case "hostVerificationEnabled":
+          if (member.getValue() instanceof Boolean) {
+            obj.setHostVerificationEnabled((Boolean)member.getValue());
+          }
+          break;
         case "includeProperties":
           if (member.getValue() instanceof Boolean) {
             obj.setIncludeProperties((Boolean)member.getValue());
@@ -74,6 +79,26 @@ public class RabbitMQOptionsConverter {
         case "requestedHeartbeat":
           if (member.getValue() instanceof Number) {
             obj.setRequestedHeartbeat(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "tlsAlgorithm":
+          if (member.getValue() instanceof String) {
+            obj.setTlsAlgorithm((String)member.getValue());
+          }
+          break;
+        case "tlsEnabled":
+          if (member.getValue() instanceof Boolean) {
+            obj.setTlsEnabled((Boolean)member.getValue());
+          }
+          break;
+        case "tlsTrustStore":
+          if (member.getValue() instanceof String) {
+            obj.setTlsTrustStore((String)member.getValue());
+          }
+          break;
+        case "tlsTrustStorePassword":
+          if (member.getValue() instanceof String) {
+            obj.setTlsTrustStorePassword((String)member.getValue());
           }
           break;
         case "uri":
@@ -110,6 +135,7 @@ public class RabbitMQOptionsConverter {
     if (obj.getHost() != null) {
       json.put("host", obj.getHost());
     }
+    json.put("hostVerificationEnabled", obj.isHostVerificationEnabled());
     json.put("includeProperties", obj.getIncludeProperties());
     json.put("networkRecoveryInterval", obj.getNetworkRecoveryInterval());
     if (obj.getPassword() != null) {
@@ -118,6 +144,16 @@ public class RabbitMQOptionsConverter {
     json.put("port", obj.getPort());
     json.put("requestedChannelMax", obj.getRequestedChannelMax());
     json.put("requestedHeartbeat", obj.getRequestedHeartbeat());
+    if (obj.getTlsAlgorithm() != null) {
+      json.put("tlsAlgorithm", obj.getTlsAlgorithm());
+    }
+    json.put("tlsEnabled", obj.isTlsEnabled());
+    if (obj.getTlsTrustStore() != null) {
+      json.put("tlsTrustStore", obj.getTlsTrustStore());
+    }
+    if (obj.getTlsTrustStorePassword() != null) {
+      json.put("tlsTrustStorePassword", obj.getTlsTrustStorePassword());
+    }
     if (obj.getUri() != null) {
       json.put("uri", obj.getUri());
     }

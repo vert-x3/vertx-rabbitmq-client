@@ -31,6 +31,11 @@ public class RabbitMQOptionsTest {
     int expectedConnectionRetryDelay = TestUtils.randomPositiveInt();
     Integer expectedConnectionRetries = TestUtils.randomBoolean() ? TestUtils.randomPositiveInt() : null;
     boolean expectedIncludeProperties = TestUtils.randomBoolean();
+    boolean expectedIsTlsEnabled = TestUtils.randomBoolean();
+    boolean expectedIsHostVerificationEnabled = TestUtils.randomBoolean();
+    String expectedTlsAlgorithm = TestUtils.randomAlphaString(20);
+    String expectedTlsTrustStore = TestUtils.randomAlphaString(20);
+    String expectedTlsTrustStorePassword = TestUtils.randomAlphaString(20);
     JsonObject json = new JsonObject();
     json.put("uri", expectedUri);
     json.put("user", expectedUser);
@@ -47,6 +52,11 @@ public class RabbitMQOptionsTest {
     json.put("connectionRetryDelay", expectedConnectionRetryDelay);
     json.put("connectionRetries", expectedConnectionRetries);
     json.put("includeProperties", expectedIncludeProperties);
+    json.put("tlsEnabled", expectedIsTlsEnabled);
+    json.put("hostVerificationEnabled", expectedIsHostVerificationEnabled);
+    json.put("tlsAlgorithm", expectedTlsAlgorithm);
+    json.put("tlsTrustStore", expectedTlsTrustStore);
+    json.put("tlsTrustStorePassword", expectedTlsTrustStorePassword);
     RabbitMQOptions options = new RabbitMQOptions();
     assertSame(options, options.setUri(expectedUri));
     assertSame(options, options.setUser(expectedUser));
@@ -63,6 +73,11 @@ public class RabbitMQOptionsTest {
     assertSame(options, options.setConnectionRetryDelay(expectedConnectionRetryDelay));
     assertSame(options, options.setConnectionRetries(expectedConnectionRetries));
     assertSame(options, options.setIncludeProperties(expectedIncludeProperties));
+    assertSame(options, options.setTlsEnabled(expectedIsTlsEnabled));
+    assertSame(options, options.setHostVerificationEnabled(expectedIsHostVerificationEnabled));
+    assertSame(options, options.setTlsAlgorithm(expectedTlsAlgorithm));
+    assertSame(options, options.setTlsTrustStore(expectedTlsTrustStore));
+    assertSame(options, options.setTlsTrustStorePassword(expectedTlsTrustStorePassword));
     for (RabbitMQOptions testOptions : Arrays.asList(new RabbitMQOptions(json), new RabbitMQOptions(options))) {
       assertEquals(testOptions.getUri(), expectedUri);
       assertEquals(testOptions.getUser(), expectedUser);
@@ -79,6 +94,11 @@ public class RabbitMQOptionsTest {
       assertEquals(testOptions.getConnectionRetryDelay(), expectedConnectionRetryDelay);
       assertEquals(testOptions.getConnectionRetries(), expectedConnectionRetries);
       assertEquals(testOptions.getIncludeProperties(), expectedIncludeProperties);
+      assertEquals(testOptions.isTlsEnabled(), expectedIsTlsEnabled);
+      assertEquals(testOptions.isHostVerificationEnabled(), expectedIsHostVerificationEnabled);
+      assertEquals(testOptions.getTlsAlgorithm(), expectedTlsAlgorithm);
+      assertEquals(testOptions.getTlsTrustStore(), expectedTlsTrustStore);
+      assertEquals(testOptions.getTlsTrustStorePassword(), expectedTlsTrustStorePassword);
     }
   }
 }

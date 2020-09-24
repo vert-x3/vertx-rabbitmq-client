@@ -70,6 +70,10 @@ Set the AMQP 0-9-1 protocol handshake timeout, in milliseconds
 |[[host]]`@host`|`String`|+++
 Set the default host to use for connections.
 +++
+|[[hostVerificationEnabled]]`@hostVerificationEnabled`|`Boolean`|+++
+Set if host verification should take place.
+ Should always be set to true in production
++++
 |[[includeProperties]]`@includeProperties`|`Boolean`|+++
 Set wether to include properties when a broker message is passed on the event bus
 +++
@@ -87,6 +91,21 @@ Set the initially requested maximum channel number, <code>zero</code> for unlimi
 +++
 |[[requestedHeartbeat]]`@requestedHeartbeat`|`Number (int)`|+++
 Set the initially requested heartbeat interval, in seconds, <code>zero</code> for none.
++++
+|[[tlsAlgorithm]]`@tlsAlgorithm`|`String`|+++
+Set the TLS algorithm
+ Default is TLSv1.2
++++
+|[[tlsEnabled]]`@tlsEnabled`|`Boolean`|+++
+Set if client uses TLS
++++
+|[[tlsTrustStore]]`@tlsTrustStore`|`String`|+++
+Set the custom trust store to use
+ Default is null meaning default trust store
++++
+|[[tlsTrustStorePassword]]`@tlsTrustStorePassword`|`String`|+++
+Set custom trust store password
+ Default is null
 +++
 |[[uri]]`@uri`|`String`|-
 |[[user]]`@user`|`String`|+++
