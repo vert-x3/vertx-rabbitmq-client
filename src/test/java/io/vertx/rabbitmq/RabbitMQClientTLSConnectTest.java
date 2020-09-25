@@ -8,7 +8,9 @@ import javax.net.ssl.SSLHandshakeException;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import io.vertx.core.net.JksOptions;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.test.tls.Trust;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -25,13 +27,9 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
   
   @Test
   public void shouldConnectWithCustomTrustStore(TestContext ctx) throws Exception {
-	 
-	  ClassLoader classloader = getClass().getClassLoader();
-	  String path = classloader.getResource("tls/client/cacerts.jks").getPath();
 	  connect(config()
 			  .setTlsEnabled(true)
-			  .setTlsTrustStore(path)
-	  );
+			  .setTlsTrustStore(Trust.SERVER_JKS.get().getPath()));
 	  assertTrue(this.client.isConnected());  
   }
   
@@ -45,13 +43,11 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
   }
   @Test
   public void shouldRejectUntrustedServer(TestContext ctx)  {
-	  ClassLoader classloader = getClass().getClassLoader();
-	  String path = classloader.getResource("tls/client/faultyCAcerts.jks").getPath();
 	  try {
 		connect(config()
 				  .setTlsEnabled(true)
-				  .setTlsTrustStorePassword("unittest")
-				  .setTlsTrustStore(path)
+				  .setTlsTrustStorePassword("wibble")
+				  .setTlsTrustStore(Trust.CLIENT_JKS.get().getPath())
 		  );
 	} catch (Exception e) {
 		assertFalse(client.isConnected());  

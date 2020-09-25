@@ -12,30 +12,32 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.test.tls.Cert;
 
 @RunWith(VertxUnitRunner.class)
 public class RabbitMQClientTestBaseTLS {
-  private static final String RESOURCE_PATH = "./tls/server/";
-  private static final String KEY = RESOURCE_PATH+"localhost.key";
-  private static final String CERT = RESOURCE_PATH+"localhost.pem";
-  private static final String CA_CERT = RESOURCE_PATH+"rootCA.pem";
   private static final String MOUNT_PATH = "/etc/";
+  private static PemKeyCertOptions CA = Cert.SERVER_PEM_ROOT_CA.get();
+  private static PemKeyCertOptions SERVER = Cert.SERVER_PEM.get();
 
   protected RabbitMQClient client;
   protected Vertx vertx;
-   
+  
+  
   
   @ClassRule
   public static final GenericContainer rabbitmq = new GenericContainer("rabbitmq:3.7")
 	.withExposedPorts(5671)  
-    .withClasspathResourceMapping(CA_CERT, MOUNT_PATH+CA_CERT, BindMode.READ_ONLY)
-    .withClasspathResourceMapping(CERT,  MOUNT_PATH+CERT, BindMode.READ_ONLY)
-    .withClasspathResourceMapping(KEY,  MOUNT_PATH+KEY, BindMode.READ_ONLY)
-    .withEnv("RABBITMQ_SSL_CACERTFILE", MOUNT_PATH+CA_CERT)
-    .withEnv("RABBITMQ_SSL_CERTFILE",  MOUNT_PATH+CERT)
-    .withEnv("RABBITMQ_SSL_KEYFILE",  MOUNT_PATH+KEY)
+    .withClasspathResourceMapping(CA.getCertPath(), MOUNT_PATH+CA.getCertPath(), BindMode.READ_ONLY)
+    .withClasspathResourceMapping(SERVER.getCertPath(),  MOUNT_PATH+SERVER.getCertPath(), BindMode.READ_ONLY)
+    .withClasspathResourceMapping(SERVER.getKeyPath(),   MOUNT_PATH+SERVER.getKeyPath(), BindMode.READ_ONLY)
+    
+    .withEnv("RABBITMQ_SSL_CACERTFILE", MOUNT_PATH+CA.getCertPath())
+    .withEnv("RABBITMQ_SSL_CERTFILE",  MOUNT_PATH+SERVER.getCertPath())
+    .withEnv("RABBITMQ_SSL_KEYFILE",  MOUNT_PATH+SERVER.getKeyPath())
     .withEnv("RABBITMQ_SSL_VERIFY",  "verify_peer")
     .withEnv("RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT",  "false")
     .waitingFor(Wait.forLogMessage(".*Server startup complete.*\\n", 1))

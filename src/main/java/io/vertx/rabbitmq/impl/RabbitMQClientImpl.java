@@ -832,7 +832,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
   
   private static KeyStore getKeyStore(String type, String storePath, String password) throws  KeyStoreException {
-	  try(InputStream is = Files.newInputStream(Paths.get(storePath))) {
+	  try(InputStream is = getInputStream(storePath)) {
 		  KeyStore keyStore = KeyStore.getInstance(type);
 		  keyStore.load(is, password == null ? null:password.toCharArray());
 		  return keyStore;
@@ -840,6 +840,16 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 		throw new KeyStoreException(e);
 	} 
   }
+
+private static InputStream getInputStream(String storePath) throws IOException {
+	InputStream is;
+	try {
+		is = Files.newInputStream(Paths.get(storePath));
+	}catch(Exception ex) {
+		is = Thread.currentThread().getContextClassLoader().getResourceAsStream(storePath);
+	}
+	return is;
+}
 
   private static KeyManager[] createKeyManagers(RabbitMQOptions options) {
 	// TODO Add support for mutual auth
