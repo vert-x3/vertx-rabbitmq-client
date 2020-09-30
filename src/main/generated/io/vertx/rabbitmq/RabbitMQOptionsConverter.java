@@ -21,16 +21,6 @@ public class RabbitMQOptionsConverter {
             obj.setAutomaticRecoveryEnabled((Boolean)member.getValue());
           }
           break;
-        case "connectionRetries":
-          if (member.getValue() instanceof Number) {
-            obj.setConnectionRetries(((Number)member.getValue()).intValue());
-          }
-          break;
-        case "connectionRetryDelay":
-          if (member.getValue() instanceof Number) {
-            obj.setConnectionRetryDelay(((Number)member.getValue()).longValue());
-          }
-          break;
         case "connectionTimeout":
           if (member.getValue() instanceof Number) {
             obj.setConnectionTimeout(((Number)member.getValue()).intValue());
@@ -44,11 +34,6 @@ public class RabbitMQOptionsConverter {
         case "host":
           if (member.getValue() instanceof String) {
             obj.setHost((String)member.getValue());
-          }
-          break;
-        case "hostVerificationEnabled":
-          if (member.getValue() instanceof Boolean) {
-            obj.setHostVerificationEnabled((Boolean)member.getValue());
           }
           break;
         case "includeProperties":
@@ -81,26 +66,6 @@ public class RabbitMQOptionsConverter {
             obj.setRequestedHeartbeat(((Number)member.getValue()).intValue());
           }
           break;
-        case "tlsAlgorithm":
-          if (member.getValue() instanceof String) {
-            obj.setTlsAlgorithm((String)member.getValue());
-          }
-          break;
-        case "tlsEnabled":
-          if (member.getValue() instanceof Boolean) {
-            obj.setTlsEnabled((Boolean)member.getValue());
-          }
-          break;
-        case "tlsTrustStore":
-          if (member.getValue() instanceof String) {
-            obj.setTlsTrustStore((String)member.getValue());
-          }
-          break;
-        case "tlsTrustStorePassword":
-          if (member.getValue() instanceof String) {
-            obj.setTlsTrustStorePassword((String)member.getValue());
-          }
-          break;
         case "uri":
           if (member.getValue() instanceof String) {
             obj.setUri((String)member.getValue());
@@ -126,16 +91,11 @@ public class RabbitMQOptionsConverter {
 
   public static void toJson(RabbitMQOptions obj, java.util.Map<String, Object> json) {
     json.put("automaticRecoveryEnabled", obj.isAutomaticRecoveryEnabled());
-    if (obj.getConnectionRetries() != null) {
-      json.put("connectionRetries", obj.getConnectionRetries());
-    }
-    json.put("connectionRetryDelay", obj.getConnectionRetryDelay());
     json.put("connectionTimeout", obj.getConnectionTimeout());
     json.put("handshakeTimeout", obj.getHandshakeTimeout());
     if (obj.getHost() != null) {
       json.put("host", obj.getHost());
     }
-    json.put("hostVerificationEnabled", obj.isHostVerificationEnabled());
     json.put("includeProperties", obj.getIncludeProperties());
     json.put("networkRecoveryInterval", obj.getNetworkRecoveryInterval());
     if (obj.getPassword() != null) {
@@ -144,16 +104,6 @@ public class RabbitMQOptionsConverter {
     json.put("port", obj.getPort());
     json.put("requestedChannelMax", obj.getRequestedChannelMax());
     json.put("requestedHeartbeat", obj.getRequestedHeartbeat());
-    if (obj.getTlsAlgorithm() != null) {
-      json.put("tlsAlgorithm", obj.getTlsAlgorithm());
-    }
-    json.put("tlsEnabled", obj.isTlsEnabled());
-    if (obj.getTlsTrustStore() != null) {
-      json.put("tlsTrustStore", obj.getTlsTrustStore());
-    }
-    if (obj.getTlsTrustStorePassword() != null) {
-      json.put("tlsTrustStorePassword", obj.getTlsTrustStorePassword());
-    }
     if (obj.getUri() != null) {
       json.put("uri", obj.getUri());
     }

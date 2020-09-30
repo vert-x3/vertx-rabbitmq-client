@@ -13,8 +13,8 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
 
   private static final int PROXY_PORT = 8000;
 
-  protected Integer connectionRetries = RabbitMQOptions.DEFAULT_CONNECTION_RETRIES;
-  protected long connectionRetryDelay = RabbitMQOptions.DEFAULT_CONNECTION_RETRY_DELAY;
+  protected Integer connectionRetries = 0;
+  protected long connectionRetryDelay = RabbitMQOptions.DEFAULT_RECONNECT_INTERVAL;
   private NetServer proxyServer;
   private NetClient proxyClient;
 
@@ -95,8 +95,8 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
     String uri = "amqp://" + username +  ":" + password + "@localhost:" + PROXY_PORT;
     return new RabbitMQOptions()
       .setUri(uri)
-      .setConnectionRetries(connectionRetries)
-      .setConnectionRetryDelay(connectionRetryDelay);
+      .setReconnectAttempts(connectionRetries)
+      .setReconnectInterval(connectionRetryDelay);
   }
 
   @Test

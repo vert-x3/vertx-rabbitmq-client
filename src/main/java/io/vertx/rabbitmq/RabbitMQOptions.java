@@ -1,13 +1,21 @@
 package io.vertx.rabbitmq;
 
-import com.rabbitmq.client.Address;
-import com.rabbitmq.client.ConnectionFactory;
-import io.vertx.codegen.annotations.DataObject;
-import io.vertx.core.json.JsonObject;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.rabbitmq.client.Address;
+import com.rabbitmq.client.ConnectionFactory;
+
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.KeyCertOptions;
+import io.vertx.core.net.NetClientOptions;
+import io.vertx.core.net.PemKeyCertOptions;
+import io.vertx.core.net.PemTrustOptions;
+import io.vertx.core.net.PfxOptions;
+import io.vertx.core.net.TrustOptions;
 
 /**
  * RabbitMQ client options, most
@@ -15,7 +23,7 @@ import java.util.List;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 @DataObject(generateConverter = true)
-public class RabbitMQOptions {
+public class RabbitMQOptions extends NetClientOptions{
 
   /**
    * The default port = {@code - 1} - {@code 5671} for SSL otherwise {@code 5672}
@@ -75,121 +83,71 @@ public class RabbitMQOptions {
   /**
    * The default connection retry delay = {@code 10000}
    */
-  public static final long DEFAULT_CONNECTION_RETRY_DELAY = 10000L;
+  public static final long DEFAULT_RECONNECT_INTERVAL = 10000L;
   
-  /**
-   * The default connection retries = {@code null} (no retry)
-   */
-  public static final Integer DEFAULT_CONNECTION_RETRIES = null;
-  
-  /**
-   * The default TLS enabled = {@code false}
-   */
-  public static final boolean DEFAULT_TLS_ENABLED = false;
-  
-  /**
-   * The default host verification enabled = {@code true}
-   */
-  public static final boolean DEFAULT_HOST_VERIFICATION_ENABLED = true;
-  
-  /**
-   * The default TLS algorithm = {@code TLSv1.2}
-   */
-  public static final String DEFAULT_TLS_ALGORITHM = "TLSv1.2";
-
-  private Integer connectionRetries = DEFAULT_CONNECTION_RETRIES;
-  private long connectionRetryDelay = DEFAULT_CONNECTION_RETRY_DELAY;
   private String uri = null;
   private List<Address> addresses = Collections.emptyList();
-  private String user = DEFAULT_USER;
-  private String password = DEFAULT_PASSWORD;
-  private String host = DEFAULT_HOST;
-  private String virtualHost = DEFAULT_VIRTUAL_HOST;
-  private int port = DEFAULT_PORT;
-  private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
-  private int requestedHeartbeat = DEFAULT_REQUESTED_HEARTBEAT;
-  private int handshakeTimeout = DEFAULT_HANDSHAKE_TIMEOUT;
-  private int requestedChannelMax = DEFAULT_REQUESTED_CHANNEL_MAX;
-  private long networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
-  private boolean automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
-  private boolean includeProperties = false;
-  private boolean isTlsEnabled = DEFAULT_TLS_ENABLED;
-  private boolean isHostVerificationEnabled = DEFAULT_HOST_VERIFICATION_ENABLED;
-  private String tlsAlgorithm = DEFAULT_TLS_ALGORITHM;
-  private String tlsKeyStrore = null;
-  private String tlsKeyStorePassword = null;
-  private String tlsTrustStore = null;
-  private String tlsTrustStorePassword = null;
+  private String user;
+  private String password;
+  private String host;
+  private String virtualHost;
+  private int port;
+  private int connectionTimeout;
+  private int requestedHeartbeat;
+  private int handshakeTimeout;
+  private int requestedChannelMax;
+  private long networkRecoveryInterval;
+  private boolean automaticRecoveryEnabled;
+  private boolean includeProperties;
    
   public RabbitMQOptions() {
+    super();
+    init();
   }
 
   public RabbitMQOptions(JsonObject json) {
-    this();
+    super(json);
+    init();
     RabbitMQOptionsConverter.fromJson(json, this);
   }
 
-  public RabbitMQOptions(RabbitMQOptions that) {
-    connectionRetries = that.connectionRetries;
-    connectionRetryDelay = that.connectionRetryDelay;
-    uri = that.uri;
-    addresses = that.addresses;
-    user = that.user;
-    password = that.password;
-    host = that.host;
-    virtualHost = that.virtualHost;
-    port = that.port;
-    connectionTimeout = that.connectionTimeout;
-    requestedHeartbeat = that.requestedHeartbeat;
-    handshakeTimeout = that.handshakeTimeout;
-    networkRecoveryInterval = that.networkRecoveryInterval;
-    automaticRecoveryEnabled = that.automaticRecoveryEnabled;
-    includeProperties = that.includeProperties;
-    requestedChannelMax = that.requestedChannelMax;
-    isTlsEnabled = that.isTlsEnabled;
-    isHostVerificationEnabled = that.isHostVerificationEnabled;
-    tlsAlgorithm = that.tlsAlgorithm;
-    tlsKeyStrore = that.tlsKeyStrore;
-    tlsKeyStorePassword = that.tlsKeyStorePassword;
-    tlsTrustStore = that.tlsTrustStore;
-    tlsTrustStorePassword = that.tlsTrustStorePassword;
+	public RabbitMQOptions(RabbitMQOptions other) {
+		super(other);
+		this.uri = other.uri;
+		this.addresses = other.addresses;
+		this.user = other.user;
+		this.password = other.password;
+		this.host = other.host;
+		this.virtualHost = other.virtualHost;
+		this.port = other.port;
+		this.connectionTimeout = other.connectionTimeout;
+		this.requestedHeartbeat = other.requestedHeartbeat;
+		this.handshakeTimeout = other.handshakeTimeout;
+		this.networkRecoveryInterval = other.networkRecoveryInterval;
+		this.automaticRecoveryEnabled = other.automaticRecoveryEnabled;
+		this.includeProperties = other.includeProperties;
+		this.requestedChannelMax = other.requestedChannelMax;
+	}
+  
+  private void init() {
+	  this.uri = null;
+	  this.addresses = Collections.emptyList();
+	  this.user = DEFAULT_USER;
+	  this.password = DEFAULT_PASSWORD;
+	  this.host = DEFAULT_HOST;
+	  this.virtualHost = DEFAULT_VIRTUAL_HOST;
+	  this.port = DEFAULT_PORT;
+	  this.connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+	  this.requestedHeartbeat = DEFAULT_REQUESTED_HEARTBEAT;
+	  this.handshakeTimeout = DEFAULT_HANDSHAKE_TIMEOUT;
+	  this.requestedChannelMax = DEFAULT_REQUESTED_CHANNEL_MAX;
+	  this.networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
+	  this.automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
+	  this.includeProperties = false;
   }
-
-  /**
-   * @return the number of connection retries
-   */
-  public Integer getConnectionRetries() {
-    return connectionRetries;
-  }
-
-  /**
-   * Set the number of connection retries to attempt when connecting, the {@code null} value disables it.
-   *
-   * @param connectionRetries the number of retries
-   * @return a reference to this, so the API can be used fluently
-   */
-  public RabbitMQOptions setConnectionRetries(Integer connectionRetries) {
-    this.connectionRetries = connectionRetries;
-    return this;
-  }
-
-  /**
-   * @return the delay in milliseconds between connection retries
-   */
-  public long getConnectionRetryDelay() {
-    return connectionRetryDelay;
-  }
-
-  /**
-   * Set the delay in milliseconds between connection retries.
-   *
-   * @param connectionRetryDelay the delay in milliseconds
-   * @return a reference to this, so the API can be used fluently
-   */
-  public RabbitMQOptions setConnectionRetryDelay(long connectionRetryDelay) {
-    this.connectionRetryDelay = connectionRetryDelay;
-    return this;
-  }
+  
+  
+  
 
   public List<Address> getAddresses() {
     return Collections.unmodifiableList(addresses);
@@ -429,101 +387,76 @@ public class RabbitMQOptions {
     this.includeProperties = includeProperties;
     return this;
   }
-  
-  /**
-   *
-   *  @return {@code true} if TLS is to be used when connecting to broker {@code false} otherwise
-   */
-  public boolean isTlsEnabled() {
-	return isTlsEnabled;
+
+	@Override
+	public RabbitMQOptions setReconnectAttempts(int attempts) {
+		super.setReconnectAttempts(attempts);
+		return this;
+	}
+	
+	@Override
+	public RabbitMQOptions setReconnectInterval(long interval) {
+		super.setReconnectInterval(interval);
+		return this;
+	}
+	
+	@Override
+	public RabbitMQOptions setSsl(boolean ssl) {
+		super.setSsl(ssl);
+		return this;
+	}
+	
+	@Override
+	public RabbitMQOptions setTrustAll(boolean trustAll) {
+		super.setTrustAll(trustAll);
+		return this;
+	}
+	
+	@Override
+  public RabbitMQOptions setKeyCertOptions(KeyCertOptions options) {
+     super.setKeyCertOptions(options);
+     return this;
   }
-  
-  /**
-   * Set if host verification should take place.
-   * Should always be set to true in production
-   *
-   * @param enableTls host verification if {@code true} 
-   * @return a reference to this, so the API can be used fluently
-   */
-  public RabbitMQOptions setHostVerificationEnabled(boolean enabled) {
-	this.isHostVerificationEnabled = enabled;
-	return this;
+
+  @Override
+  public RabbitMQOptions setKeyStoreOptions(JksOptions options) {
+     super.setKeyStoreOptions(options);
+     return this;
   }
-  
-  /**
-  *
-  *  @return {@code true} if host verification for TLS.  {@code false} for unsecure
-  */
- public boolean isHostVerificationEnabled() {
-	return isHostVerificationEnabled;
- }
- 
- /**
-  * Set if client uses TLS
-  *
-  * @param enableTls if {@code true}, enables TLS
-  * @return a reference to this, so the API can be used fluently
-  */
- public RabbitMQOptions setTlsEnabled(boolean enableTls) {
-	this.isTlsEnabled = enableTls;
-	return this;
- }
- 
- /**
-  * @return The Tls algorithm used
-  */
-  public String getTlsAlgorithm() {
-	return tlsAlgorithm;
+
+  @Override
+  public RabbitMQOptions setPfxKeyCertOptions(PfxOptions options) {
+     super.setPfxKeyCertOptions(options);
+     return this;
   }
-  
-  /**
-   * Set the TLS algorithm
-   * Default is TLSv1.2
-   *
-   * @param tlsAlgorith 
-   * @return a reference to this, so the API can be used fluently
-   */
-  public RabbitMQOptions setTlsAlgorithm(String tlsAlgorithm) {
-	this.tlsAlgorithm = tlsAlgorithm;
-	return this;
+
+  @Override
+  public RabbitMQOptions setPemKeyCertOptions(PemKeyCertOptions options) {
+     super.setPemKeyCertOptions(options);
+     return this;
   }
-  
-  /**
-   * @return The path to the trust store
-   */
-  public String getTlsTrustStore() {
-	return tlsTrustStore;
+
+  @Override
+  public RabbitMQOptions setTrustOptions(TrustOptions options) {
+     super.setTrustOptions(options);
+     return this;
   }
-  
-  /**
-   * Set the custom trust store to use
-   * Default is null meaning default trust store
-   *
-   * @param tlsTrustStore 
-   * @return a reference to this, so the API can be used fluently
-   */
-  public RabbitMQOptions setTlsTrustStore(String tlsTrustStore) {
-	this.tlsTrustStore = tlsTrustStore;
-	return this;
+
+  @Override
+  public RabbitMQOptions setPemTrustOptions(PemTrustOptions options) {
+     super.setPemTrustOptions(options);
+     return this;
   }
-  
-  /**
-   * @return The trust store password
-   */
-  public String getTlsTrustStorePassword() {
-	return tlsTrustStorePassword;
+
+  @Override
+  public RabbitMQOptions setPfxTrustOptions(PfxOptions options) {
+     super.setPfxTrustOptions(options);
+     return this;
   }
+
+
+
   
-  /**
-   * Set custom trust store password
-   * Default is null 
-   *
-   * @param tlsTrustStorePassword 
-   * @return a reference to this, so the API can be used fluently
-   */
-  public RabbitMQOptions setTlsTrustStorePassword(String tlsTrustStorePassword) {
-	this.tlsTrustStorePassword = tlsTrustStorePassword;
-	return this;
-  }
+  
   
 }
