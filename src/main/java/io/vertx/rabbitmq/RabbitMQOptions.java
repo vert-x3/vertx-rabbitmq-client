@@ -102,6 +102,7 @@ public class RabbitMQOptions extends NetClientOptions{
    
   public RabbitMQOptions() {
     super();
+    setReconnectInterval(DEFAULT_RECONNECT_INTERVAL);
     init();
   }
 
