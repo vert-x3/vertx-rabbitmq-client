@@ -35,6 +35,7 @@ import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.JdkSSLEngineOptions;
 import io.vertx.core.net.impl.SSLHelper;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.QueueOptions;
@@ -107,7 +108,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     cf.setNetworkRecoveryInterval(config.getNetworkRecoveryInterval());
     cf.setAutomaticRecoveryEnabled(config.isAutomaticRecoveryEnabled());
 
-    if(config.isSsl()) {   	
+    if(config.isSsl()) {  
+    	//The RabbitMQ Client connection needs a JDK SSLContext, so force this setting.
+    	config.setSslEngineOptions(new JdkSSLEngineOptions());
     	SSLHelper sslHelper = new SSLHelper(config, config.getKeyCertOptions(), config.getTrustOptions());
     	JdkSslContext ctx = (JdkSslContext)sslHelper.getContext((VertxInternal)vertx);
       cf.useSslProtocol(ctx.context());
