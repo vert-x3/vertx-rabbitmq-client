@@ -21,16 +21,6 @@ public class RabbitMQOptionsConverter {
             obj.setAutomaticRecoveryEnabled((Boolean)member.getValue());
           }
           break;
-        case "connectionRetries":
-          if (member.getValue() instanceof Number) {
-            obj.setConnectionRetries(((Number)member.getValue()).intValue());
-          }
-          break;
-        case "connectionRetryDelay":
-          if (member.getValue() instanceof Number) {
-            obj.setConnectionRetryDelay(((Number)member.getValue()).longValue());
-          }
-          break;
         case "connectionTimeout":
           if (member.getValue() instanceof Number) {
             obj.setConnectionTimeout(((Number)member.getValue()).intValue());
@@ -101,10 +91,6 @@ public class RabbitMQOptionsConverter {
 
   public static void toJson(RabbitMQOptions obj, java.util.Map<String, Object> json) {
     json.put("automaticRecoveryEnabled", obj.isAutomaticRecoveryEnabled());
-    if (obj.getConnectionRetries() != null) {
-      json.put("connectionRetries", obj.getConnectionRetries());
-    }
-    json.put("connectionRetryDelay", obj.getConnectionRetryDelay());
     json.put("connectionTimeout", obj.getConnectionTimeout());
     json.put("handshakeTimeout", obj.getHandshakeTimeout());
     if (obj.getHost() != null) {

@@ -1,6 +1,28 @@
 package io.vertx.rabbitmq.impl;
 
-import com.rabbitmq.client.*;
+import static io.vertx.rabbitmq.impl.Utils.toJson;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Address;
+import com.rabbitmq.client.AlreadyClosedException;
+import com.rabbitmq.client.BasicProperties;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.GetResponse;
+import com.rabbitmq.client.ShutdownListener;
+import com.rabbitmq.client.ShutdownSignalException;
+
+import io.netty.handler.ssl.JdkSslContext;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -9,9 +31,12 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.ContextInternal;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.JdkSSLEngineOptions;
+import io.vertx.core.net.impl.SSLHelper;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
@@ -19,11 +44,6 @@ import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
 import io.vertx.rabbitmq.RabbitMQOptions;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeoutException;
-
-import static io.vertx.rabbitmq.impl.Utils.*;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -32,10 +52,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private static final Logger log = LoggerFactory.getLogger(RabbitMQClientImpl.class);
   private static final JsonObject emptyConfig = new JsonObject();
-
+  
   private final Vertx vertx;
   private final RabbitMQOptions config;
-  private final Integer retries;
+  private final int retries;
 
   private Connection connection;
   private Channel channel;
@@ -47,7 +67,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public RabbitMQClientImpl(Vertx vertx, RabbitMQOptions config) {
     this.vertx = vertx;
     this.config = config;
-    this.retries = config.getConnectionRetries();
+    this.retries = config.getReconnectAttempts();
   }
 
   public long getChannelInstance() {
@@ -59,8 +79,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     this.connectionEstablishedCallbacks.add(connectionEstablishedCallback);
   }
   
-  private static Connection newConnection(RabbitMQOptions config) throws IOException, TimeoutException {
+  private static Connection newConnection(Vertx vertx, RabbitMQOptions config) throws IOException, TimeoutException {
     ConnectionFactory cf = new ConnectionFactory();
+    
     String uri = config.getUri();
     // Use uri if set, otherwise support individual connection parameters
     List<Address> addresses = null;
@@ -87,7 +108,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     cf.setNetworkRecoveryInterval(config.getNetworkRecoveryInterval());
     cf.setAutomaticRecoveryEnabled(config.isAutomaticRecoveryEnabled());
 
-
+    if(config.isSsl()) {  
+    	//The RabbitMQ Client connection needs a JDK SSLContext, so force this setting.
+    	config.setSslEngineOptions(new JdkSSLEngineOptions());
+    	SSLHelper sslHelper = new SSLHelper(config, config.getKeyCertOptions(), config.getTrustOptions());
+    	JdkSslContext ctx = (JdkSslContext)sslHelper.getContext((VertxInternal)vertx);
+      cf.useSslProtocol(ctx.context());
+    }
     //TODO: Support other configurations
 
     return addresses == null
@@ -147,7 +174,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     stop(ar -> {
       if (!handler.queue().isCancelled()) {
         if (ar.succeeded()) {    
-          if (retries == null) {
+          if (retries == 0) {
             log.error("Retries disabled. Will not attempt to restart");
           } else if (attempts >= retries) {
             log.error("Max number of consumer restart attempts (" + retries + ") reached. Will not attempt to restart again");
@@ -161,7 +188,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
                 }).onComplete(arChan -> {
                   if (arChan.failed()) {
                     log.error("Failed to restart consumer: ", arChan.cause());
-                    long delay = config.getConnectionRetryDelay();
+                    long delay = config.getReconnectInterval();
                     vertx.setTimer(delay, id -> {
                       restartConsumer(attempts + 1, handler, options);
                     });
@@ -169,7 +196,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
                 });
             } else {
               log.error("Failed to restart client: ", arStart.cause());
-              long delay = config.getConnectionRetryDelay();
+              long delay = config.getReconnectInterval();
               vertx.setTimer(delay, id -> {
                 restartConsumer(attempts + 1, handler, options);
               });
@@ -640,14 +667,14 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         promise.fail(e);
       }
     }).recover(err -> {
-      if (retries == null) {
+      if (retries == 0) {
         log.error("Retries disabled. Will not attempt to restart");
         return ctx.failedFuture(err);
       } else if (attempts >= retries) {
         log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
         return ctx.failedFuture(err);
       } else {
-        long delay = config.getConnectionRetryDelay();
+        long delay = config.getReconnectInterval();
         log.info("Attempting to reconnect to rabbitmq...");
         Promise<Void> promise = ctx.promise();
         vertx.setTimer(delay, id -> {
@@ -714,7 +741,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private Future<Void> connect() throws IOException, TimeoutException {
     log.debug("Connecting to rabbitmq...");
-    connection = newConnection(config);
+    connection = newConnection(vertx, config);
     connection.addShutdownListener(this);
     ++channelInstance;
     channel = connection.createChannel();
@@ -775,5 +802,5 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   private interface ChannelHandler<T> {
     T handle(Channel channel) throws Exception;
-  }
+  }  
 }

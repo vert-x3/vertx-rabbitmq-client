@@ -59,12 +59,13 @@ The RabbitMQClient will, by default, retry connecting to the RabbitMQ server if 
 It will also attempt to reconnect whenever the connection to the RabbitMQ server becomes broken.
 The failure of a connection could be caused by a transient network failure (where the client would probably connect back to the same RabbitMQ server) or it could be caused by a failover scenario.
 
-The reconnection policy can be configured by setting the connectionRetries and connectionRetryDelay properties in the configuration:
+The reconnection policy can be configured by setting the {@link io.vertx.core.net.NetClientOptions#setReconnectInterval(long)} and
+{@link io.vertx.core.net.NetClientOptions#setReconnectAttempts(int)} properties in the configuration:
 [source, java]
 ----
 RabbitMQOptions config = new RabbitMQOptions();
-options.setConnectionRetries(Integer.MAX_VALUE);
-options.setConnectionRetryDelay(500);
+options.setReconnectAttempts(Integer.MAX_VALUE);
+options.setReconnectInterval(500);
 ----
 
 As soon as the connection has been re-established users of the client may attempt to publish (or consume) messages.
@@ -83,6 +84,63 @@ In this instance it is necessary to both recreate the queue and set the new queu
 [source,$lang]
 ----
 {@link examples.RabbitMQExamples#connectionEstablishedCallbackForServerNamedAutoDeleteQueue}
+----
+
+==== Enabling SSL/TLS on the client
+
+The RabbitMQClient can easily configured to use SSL. 
+[source,$lang]
+----
+RabbitMQOptions options = new RabbitMQOptions()
+  .setSsl(true);
+----
+
+===== Client trust configuration
+
+If {@link io.vertx.core.net.ClientOptionsBase#setTrustAll trustAll} is set to true, the client will trust all server certificates. 
+The connection will still be encrypted but is then vulnerable to 'man in the middle' attacks.
+*Greatbadness*, Do not use this option in production! Default value is false.
+
+[source,$lang]
+----
+RabbitMQOptions options = new RabbitMQOptions()
+  .setSsl(true)
+  .setTrustAll(true));
+----
+
+If {@link io.vertx.core.net.ClientOptionsBase#setTrustAll trustAll} is set to false, proper server authentication will takes place. Three main options are available. 
+
+ - Your default truststore already "trusts" the server, in which case all is fine +
+ - You start the java process with -Djavax.net.ssl.trustStore=xxx.jks specifying the custom trust store +
+ - You supply a custom trust store via RabbitMQOptions
+
+===== JKS trust store option
+[source,$lang]
+----
+RabbitMQOptions options = new RabbitMQOptions()
+  .setSsl(true)
+  .setTrustOptions(new JksOptions()
+    .setPath("/path/myKeyStore.jks")
+    .setPassword("myKeyStorePassword"));
+----
+===== p12/pfx trust store option
+[source,$lang]
+----
+RabbitMQOptions options = new RabbitMQOptions()
+  .setSsl(true)
+  .setPfxTrustOptions(
+    new PfxOptions().
+      setPath("/path/myKeyStore.p12").
+      setPassword("myKeyStorePassword"));
+----
+===== PEM trust option
+[source,$lang]
+----
+RabbitMQOptions options = new RabbitMQOptions()
+  .setSsl(true)
+  .setPemTrustOptions(
+    new PemTrustOptions().
+      addCertPath("/path/ca-cert.pem"));
 ----
 
 

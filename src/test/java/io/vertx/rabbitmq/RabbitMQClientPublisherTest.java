@@ -53,8 +53,8 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
     RabbitMQOptions options = super.config();
     options.setUri("amqp://" + fixedRabbitmq.getContainerIpAddress() + ":" + fixedRabbitmq.getMappedPort(5672));
     options.setAutomaticRecoveryEnabled(true);
-    options.setConnectionRetries(Integer.MAX_VALUE);
-    options.setConnectionRetryDelay(500);
+    options.setReconnectAttempts(Integer.MAX_VALUE);
+    options.setReconnectInterval(500);
     return options;
   }
   

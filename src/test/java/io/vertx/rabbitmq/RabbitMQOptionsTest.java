@@ -28,9 +28,8 @@ public class RabbitMQOptionsTest {
     int expectedRequestedChannelMax = TestUtils.randomPositiveInt();
     int expectedNetworkRecoveryInterval = TestUtils.randomPositiveInt();
     boolean expectedAutomaticRecoveryEnabled = TestUtils.randomBoolean();
-    int expectedConnectionRetryDelay = TestUtils.randomPositiveInt();
-    Integer expectedConnectionRetries = TestUtils.randomBoolean() ? TestUtils.randomPositiveInt() : null;
     boolean expectedIncludeProperties = TestUtils.randomBoolean();
+   
     JsonObject json = new JsonObject();
     json.put("uri", expectedUri);
     json.put("user", expectedUser);
@@ -44,8 +43,6 @@ public class RabbitMQOptionsTest {
     json.put("requestedChannelMax", expectedRequestedChannelMax);
     json.put("networkRecoveryInterval", expectedNetworkRecoveryInterval);
     json.put("automaticRecoveryEnabled", expectedAutomaticRecoveryEnabled);
-    json.put("connectionRetryDelay", expectedConnectionRetryDelay);
-    json.put("connectionRetries", expectedConnectionRetries);
     json.put("includeProperties", expectedIncludeProperties);
     RabbitMQOptions options = new RabbitMQOptions();
     assertSame(options, options.setUri(expectedUri));
@@ -60,9 +57,8 @@ public class RabbitMQOptionsTest {
     assertSame(options, options.setRequestedChannelMax(expectedRequestedChannelMax));
     assertSame(options, options.setNetworkRecoveryInterval(expectedNetworkRecoveryInterval));
     assertSame(options, options.setAutomaticRecoveryEnabled(expectedAutomaticRecoveryEnabled));
-    assertSame(options, options.setConnectionRetryDelay(expectedConnectionRetryDelay));
-    assertSame(options, options.setConnectionRetries(expectedConnectionRetries));
     assertSame(options, options.setIncludeProperties(expectedIncludeProperties));
+    
     for (RabbitMQOptions testOptions : Arrays.asList(new RabbitMQOptions(json), new RabbitMQOptions(options))) {
       assertEquals(testOptions.getUri(), expectedUri);
       assertEquals(testOptions.getUser(), expectedUser);
@@ -76,9 +72,7 @@ public class RabbitMQOptionsTest {
       assertEquals(testOptions.getRequestedChannelMax(), expectedRequestedChannelMax);
       assertEquals(testOptions.getNetworkRecoveryInterval(), expectedNetworkRecoveryInterval);
       assertEquals(testOptions.isAutomaticRecoveryEnabled(), expectedAutomaticRecoveryEnabled);
-      assertEquals(testOptions.getConnectionRetryDelay(), expectedConnectionRetryDelay);
-      assertEquals(testOptions.getConnectionRetries(), expectedConnectionRetries);
       assertEquals(testOptions.getIncludeProperties(), expectedIncludeProperties);
-    }
+     }
   }
 }
