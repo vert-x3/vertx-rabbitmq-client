@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 import javax.net.ssl.SSLHandshakeException;
 
@@ -40,6 +41,18 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
 		return config;
 	}
 
+	@Test
+	public void shouldPropagateCausingExeption(TestContext ctx) throws Throwable {
+		try {
+		  connect(new RabbitMQOptions()
+				.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ": A32")
+				);
+		}catch(Exception e) {
+			assertTrue(ExceptionUtils.getRootCause(e) instanceof URISyntaxException);
+		}		
+	}
+
+	
 	@Test
 	public void shouldConnectWithoutHostVerification(TestContext ctx) throws Exception {
 		connect(config()
