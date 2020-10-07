@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.shaded.org.apache.commons.lang.exception.ExceptionUtils;
 
 import io.vertx.ext.unit.TestContext;
 import io.vertx.test.tls.Trust;
