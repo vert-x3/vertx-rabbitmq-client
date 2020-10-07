@@ -90,7 +90,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         log.info("Connecting to " + uri);
         cf.setUri(uri);
       } catch (Exception e) {
-        throw new IllegalArgumentException("Invalid rabbitmq connection uri " + uri);
+        throw new IllegalArgumentException("Invalid rabbitmq connection uri",e) ;
       }
     } else {
       cf.setUsername(config.getUser());

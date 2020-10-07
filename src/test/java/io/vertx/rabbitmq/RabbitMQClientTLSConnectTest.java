@@ -1,10 +1,12 @@
 package io.vertx.rabbitmq;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 
 import javax.net.ssl.SSLHandshakeException;
 
@@ -13,6 +15,7 @@ import org.junit.Test;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.shaded.org.apache.commons.lang.exception.ExceptionUtils;
 
 import io.vertx.ext.unit.TestContext;
 import io.vertx.test.tls.Trust;
@@ -38,6 +41,17 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
 		config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5671));
 		config.setPort(rabbitmq.getMappedPort(5671));
 		return config;
+	}
+	
+	@Test
+	public void shouldPropagateCausingExeption(TestContext ctx) throws Throwable {
+		try {
+		  connect(new RabbitMQOptions()
+				.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ": A32")
+				);
+		}catch(Exception e) {
+			assertTrue(ExceptionUtils.getRootCause(e) instanceof URISyntaxException);
+		}		
 	}
 
 	@Test
