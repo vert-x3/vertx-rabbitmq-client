@@ -74,7 +74,7 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
       fail("Should have thrown exception");
     } catch (Exception e) {
       assertFalse(client.isConnected());
-      assertTrue(e.getCause() instanceof SSLHandshakeException);
+      assertTrue("Was expecting " + e.getCause() + " to be an instance of SSLHandshakeException", e.getCause() instanceof SSLHandshakeException);
     }
   }
 }
