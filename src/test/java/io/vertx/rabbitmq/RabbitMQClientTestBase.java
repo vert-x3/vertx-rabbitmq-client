@@ -4,6 +4,7 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.core.Vertx;
+import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
@@ -70,11 +71,22 @@ public class RabbitMQClientTestBase {
 
   @After
   public void tearDown(TestContext ctx) throws Exception {
-    if (channel != null) {
-      channel.close();
+    Channel ch = channel;
+    channel = null;
+    if (ch != null) {
+      ch.close();
     }
-    if (vertx != null) {
-      vertx.close(ctx.asyncAssertSuccess());
+    RabbitMQClient c = client;
+    client = null;
+    if (c != null) {
+      Async async = ctx.async();
+      c.stop(ctx.asyncAssertSuccess(v -> async.complete()));
+      async.awaitSuccess(20_000);
+    }
+    Vertx v = vertx;
+    vertx = null;
+    if (v != null) {
+      v.close(ctx.asyncAssertSuccess());
     }
   }
 
