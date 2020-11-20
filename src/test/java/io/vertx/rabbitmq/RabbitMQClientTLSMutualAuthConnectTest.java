@@ -24,58 +24,57 @@ import io.vertx.test.tls.Trust;
  */
 public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBaseTLS {
 
-	@ClassRule
-	public static final GenericContainer rabbitmq = new GenericContainer("rabbitmq:3.7").withExposedPorts(5671)
-			.withClasspathResourceMapping(CA_CERT_PATH, MOUNT_PATH + CA_CERT_PATH, BindMode.READ_ONLY)
-			.withClasspathResourceMapping(SERVER.getCertPath(), MOUNT_PATH + SERVER.getCertPath(), BindMode.READ_ONLY)
-			.withClasspathResourceMapping(SERVER.getKeyPath(), MOUNT_PATH + SERVER.getKeyPath(), BindMode.READ_ONLY)
+  @ClassRule
+  public static final GenericContainer rabbitmq = new GenericContainer("rabbitmq:3.7").withExposedPorts(5671)
+    .withClasspathResourceMapping(CA_CERT_PATH, MOUNT_PATH + CA_CERT_PATH, BindMode.READ_ONLY)
+    .withClasspathResourceMapping(SERVER.getCertPath(), MOUNT_PATH + SERVER.getCertPath(), BindMode.READ_ONLY)
+    .withClasspathResourceMapping(SERVER.getKeyPath(), MOUNT_PATH + SERVER.getKeyPath(), BindMode.READ_ONLY)
 
-			.withEnv("RABBITMQ_SSL_CACERTFILE", MOUNT_PATH + CA_CERT_PATH)
-			.withEnv("RABBITMQ_SSL_CERTFILE", MOUNT_PATH + SERVER.getCertPath())
-			.withEnv("RABBITMQ_SSL_KEYFILE", MOUNT_PATH + SERVER.getKeyPath()).withEnv("RABBITMQ_SSL_VERIFY", "verify_peer")
-			.withEnv("RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT", "true").withEnv("RABBITMQ_SSL_DEPTH", "4")
-			.waitingFor(Wait.forLogMessage(".*Server startup complete.*\\n", 1));
+    .withEnv("RABBITMQ_SSL_CACERTFILE", MOUNT_PATH + CA_CERT_PATH)
+    .withEnv("RABBITMQ_SSL_CERTFILE", MOUNT_PATH + SERVER.getCertPath())
+    .withEnv("RABBITMQ_SSL_KEYFILE", MOUNT_PATH + SERVER.getKeyPath()).withEnv("RABBITMQ_SSL_VERIFY", "verify_peer")
+    .withEnv("RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT", "true").withEnv("RABBITMQ_SSL_DEPTH", "4")
+    .waitingFor(Wait.forLogMessage(".*Server startup complete.*\\n", 1));
 
-	private RabbitMQOptions config() throws Exception {
-		RabbitMQOptions config = new RabbitMQOptions();
+  private RabbitMQOptions config() throws Exception {
+    RabbitMQOptions config = new RabbitMQOptions();
 
-		config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5671));
-		return config;
-	}
-	
-	@Ignore
-	@Test
-	public void shouldConnectWithMutualAuth(TestContext ctx) throws Exception {
-		
-		
-		JksOptions me = new JksOptions()
-				.setPassword(Cert.CLIENT_JKS.get().getPassword())
-				.setPath("tls/client-keystore-root-ca.jks");
-		
-		connect(config()
-				.setSsl(true)
-				.setTrustOptions(TRUSTED)
-		    .setKeyCertOptions(me));
+    config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5671));
+    return config;
+  }
 
-		assertTrue(this.client.isConnected());
-	}
+  @Ignore
+  @Test
+  public void shouldConnectWithMutualAuth(TestContext ctx) throws Exception {
 
-	@Test
-	public void shouldRejectUntrustedClient(TestContext ctx) {
-		JksOptions untrusted = new JksOptions()
-				.setPassword(Cert.CLIENT_JKS.get().getPassword())
-				.setPath(Cert.CLIENT_JKS.get().getPath());
-		
-		try {
-				connect(config()
-					.setSsl(true)
-					.setTrustOptions(TRUSTED)
-			    .setKeyCertOptions(untrusted));
-				fail("Should have thrown exception");
-		} catch (Exception e) {
-			assertFalse(client.isConnected());
-			assertTrue(e.getCause() instanceof SSLHandshakeException);
-		}
 
-	}
+    JksOptions me = new JksOptions()
+      .setPassword(Cert.CLIENT_JKS.get().getPassword())
+      .setPath("tls/client-keystore-root-ca.jks");
+
+    connect(config()
+      .setSsl(true)
+      .setTrustOptions(TRUSTED)
+      .setKeyCertOptions(me));
+
+    assertTrue(this.client.isConnected());
+  }
+
+  @Test
+  public void shouldRejectUntrustedClient(TestContext ctx) {
+    JksOptions untrusted = new JksOptions()
+      .setPassword(Cert.CLIENT_JKS.get().getPassword())
+      .setPath(Cert.CLIENT_JKS.get().getPath());
+
+    try {
+      connect(config()
+        .setSsl(true)
+        .setTrustOptions(TRUSTED)
+        .setKeyCertOptions(untrusted));
+      fail("Should have thrown exception");
+    } catch (Exception e) {
+      assertFalse(client.isConnected());
+      assertTrue(e.getCause() instanceof SSLHandshakeException);
+    }
+  }
 }
