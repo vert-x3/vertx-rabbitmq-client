@@ -14,10 +14,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import io.vertx.core.net.JksOptions;
-import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.test.tls.Cert;
-import io.vertx.test.tls.Trust;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -65,7 +63,6 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
     JksOptions untrusted = new JksOptions()
       .setPassword(Cert.CLIENT_JKS.get().getPassword())
       .setPath(Cert.CLIENT_JKS.get().getPath());
-
     try {
       connect(config()
         .setSsl(true)

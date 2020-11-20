@@ -23,7 +23,7 @@ import io.vertx.core.net.TrustOptions;
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
 @DataObject(generateConverter = true)
-public class RabbitMQOptions extends NetClientOptions{
+public class RabbitMQOptions extends NetClientOptions {
 
   /**
    * The default port = {@code - 1} - {@code 5671} for SSL otherwise {@code 5672}
@@ -84,7 +84,7 @@ public class RabbitMQOptions extends NetClientOptions{
    * The default connection retry delay = {@code 10000}
    */
   public static final long DEFAULT_RECONNECT_INTERVAL = 10000L;
-  
+
   private String uri = null;
   private List<Address> addresses = Collections.emptyList();
   private String user;
@@ -99,7 +99,7 @@ public class RabbitMQOptions extends NetClientOptions{
   private long networkRecoveryInterval;
   private boolean automaticRecoveryEnabled;
   private boolean includeProperties;
-   
+
   public RabbitMQOptions() {
     super();
     setReconnectInterval(DEFAULT_RECONNECT_INTERVAL);
@@ -112,43 +112,41 @@ public class RabbitMQOptions extends NetClientOptions{
     RabbitMQOptionsConverter.fromJson(json, this);
   }
 
-	public RabbitMQOptions(RabbitMQOptions other) {
-		super(other);
-		this.uri = other.uri;
-		this.addresses = other.addresses;
-		this.user = other.user;
-		this.password = other.password;
-		this.host = other.host;
-		this.virtualHost = other.virtualHost;
-		this.port = other.port;
-		this.connectionTimeout = other.connectionTimeout;
-		this.requestedHeartbeat = other.requestedHeartbeat;
-		this.handshakeTimeout = other.handshakeTimeout;
-		this.networkRecoveryInterval = other.networkRecoveryInterval;
-		this.automaticRecoveryEnabled = other.automaticRecoveryEnabled;
-		this.includeProperties = other.includeProperties;
-		this.requestedChannelMax = other.requestedChannelMax;
-	}
-  
-  private void init() {
-	  this.uri = null;
-	  this.addresses = Collections.emptyList();
-	  this.user = DEFAULT_USER;
-	  this.password = DEFAULT_PASSWORD;
-	  this.host = DEFAULT_HOST;
-	  this.virtualHost = DEFAULT_VIRTUAL_HOST;
-	  this.port = DEFAULT_PORT;
-	  this.connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
-	  this.requestedHeartbeat = DEFAULT_REQUESTED_HEARTBEAT;
-	  this.handshakeTimeout = DEFAULT_HANDSHAKE_TIMEOUT;
-	  this.requestedChannelMax = DEFAULT_REQUESTED_CHANNEL_MAX;
-	  this.networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
-	  this.automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
-	  this.includeProperties = false;
+  public RabbitMQOptions(RabbitMQOptions other) {
+    super(other);
+    this.uri = other.uri;
+    this.addresses = other.addresses;
+    this.user = other.user;
+    this.password = other.password;
+    this.host = other.host;
+    this.virtualHost = other.virtualHost;
+    this.port = other.port;
+    this.connectionTimeout = other.connectionTimeout;
+    this.requestedHeartbeat = other.requestedHeartbeat;
+    this.handshakeTimeout = other.handshakeTimeout;
+    this.networkRecoveryInterval = other.networkRecoveryInterval;
+    this.automaticRecoveryEnabled = other.automaticRecoveryEnabled;
+    this.includeProperties = other.includeProperties;
+    this.requestedChannelMax = other.requestedChannelMax;
   }
-  
-  
-  
+
+  private void init() {
+    this.uri = null;
+    this.addresses = Collections.emptyList();
+    this.user = DEFAULT_USER;
+    this.password = DEFAULT_PASSWORD;
+    this.host = DEFAULT_HOST;
+    this.virtualHost = DEFAULT_VIRTUAL_HOST;
+    this.port = DEFAULT_PORT;
+    this.connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+    this.requestedHeartbeat = DEFAULT_REQUESTED_HEARTBEAT;
+    this.handshakeTimeout = DEFAULT_HANDSHAKE_TIMEOUT;
+    this.requestedChannelMax = DEFAULT_REQUESTED_CHANNEL_MAX;
+    this.networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
+    this.automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
+    this.includeProperties = false;
+  }
+
 
   public List<Address> getAddresses() {
     return Collections.unmodifiableList(addresses);
@@ -156,6 +154,7 @@ public class RabbitMQOptions extends NetClientOptions{
 
   /**
    * Set multiple addresses for cluster mode.
+   *
    * @param addresses addresses of AMQP cluster
    * @return a reference to this, so the API can be used fluently
    */
@@ -389,75 +388,71 @@ public class RabbitMQOptions extends NetClientOptions{
     return this;
   }
 
-	@Override
-	public RabbitMQOptions setReconnectAttempts(int attempts) {
-		super.setReconnectAttempts(attempts);
-		return this;
-	}
-	
-	@Override
-	public RabbitMQOptions setReconnectInterval(long interval) {
-		super.setReconnectInterval(interval);
-		return this;
-	}
-	
-	@Override
-	public RabbitMQOptions setSsl(boolean ssl) {
-		super.setSsl(ssl);
-		return this;
-	}
-	
-	@Override
-	public RabbitMQOptions setTrustAll(boolean trustAll) {
-		super.setTrustAll(trustAll);
-		return this;
-	}
-	
-	@Override
+  @Override
+  public RabbitMQOptions setReconnectAttempts(int attempts) {
+    super.setReconnectAttempts(attempts);
+    return this;
+  }
+
+  @Override
+  public RabbitMQOptions setReconnectInterval(long interval) {
+    super.setReconnectInterval(interval);
+    return this;
+  }
+
+  @Override
+  public RabbitMQOptions setSsl(boolean ssl) {
+    super.setSsl(ssl);
+    return this;
+  }
+
+  @Override
+  public RabbitMQOptions setTrustAll(boolean trustAll) {
+    super.setTrustAll(trustAll);
+    return this;
+  }
+
+  @Override
   public RabbitMQOptions setKeyCertOptions(KeyCertOptions options) {
-     super.setKeyCertOptions(options);
-     return this;
+    super.setKeyCertOptions(options);
+    return this;
   }
 
   @Override
   public RabbitMQOptions setKeyStoreOptions(JksOptions options) {
-     super.setKeyStoreOptions(options);
-     return this;
+    super.setKeyStoreOptions(options);
+    return this;
   }
 
   @Override
   public RabbitMQOptions setPfxKeyCertOptions(PfxOptions options) {
-     super.setPfxKeyCertOptions(options);
-     return this;
+    super.setPfxKeyCertOptions(options);
+    return this;
   }
 
   @Override
   public RabbitMQOptions setPemKeyCertOptions(PemKeyCertOptions options) {
-     super.setPemKeyCertOptions(options);
-     return this;
+    super.setPemKeyCertOptions(options);
+    return this;
   }
 
   @Override
   public RabbitMQOptions setTrustOptions(TrustOptions options) {
-     super.setTrustOptions(options);
-     return this;
+    super.setTrustOptions(options);
+    return this;
   }
 
   @Override
   public RabbitMQOptions setPemTrustOptions(PemTrustOptions options) {
-     super.setPemTrustOptions(options);
-     return this;
+    super.setPemTrustOptions(options);
+    return this;
   }
 
   @Override
   public RabbitMQOptions setPfxTrustOptions(PfxOptions options) {
-     super.setPfxTrustOptions(options);
-     return this;
+    super.setPfxTrustOptions(options);
+    return this;
   }
 
 
-
-  
-  
-  
 }
