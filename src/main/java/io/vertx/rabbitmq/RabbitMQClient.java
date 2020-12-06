@@ -129,6 +129,13 @@ public interface RabbitMQClient {
   }
 
   /**
+   * Like {@link #basicConsumer(String, Handler)} but returns a {@code Future} of the asynchronous result
+   */
+  default Future<RabbitMQConsumer> basicConsumer(String queue) {
+    return basicConsumer(queue, new QueueOptions());
+  }
+
+  /**
    * Create a consumer with the given {@code options}.
    *
    * @param queue          the name of a queue
