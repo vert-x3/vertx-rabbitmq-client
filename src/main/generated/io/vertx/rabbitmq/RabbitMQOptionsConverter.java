@@ -16,6 +16,16 @@ public class RabbitMQOptionsConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, RabbitMQOptions obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
+        case "applicationLayerProtocols":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.ArrayList<java.lang.String> list =  new java.util.ArrayList<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                list.add((String)item);
+            });
+            obj.setApplicationLayerProtocols(list);
+          }
+          break;
         case "automaticRecoveryEnabled":
           if (member.getValue() instanceof Boolean) {
             obj.setAutomaticRecoveryEnabled((Boolean)member.getValue());
@@ -124,6 +134,8 @@ public class RabbitMQOptionsConverter {
           if (member.getValue() instanceof Number) {
             obj.setNetworkRecoveryInterval(((Number)member.getValue()).longValue());
           }
+          break;
+        case "nioEnabled":
           break;
         case "openSslEngineOptions":
           if (member.getValue() instanceof JsonObject) {
@@ -275,6 +287,11 @@ public class RabbitMQOptionsConverter {
             obj.setUseAlpn((Boolean)member.getValue());
           }
           break;
+        case "useNio":
+          if (member.getValue() instanceof Boolean) {
+            obj.setUseNio((Boolean)member.getValue());
+          }
+          break;
         case "user":
           if (member.getValue() instanceof String) {
             obj.setUser((String)member.getValue());
@@ -294,6 +311,11 @@ public class RabbitMQOptionsConverter {
   }
 
   public static void toJson(RabbitMQOptions obj, java.util.Map<String, Object> json) {
+    if (obj.getApplicationLayerProtocols() != null) {
+      JsonArray array = new JsonArray();
+      obj.getApplicationLayerProtocols().forEach(item -> array.add(item));
+      json.put("applicationLayerProtocols", array);
+    }
     json.put("automaticRecoveryEnabled", obj.isAutomaticRecoveryEnabled());
     json.put("connectTimeout", obj.getConnectTimeout());
     json.put("connectionTimeout", obj.getConnectionTimeout());
@@ -343,6 +365,7 @@ public class RabbitMQOptionsConverter {
       json.put("metricsName", obj.getMetricsName());
     }
     json.put("networkRecoveryInterval", obj.getNetworkRecoveryInterval());
+    json.put("nioEnabled", obj.isNioEnabled());
     if (obj.getOpenSslEngineOptions() != null) {
       json.put("openSslEngineOptions", obj.getOpenSslEngineOptions().toJson());
     }
