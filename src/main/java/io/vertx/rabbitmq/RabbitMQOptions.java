@@ -76,9 +76,9 @@ public class RabbitMQOptions extends NetClientOptions {
   public static final long DEFAULT_NETWORK_RECOVERY_INTERNAL = 5000L;
 
   /**
-   * The default automatic recovery enabled = {@code false}
+   * The default automatic recovery enabled = {@code true}
    */
-  public static final boolean DEFAULT_AUTOMATIC_RECOVERY_ENABLED = false;
+  public static final boolean DEFAULT_AUTOMATIC_RECOVERY_ENABLED = true;
 
   /**
    * The default connection retry delay = {@code 10000}
