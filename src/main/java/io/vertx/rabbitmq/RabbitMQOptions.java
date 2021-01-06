@@ -22,7 +22,7 @@ import io.vertx.core.net.TrustOptions;
  *
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-@DataObject(generateConverter = true)
+@DataObject(generateConverter = true, inheritConverter = true)
 public class RabbitMQOptions extends NetClientOptions {
 
   /**
