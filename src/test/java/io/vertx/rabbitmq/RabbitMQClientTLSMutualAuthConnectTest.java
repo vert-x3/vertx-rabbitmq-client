@@ -4,8 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import javax.net.ssl.SSLHandshakeException;
-
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -16,6 +14,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.test.tls.Cert;
+import javax.net.ssl.SSLException;
 
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
@@ -71,7 +70,7 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
       fail("Should have thrown exception");
     } catch (Exception e) {
       assertFalse(client.isConnected());
-      assertTrue("Was expecting " + e.getCause() + " to be an instance of SSLHandshakeException", e.getCause() instanceof SSLHandshakeException);
+      assertTrue("Was expecting " + e.getCause() + " to be an instance of SSLException", e.getCause() instanceof SSLException);
     }
   }
 }
