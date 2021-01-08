@@ -54,7 +54,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
   public RabbitMQOptions config() throws Exception {
     RabbitMQOptions options = super.config();
     options.setUri("amqp://" + fixedRabbitmq.getContainerIpAddress() + ":" + fixedRabbitmq.getMappedPort(5672));
-    options.setAutomaticRecoveryEnabled(true);
+    options.setAutomaticRecoveryEnabled(false);
     options.setReconnectAttempts(Integer.MAX_VALUE);
     options.setReconnectInterval(500);
     return options;
@@ -270,8 +270,8 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
       );
     }
     
-    logger.info("Waiting up to 20s for the latch");
-    receivedLastMessageLatch.await(20000L);
+    logger.info("Waiting up to 60s for the latch");
+    receivedLastMessageLatch.await(60000L);
     logger.info("Latched, shutting down");
 
     List<String> got = new ArrayList<>(messagesReceived.keySet());
