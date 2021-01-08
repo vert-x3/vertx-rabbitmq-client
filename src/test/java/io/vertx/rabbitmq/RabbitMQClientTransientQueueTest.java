@@ -11,7 +11,6 @@ import io.vertx.ext.unit.TestContext;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -271,7 +270,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     }
     
     logger.info("Waiting up to 20s for the latch");
-    receivedLastMessageLatch.await(20000L);
+    receivedLastMessageLatch.await(40000L);
     logger.info("Latched, shutting down");
 
     List<String> got = new ArrayList<>(messagesReceived.keySet());
