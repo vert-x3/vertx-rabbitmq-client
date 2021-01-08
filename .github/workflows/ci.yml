@@ -18,6 +18,8 @@ jobs:
         os: [ubuntu-latest]
         jdk: [8, 11]
     runs-on: ${{ matrix.os }}
+    env:
+      MAVEN_OPTS: -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dmaven.wagon.http.retryHandler.count=3
     steps:
       - name: Checkout
         uses: actions/checkout@v2

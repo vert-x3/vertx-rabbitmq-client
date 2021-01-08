@@ -94,7 +94,10 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
       consumer.endHandler(v -> endOfStream.complete());
       consumer.handler(msg -> ctx.fail());
-      consumer.cancel(ctx.asyncAssertSuccess(v -> canceled.complete()));
+      vertx.executeBlocking(p -> {
+        consumer.cancel(ctx.asyncAssertSuccess(v -> canceled.complete()));
+        p.complete();
+      });
     }));
 
     canceled.awaitSuccess(15000);
