@@ -270,7 +270,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     }
     
     logger.info("Waiting up to 20s for the latch");
-    receivedLastMessageLatch.await(40000L);
+    receivedLastMessageLatch.await(60000L);
     logger.info("Latched, shutting down");
 
     List<String> got = new ArrayList<>(messagesReceived.keySet());
