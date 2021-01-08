@@ -53,7 +53,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
   public RabbitMQOptions config() throws Exception {
     RabbitMQOptions options = super.config();
     options.setUri("amqp://" + fixedRabbitmq.getContainerIpAddress() + ":" + fixedRabbitmq.getMappedPort(5672));
-    options.setAutomaticRecoveryEnabled(true);
+    options.setAutomaticRecoveryEnabled(false);
     options.setReconnectAttempts(Integer.MAX_VALUE);
     options.setReconnectInterval(500);
     return options;
