@@ -6,12 +6,10 @@ import io.vertx.core.Promise;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
-import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +26,12 @@ import org.junit.ClassRule;
 import org.testcontainers.containers.FixedHostPortGenericContainer;
 import org.testcontainers.containers.GenericContainer;
 
+/**
+ * The point of this test is to demonstrate what happens with a transient queue when reconnects (or auto recovery) is used.
+ * If, when the server comes back, there exchange exists but the queue does not then messages will be dropped.
+ * This is inevitable - it is not possible to guarantee that the consumer (that creates the queue) starts before the publisher (that creates the exchange).
+ * The test does guarantee that all messages will be processed by the broker, but if that processing discards the message there is nothing that can be done.
+ */
 public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
 
   @SuppressWarnings("constantname")
@@ -111,7 +115,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     }    
     Map<String, RabbitMQMessage> messagesReceived = new HashMap<>(count);
         
-    Async receivedLastMessageLatch = ctx.async();
+    CompletableFuture<Void> receivedLastMessageLatch = new CompletableFuture<>();
     
     // Now that publishers start asynchronously there is a race condition where messages can be published
     // before the connection established callbacks have run, which means that the queue doesn't exist and
@@ -171,7 +175,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
                   consumerClient.basicAck(m.envelope().getDeliveryTag(), false);
                   if (Integer.toString(count - 1).equals(m.properties().getMessageId())) {
                     logger.info("Have received \"" + m.body().toString() + "\" the last message, with " + duplicateCount.get() + " duplicates");
-                    receivedLastMessageLatch.complete();
+                    receivedLastMessageLatch.complete(null);
                   }
                 }
               });
@@ -184,6 +188,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     ); 
     
     letConsumerStartFirst.get(2, TimeUnit.MINUTES);
+    logger.info("Consumer started, preparing producer");
             
     this.client = RabbitMQClient.create(vertx, config());
     prepareClient(client
@@ -254,7 +259,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     publisher.restart();
 
     synchronized(messages) {
-      logger.info("After the publisher has sent everything there remain " + messages.size() + " messages unconfirmed");
+      logger.info("After the publisher has sent everything there remain " + messages.size() + " messages unconfirmed (" + messages.keySet() + ")");
       messagesCopy = new ArrayList<>(messages.values());
       Collections.sort(messagesCopy, (l,r) -> l.messageId.compareTo(r.messageId));
     }
@@ -270,9 +275,13 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
       );
     }
     
-    logger.info("Waiting up to 60s for the latch");
-    receivedLastMessageLatch.await(60000L);
-    logger.info("Latched, shutting down");
+    logger.info("Waiting up to 20s for the last message to be received (noting that it may not be)");
+    try {
+      receivedLastMessageLatch.get(20, TimeUnit.SECONDS);
+      logger.info("Latched, shutting down");
+    } catch(TimeoutException ex) {
+      logger.info("Shutting down after waiting for last message that isn't going to arrive");
+    }
 
     List<String> got = new ArrayList<>(messagesReceived.keySet());
     analyzeReceivedMessages(got);
@@ -321,6 +330,12 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
       this.from = from;
       this.to = to;
     }
+
+    @Override
+    public String toString() {
+      return "[" + from + '-' + to + ']';
+    }
+    
   };
   
   private void analyzeReceivedMessages(List<String> received) {
