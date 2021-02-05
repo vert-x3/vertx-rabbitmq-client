@@ -223,9 +223,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     return forChannel(channel -> {
       log.debug("Created new QueueConsumer");
       QueueConsumerHandler handler = new QueueConsumerHandler(vertx, channel, options, queue);
-      handler.setShutdownHandler(sig -> {
-        restartConsumer(0, handler, options);
-      });
+      if (retries > 0) {
+        handler.setShutdownHandler(sig -> {
+          restartConsumer(0, handler, options);
+        });
+      }
       try {
         channel.basicConsume(queue, options.isAutoAck(), handler);
       } catch(Throwable ex) {
