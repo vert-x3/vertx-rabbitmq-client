@@ -1,6 +1,7 @@
 # RabbitMQ Client for Vert.x
 
-[![Build Status](https://travis-ci.org/vert-x3/vertx-rabbitmq-client.svg?branch=master?branch=master)](https://travis-ci.org/vert-x3/vertx-rabbitmq-client)
+[![Build Status](https://github.com/vert-x3/vertx-rabbitmq-client/workflows/CI/badge.svg?branch=3.9)](https://github.com/vert-x3/vertx-rabbitmq-client/actions?query=workflow%3ACI)
+
 
 A Vert.x client allowing applications to interact with a RabbitMQ broker (AMQP 0.9.1)
 
