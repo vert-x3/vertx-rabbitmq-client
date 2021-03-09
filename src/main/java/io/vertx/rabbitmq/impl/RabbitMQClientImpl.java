@@ -115,6 +115,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     	JdkSslContext ctx = (JdkSslContext)sslHelper.getContext((VertxInternal)vertx);
       cf.useSslProtocol(ctx.context());
     }
+
+    if (config.isNioEnabled()) {
+      cf.useNio();
+    }
+
     //TODO: Support other configurations
 
     return addresses == null

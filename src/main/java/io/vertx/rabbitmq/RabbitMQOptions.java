@@ -85,6 +85,11 @@ public class RabbitMQOptions extends NetClientOptions {
    */
   public static final long DEFAULT_RECONNECT_INTERVAL = 10000L;
 
+  /**
+   * The default use nio sockets = {@code false}
+   */
+  public static final boolean DEFAULT_USE_NIO_SOCKETS = false;
+
   private String uri = null;
   private List<Address> addresses = Collections.emptyList();
   private String user;
@@ -99,6 +104,7 @@ public class RabbitMQOptions extends NetClientOptions {
   private long networkRecoveryInterval;
   private boolean automaticRecoveryEnabled;
   private boolean includeProperties;
+  private boolean useNio;
 
   public RabbitMQOptions() {
     super();
@@ -128,6 +134,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.automaticRecoveryEnabled = other.automaticRecoveryEnabled;
     this.includeProperties = other.includeProperties;
     this.requestedChannelMax = other.requestedChannelMax;
+    this.useNio = other.useNio;
   }
 
   private void init() {
@@ -145,6 +152,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
     this.automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
     this.includeProperties = false;
+    this.useNio = DEFAULT_USE_NIO_SOCKETS;
   }
 
 
@@ -385,6 +393,24 @@ public class RabbitMQOptions extends NetClientOptions {
    */
   public RabbitMQOptions setIncludeProperties(boolean includeProperties) {
     this.includeProperties = includeProperties;
+    return this;
+  }
+
+  /**
+   * @return {@code true} if NIO Sockets are enabled, {@code false} otherwise
+   */
+  public boolean isNioEnabled() {
+    return useNio;
+  }
+
+  /**
+   * Enables or disables usage of NIO Sockets.
+   *
+   * @param useNio if {@code true}, enables NIO Sockets
+   * @return a reference to this, so the API can be used fluently
+   */
+  public RabbitMQOptions setUseNio(boolean useNio) {
+    this.useNio = useNio;
     return this;
   }
 
