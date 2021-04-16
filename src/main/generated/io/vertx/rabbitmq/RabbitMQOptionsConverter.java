@@ -31,6 +31,11 @@ public class RabbitMQOptionsConverter {
             obj.setAutomaticRecoveryEnabled((Boolean)member.getValue());
           }
           break;
+        case "automaticRecoveryOnInitialConnection":
+          if (member.getValue() instanceof Boolean) {
+            obj.setAutomaticRecoveryOnInitialConnection((Boolean)member.getValue());
+          }
+          break;
         case "connectTimeout":
           if (member.getValue() instanceof Number) {
             obj.setConnectTimeout(((Number)member.getValue()).intValue());
@@ -317,6 +322,7 @@ public class RabbitMQOptionsConverter {
       json.put("applicationLayerProtocols", array);
     }
     json.put("automaticRecoveryEnabled", obj.isAutomaticRecoveryEnabled());
+    json.put("automaticRecoveryOnInitialConnection", obj.isAutomaticRecoveryOnInitialConnection());
     json.put("connectTimeout", obj.getConnectTimeout());
     json.put("connectionTimeout", obj.getConnectionTimeout());
     if (obj.getCrlPaths() != null) {

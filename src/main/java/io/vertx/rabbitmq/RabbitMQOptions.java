@@ -81,6 +81,11 @@ public class RabbitMQOptions extends NetClientOptions {
   public static final boolean DEFAULT_AUTOMATIC_RECOVERY_ENABLED = false;
 
   /**
+   * The default automatic recovery on initial connection = {@code true}
+   */
+  public static final boolean DEFAULT_AUTOMATIC_RECOVERY_ON_INITIAL_CONNECTION = true;
+
+  /**
    * The default connection retry delay = {@code 10000}
    */
   public static final long DEFAULT_RECONNECT_INTERVAL = 10000L;
@@ -103,6 +108,7 @@ public class RabbitMQOptions extends NetClientOptions {
   private int requestedChannelMax;
   private long networkRecoveryInterval;
   private boolean automaticRecoveryEnabled;
+  private boolean automaticRecoveryOnInitialConnection;
   private boolean includeProperties;
   private boolean useNio;
 
@@ -132,6 +138,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.handshakeTimeout = other.handshakeTimeout;
     this.networkRecoveryInterval = other.networkRecoveryInterval;
     this.automaticRecoveryEnabled = other.automaticRecoveryEnabled;
+    this.automaticRecoveryOnInitialConnection = other.automaticRecoveryOnInitialConnection;
     this.includeProperties = other.includeProperties;
     this.requestedChannelMax = other.requestedChannelMax;
     this.useNio = other.useNio;
@@ -151,6 +158,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.requestedChannelMax = DEFAULT_REQUESTED_CHANNEL_MAX;
     this.networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
     this.automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
+    this.automaticRecoveryOnInitialConnection = DEFAULT_AUTOMATIC_RECOVERY_ON_INITIAL_CONNECTION;
     this.includeProperties = false;
     this.useNio = DEFAULT_USE_NIO_SOCKETS;
   }
@@ -378,6 +386,28 @@ public class RabbitMQOptions extends NetClientOptions {
     return this;
   }
 
+  public boolean isAutomaticRecoveryOnInitialConnection() {
+    return automaticRecoveryOnInitialConnection;
+  }
+
+  /**
+   * Enable or disable automatic recovery on initial connections.
+   * 
+   * If automatic recovery is enabled it will, by default, make multiple attempts to connect on startup.
+   * This can cause problems with the configuration is wrong, and it is this bad configuration that is preventing connection.
+   * To work around this automaticRecoveryOnInitialConnection can be set to false (it default to true).
+   * When automaticRecoveryOnInitialConnection is false (and automaticRecoveryEnabled is true) reconnection attempts will not be made until
+   * after the first connection has been successful.
+   * 
+   * @param automaticRecoveryOnInitialConnection if {@code false}, prevents automatic recovery on the first connection attempts.
+   * @return a reference to this, so the API can be used fluently
+   * 
+   */
+  public RabbitMQOptions setAutomaticRecoveryOnInitialConnection(boolean automaticRecoveryOnInitialConnection) {
+    this.automaticRecoveryOnInitialConnection = automaticRecoveryOnInitialConnection;
+    return this;
+  }  
+  
   /**
    * @return wether to include properties when a broker message is passed on the event bus
    */

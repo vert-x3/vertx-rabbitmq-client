@@ -61,6 +61,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private Channel channel;
   private long channelInstance;
   private boolean channelConfirms = false;
+  private boolean hasConnected = false;
   
   private List<Handler<Promise<Void>>> connectionEstablishedCallbacks = new ArrayList<>();
 
@@ -674,7 +675,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         promise.fail(e);
       }
     }).recover(err -> {
-      if (retries == 0) {
+      if (retries == 0 || (!hasConnected && !config.isAutomaticRecoveryOnInitialConnection())) {
         log.error("Retries disabled. Will not attempt to restart");
         return ctx.failedFuture(err);
       } else if (attempts >= retries) {
@@ -760,6 +761,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       connectCallbackHandler(Future.succeededFuture(), iter, promise);
     }
     log.debug("Connected to rabbitmq !");
+    hasConnected = true;
     return promise.future();
   }
 
