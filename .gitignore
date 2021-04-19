@@ -22,3 +22,5 @@ test-tmp
 src/gen
 src/main/resources/vertx-js/*.js
 src/test/resources/vertx-js/*.js
+
+nb-configuration.xml
