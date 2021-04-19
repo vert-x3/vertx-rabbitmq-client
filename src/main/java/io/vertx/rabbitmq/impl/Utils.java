@@ -7,6 +7,7 @@ import com.rabbitmq.client.LongString;
 import io.vertx.core.json.JsonObject;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -168,7 +169,7 @@ class Utils {
 
   public static String decode(String encoding, byte[] bytes) throws UnsupportedEncodingException {
     if (encoding == null) {
-      return new String(bytes, "UTF-8");
+      return new String(bytes, StandardCharsets.UTF_8);
     } else {
       return new String(bytes, encoding);
     }
@@ -176,7 +177,7 @@ class Utils {
 
   public static byte[] encode(String encoding, String string) throws UnsupportedEncodingException {
     if (encoding == null) {
-      return string.getBytes();
+      return string.getBytes(StandardCharsets.UTF_8);
     } else {
       return string.getBytes(encoding);
     }
