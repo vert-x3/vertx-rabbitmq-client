@@ -31,11 +31,6 @@ public class RabbitMQOptionsConverter {
             obj.setAutomaticRecoveryEnabled((Boolean)member.getValue());
           }
           break;
-        case "automaticRecoveryOnInitialConnection":
-          if (member.getValue() instanceof Boolean) {
-            obj.setAutomaticRecoveryOnInitialConnection((Boolean)member.getValue());
-          }
-          break;
         case "connectTimeout":
           if (member.getValue() instanceof Number) {
             obj.setConnectTimeout(((Number)member.getValue()).intValue());
@@ -197,6 +192,11 @@ public class RabbitMQOptionsConverter {
             obj.setReconnectInterval(((Number)member.getValue()).longValue());
           }
           break;
+        case "reconnectOnInitialConnection":
+          if (member.getValue() instanceof Boolean) {
+            obj.setReconnectOnInitialConnection((Boolean)member.getValue());
+          }
+          break;
         case "requestedChannelMax":
           if (member.getValue() instanceof Number) {
             obj.setRequestedChannelMax(((Number)member.getValue()).intValue());
@@ -322,7 +322,6 @@ public class RabbitMQOptionsConverter {
       json.put("applicationLayerProtocols", array);
     }
     json.put("automaticRecoveryEnabled", obj.isAutomaticRecoveryEnabled());
-    json.put("automaticRecoveryOnInitialConnection", obj.isAutomaticRecoveryOnInitialConnection());
     json.put("connectTimeout", obj.getConnectTimeout());
     json.put("connectionTimeout", obj.getConnectionTimeout());
     if (obj.getCrlPaths() != null) {
@@ -397,6 +396,7 @@ public class RabbitMQOptionsConverter {
     json.put("receiveBufferSize", obj.getReceiveBufferSize());
     json.put("reconnectAttempts", obj.getReconnectAttempts());
     json.put("reconnectInterval", obj.getReconnectInterval());
+    json.put("reconnectOnInitialConnection", obj.isReconnectOnInitialConnection());
     json.put("requestedChannelMax", obj.getRequestedChannelMax());
     json.put("requestedHeartbeat", obj.getRequestedHeartbeat());
     json.put("reuseAddress", obj.isReuseAddress());

@@ -58,11 +58,11 @@ You can set multiples addresses to connect to a cluster;
 There are two, separate and incompatible, mechanisms for handling reconnections in the RabbitMQClient:
 
 * Java RabbitMQ client library auto recovery;
-* RabbitMQClient restarts.
+* RabbitMQClient reconnections.
 
 Neither mechanism is enabled by default.
 
-The reconnections provided by the Java RabbitMQ client library do not work in all situations (if the connection to the server disconnects nicely the client will shut down and not recover).
+The recovery provided by the Java RabbitMQ client library do not work in all situations (if the connection to the server disconnects nicely the client will shut down and not recover).
 ----
 [source, java]
 In order to use the Java RabbitMQ client library auto recovery it is necessary to both enable it and disable the RabbitMQClient library reconnect attempts:
@@ -73,8 +73,7 @@ options.setReconnectAttempts(0);
 The client library will also attempt topology recovery as detailed in its documentation (this is enabled by default in the library and is not exposed in the RabbitMQClientOptions).
 
 
-
-Alternatively the RabbitMQClient may be configured to retry connecting to the RabbitMQ server whenever there is a connection problem.
+Alternatively the RabbitMQClient may be configured to reconnect to the RabbitMQ server whenever there is a connection problem.
 The failure of a connection could be caused by a transient network failure (where the client would probably connect back to the same RabbitMQ server) or it could be caused by a failover scenario.
 This approach is more brutal than that followed by the client library - the RabbitMQClient restarts work by closing the connections when the client library reports a problem and then repeatedly trying to reconnect from scratch.
 
@@ -105,6 +104,15 @@ In this instance it is necessary to both recreate the queue and set the new queu
 ----
 {@link examples.RabbitMQExamples#connectionEstablishedCallbackForServerNamedAutoDeleteQueue}
 ----
+
+The reconnect facility is specifically designed to reconnect on startup to handle the situation where the RabbitMQ service is not yet available.
+This may not be desirable in all circumstances because it results in the client effectively hanging until the RabbitMQ service is available - and a bad configuration could
+mean that this never happens.
+There are three options for managing this situation:
+
+* Check the logs, each reconnect attempt is logged.
+* Limit the the number of reconnects.
+* Use the reconnectOnInitialConnection option to prevent any reconnect attempts if the initial connection fails.
 
 ==== Enabling SSL/TLS on the client
 

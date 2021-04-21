@@ -76,7 +76,7 @@ public class RabbitMQClientEmptyJsonTest {
                 new RabbitMQOptions(config())
                         .setAutomaticRecoveryEnabled(false)
                         .setReconnectAttempts(Integer.MAX_VALUE)
-                        .setAutomaticRecoveryOnInitialConnection(false)
+                        .setReconnectOnInitialConnection(false)
                         .setReconnectInterval(500));
         return rabbit
                 .start()

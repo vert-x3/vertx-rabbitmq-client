@@ -181,9 +181,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       if (!handler.queue().isCancelled()) {
         if (ar.succeeded()) {    
           if (retries == 0) {
-            log.error("Retries disabled. Will not attempt to restart");
+            log.error("Retries disabled. Will not attempt to reconnect");
           } else if (attempts >= retries) {
-            log.error("Max number of consumer restart attempts (" + retries + ") reached. Will not attempt to restart again");
+            log.error("Max number of consumer reconnect attempts (" + retries + ") reached. Will not attempt to reconnect again");
           } else {
             start((arStart) -> {
               if (arStart.succeeded()) {
@@ -193,7 +193,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
                   return q.resume();
                 }).onComplete(arChan -> {
                   if (arChan.failed()) {
-                    log.error("Failed to restart consumer: ", arChan.cause());
+                    log.error("Failed to reconnect consumer: ", arChan.cause());
                     long delay = config.getReconnectInterval();
                     vertx.setTimer(delay, id -> {
                       restartConsumer(attempts + 1, handler, options);
@@ -201,7 +201,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
                   }
                 });
             } else {
-              log.error("Failed to restart client: ", arStart.cause());
+              log.error("Failed to reconnect client: ", arStart.cause());
               long delay = config.getReconnectInterval();
               vertx.setTimer(delay, id -> {
                 restartConsumer(attempts + 1, handler, options);
@@ -210,7 +210,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
           });
           }
         } else {
-          log.error("Failed to stop client, will not attempt to restart: ", ar.cause());
+          log.error("Failed to stop client, will not attempt to reconnect: ", ar.cause());
         }
       }
     });    
@@ -675,8 +675,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         promise.fail(e);
       }
     }).recover(err -> {
-      if (retries == 0 || (!hasConnected && !config.isAutomaticRecoveryOnInitialConnection())) {
-        log.error("Retries disabled. Will not attempt to restart");
+      if (retries == 0 || (!hasConnected && !config.isReconnectOnInitialConnection())) {
+        log.error("Retries disabled. Will not attempt to reconnect");
         return ctx.failedFuture(err);
       } else if (attempts >= retries) {
         log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
