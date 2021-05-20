@@ -142,6 +142,16 @@ public class RabbitMQOptionsConverter {
           break;
         case "nioEnabled":
           break;
+        case "nonProxyHosts":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.ArrayList<java.lang.String> list =  new java.util.ArrayList<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                list.add((String)item);
+            });
+            obj.setNonProxyHosts(list);
+          }
+          break;
         case "openSslEngineOptions":
           if (member.getValue() instanceof JsonObject) {
             obj.setOpenSslEngineOptions(new io.vertx.core.net.OpenSSLEngineOptions((io.vertx.core.json.JsonObject)member.getValue()));
@@ -372,6 +382,11 @@ public class RabbitMQOptionsConverter {
     }
     json.put("networkRecoveryInterval", obj.getNetworkRecoveryInterval());
     json.put("nioEnabled", obj.isNioEnabled());
+    if (obj.getNonProxyHosts() != null) {
+      JsonArray array = new JsonArray();
+      obj.getNonProxyHosts().forEach(item -> array.add(item));
+      json.put("nonProxyHosts", array);
+    }
     if (obj.getOpenSslEngineOptions() != null) {
       json.put("openSslEngineOptions", obj.getOpenSslEngineOptions().toJson());
     }
