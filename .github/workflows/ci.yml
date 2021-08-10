@@ -16,7 +16,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        jdk: [8, 11]
+        # Currently with 15, should be bumped to 17 when GA
+        jdk: [8, 15]
     runs-on: ${{ matrix.os }}
     env:
       MAVEN_OPTS: -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dmaven.wagon.http.retryHandler.count=3
