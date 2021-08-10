@@ -33,7 +33,7 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
     .withEnv("RABBITMQ_SSL_FAIL_IF_NO_PEER_CERT", "true").withEnv("RABBITMQ_SSL_DEPTH", "4")
     .waitingFor(Wait.forLogMessage(".*Server startup complete.*\\n", 1));
 
-  private RabbitMQOptions config() throws Exception {
+  private RabbitMQOptions config() {
     RabbitMQOptions config = new RabbitMQOptions();
 
     config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5671));
@@ -42,7 +42,7 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
 
   @Ignore
   @Test
-  public void shouldConnectWithMutualAuth(TestContext ctx) throws Exception {
+  public void shouldConnectWithMutualAuth() throws Exception {
 
 
     JksOptions me = new JksOptions()
@@ -58,7 +58,7 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
   }
 
   @Test
-  public void shouldRejectUntrustedClient(TestContext ctx) {
+  public void shouldRejectUntrustedClient() {
     JksOptions untrusted = new JksOptions()
       .setPassword(Cert.CLIENT_JKS.get().getPassword())
       .setPath(Cert.CLIENT_JKS.get().getPath());
@@ -70,7 +70,7 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
       fail("Should have thrown exception");
     } catch (Exception e) {
       assertFalse(client.isConnected());
-      assertTrue("Was expecting " + e.getCause() + " to be an instance of SSLException", e.getCause() instanceof SSLException);
+      assertTrue("Was expecting " + e + " to be an instance of SSLException", e instanceof SSLException);
     }
   }
 }
