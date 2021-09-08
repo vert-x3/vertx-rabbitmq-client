@@ -81,6 +81,11 @@ public class RabbitMQOptions {
    * The default connection retries = {@code null} (no retry)
    */
   public static final Integer DEFAULT_CONNECTION_RETRIES = null;
+  
+  /**
+   * The default connection name = {@code VertxRabbitMQ}
+   */
+  public static final String DEFAULT_CONNECTION_NAME = "VertxRabbitMQ";
 
   private Integer connectionRetries = DEFAULT_CONNECTION_RETRIES;
   private long connectionRetryDelay = DEFAULT_CONNECTION_RETRY_DELAY;
@@ -98,6 +103,7 @@ public class RabbitMQOptions {
   private long networkRecoveryInterval = DEFAULT_NETWORK_RECOVERY_INTERNAL;
   private boolean automaticRecoveryEnabled = DEFAULT_AUTOMATIC_RECOVERY_ENABLED;
   private boolean includeProperties = false;
+  private String connectionName = DEFAULT_CONNECTION_NAME;
 
   public RabbitMQOptions() {
   }
@@ -124,6 +130,7 @@ public class RabbitMQOptions {
     automaticRecoveryEnabled = that.automaticRecoveryEnabled;
     includeProperties = that.includeProperties;
     requestedChannelMax = that.requestedChannelMax;
+    connectionName = that.connectionName;
   }
 
   /**
@@ -398,6 +405,15 @@ public class RabbitMQOptions {
    */
   public RabbitMQOptions setIncludeProperties(boolean includeProperties) {
     this.includeProperties = includeProperties;
+    return this;
+  }
+
+  public String getConnectionName() {
+    return connectionName;
+  }
+
+  public RabbitMQOptions setConnectionName(String connectionName) {
+    this.connectionName = connectionName;
     return this;
   }
 }

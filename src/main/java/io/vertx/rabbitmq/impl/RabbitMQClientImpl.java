@@ -76,8 +76,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     //TODO: Support other configurations
 
     return addresses == null
-           ? cf.newConnection()
-           : cf.newConnection(addresses);
+           ? cf.newConnection(config.getConnectionName())
+           : cf.newConnection(addresses, config.getConnectionName());
   }
 
   @Override

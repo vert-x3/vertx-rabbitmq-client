@@ -38,6 +38,7 @@
 |[[automaticRecoveryEnabled]]`@automaticRecoveryEnabled`|`Boolean`|+++
 Enables or disables automatic connection recovery.
 +++
+|[[connectionName]]`@connectionName`|`String`|-
 |[[connectionRetries]]`@connectionRetries`|`Number (Integer)`|+++
 Set the number of connection retries to attempt when connecting, the <code>null</code> value disables it.
 +++

@@ -31,6 +31,8 @@ public class RabbitMQOptionsTest {
     int expectedConnectionRetryDelay = TestUtils.randomPositiveInt();
     Integer expectedConnectionRetries = TestUtils.randomBoolean() ? TestUtils.randomPositiveInt() : null;
     boolean expectedIncludeProperties = TestUtils.randomBoolean();
+    String connectionName = TestUtils.randomAlphaString(20);
+
     JsonObject json = new JsonObject();
     json.put("uri", expectedUri);
     json.put("user", expectedUser);
@@ -47,6 +49,7 @@ public class RabbitMQOptionsTest {
     json.put("connectionRetryDelay", expectedConnectionRetryDelay);
     json.put("connectionRetries", expectedConnectionRetries);
     json.put("includeProperties", expectedIncludeProperties);
+    json.put("connectionName", connectionName);
     RabbitMQOptions options = new RabbitMQOptions();
     assertSame(options, options.setUri(expectedUri));
     assertSame(options, options.setUser(expectedUser));
@@ -63,6 +66,8 @@ public class RabbitMQOptionsTest {
     assertSame(options, options.setConnectionRetryDelay(expectedConnectionRetryDelay));
     assertSame(options, options.setConnectionRetries(expectedConnectionRetries));
     assertSame(options, options.setIncludeProperties(expectedIncludeProperties));
+    assertSame(options, options.setConnectionName(connectionName));
+
     for (RabbitMQOptions testOptions : Arrays.asList(new RabbitMQOptions(json), new RabbitMQOptions(options))) {
       assertEquals(testOptions.getUri(), expectedUri);
       assertEquals(testOptions.getUser(), expectedUser);
@@ -79,6 +84,7 @@ public class RabbitMQOptionsTest {
       assertEquals(testOptions.getConnectionRetryDelay(), expectedConnectionRetryDelay);
       assertEquals(testOptions.getConnectionRetries(), expectedConnectionRetries);
       assertEquals(testOptions.getIncludeProperties(), expectedIncludeProperties);
-    }
+      assertEquals(testOptions.getConnectionName(), connectionName);
+     }
   }
 }
