@@ -95,6 +95,14 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
     this.options = options;
     this.client.addConnectionEstablishedCallback(p -> {
       addConfirmListener(client, options, p);
+      if(client instanceof RabbitMQClientImpl){
+        if (lastChannelInstance == 0) {
+          lastChannelInstance = ((RabbitMQClientImpl)client).getChannelInstance();
+        } else if (lastChannelInstance != ((RabbitMQClientImpl)client).getChannelInstance()) {
+          pendingAcks.clear();
+          lastChannelInstance = ((RabbitMQClientImpl)client).getChannelInstance();
+        }
+      }
     });
   }
 
@@ -224,12 +232,6 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
 
   private void handleConfirmation(RabbitMQConfirmation rawConfirmation) {
     synchronized(pendingAcks) {
-      if (lastChannelInstance == 0) {
-        lastChannelInstance = rawConfirmation.getChannelInstance();
-      } else if (lastChannelInstance != rawConfirmation.getChannelInstance()) {
-        pendingAcks.clear();
-        lastChannelInstance = rawConfirmation.getChannelInstance();
-      }
       if (rawConfirmation.isMultiple()) {
         for (Iterator<MessageDetails> iter = pendingAcks.iterator(); iter.hasNext(); ) {
           MessageDetails md = iter.next();
