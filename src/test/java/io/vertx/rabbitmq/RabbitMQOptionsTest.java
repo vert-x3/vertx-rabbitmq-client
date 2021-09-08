@@ -30,6 +30,7 @@ public class RabbitMQOptionsTest {
     boolean expectedAutomaticRecoveryEnabled = TestUtils.randomBoolean();
     boolean expectedIncludeProperties = TestUtils.randomBoolean();
     boolean useNio = TestUtils.randomBoolean();
+    String connectionName = TestUtils.randomAlphaString(20);
 
     JsonObject json = new JsonObject();
     json.put("uri", expectedUri);
@@ -46,6 +47,7 @@ public class RabbitMQOptionsTest {
     json.put("automaticRecoveryEnabled", expectedAutomaticRecoveryEnabled);
     json.put("includeProperties", expectedIncludeProperties);
     json.put("useNio", useNio);
+    json.put("connectionName", connectionName);
     RabbitMQOptions options = new RabbitMQOptions();
     assertSame(options, options.setUri(expectedUri));
     assertSame(options, options.setUser(expectedUser));
@@ -61,6 +63,7 @@ public class RabbitMQOptionsTest {
     assertSame(options, options.setAutomaticRecoveryEnabled(expectedAutomaticRecoveryEnabled));
     assertSame(options, options.setIncludeProperties(expectedIncludeProperties));
     assertSame(options, options.setUseNio(useNio));
+    assertSame(options, options.setConnectionName(connectionName));
 
     for (RabbitMQOptions testOptions : Arrays.asList(new RabbitMQOptions(json), new RabbitMQOptions(options))) {
       assertEquals(testOptions.getUri(), expectedUri);
@@ -77,6 +80,7 @@ public class RabbitMQOptionsTest {
       assertEquals(testOptions.isAutomaticRecoveryEnabled(), expectedAutomaticRecoveryEnabled);
       assertEquals(testOptions.getIncludeProperties(), expectedIncludeProperties);
       assertEquals(testOptions.isNioEnabled(), useNio);
+      assertEquals(testOptions.getConnectionName(), connectionName);
      }
   }
 }
