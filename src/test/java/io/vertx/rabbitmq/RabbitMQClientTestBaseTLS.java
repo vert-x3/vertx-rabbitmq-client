@@ -1,6 +1,8 @@
 package io.vertx.rabbitmq;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -35,20 +37,21 @@ public class RabbitMQClientTestBaseTLS {
     }
 
     client = RabbitMQClient.create(vertx, config);
-    CompletableFuture<Void> latch = new CompletableFuture<>();
-    client.start(ar -> {
-      if (ar.succeeded()) {
-        latch.complete(null);
-      } else {
-        latch.completeExceptionally(ar.cause());
-      }
-    });
-    latch.get(100L, TimeUnit.SECONDS);
+    CompletionStage<Void> latch = client.start().toCompletionStage();
+    try {
+      latch.toCompletableFuture().get(100L, TimeUnit.SECONDS);
+    } catch (ExecutionException e) {
+      rethrow(e.getCause());;
+    }
   }
 
+  @SuppressWarnings("unchecked")
+  private static <T extends Throwable> void rethrow(Throwable t) throws T {
+    throw (T) t;
+  }
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     vertx = Vertx.vertx();
   }
 

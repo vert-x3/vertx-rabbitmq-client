@@ -41,6 +41,11 @@ public class RabbitMQOptionsConverter {
             obj.setConnectTimeout(((Number)member.getValue()).intValue());
           }
           break;
+        case "connectionName":
+          if (member.getValue() instanceof String) {
+            obj.setConnectionName((String)member.getValue());
+          }
+          break;
         case "connectionTimeout":
           if (member.getValue() instanceof Number) {
             obj.setConnectionTimeout(((Number)member.getValue()).intValue());
@@ -334,6 +339,9 @@ public class RabbitMQOptionsConverter {
     json.put("automaticRecoveryEnabled", obj.isAutomaticRecoveryEnabled());
     json.put("automaticRecoveryOnInitialConnection", obj.isAutomaticRecoveryOnInitialConnection());
     json.put("connectTimeout", obj.getConnectTimeout());
+    if (obj.getConnectionName() != null) {
+      json.put("connectionName", obj.getConnectionName());
+    }
     json.put("connectionTimeout", obj.getConnectionTimeout());
     if (obj.getCrlPaths() != null) {
       JsonArray array = new JsonArray();

@@ -95,6 +95,11 @@ public class RabbitMQOptions extends NetClientOptions {
    */
   public static final boolean DEFAULT_USE_NIO_SOCKETS = false;
 
+  /**
+   * The default connection name = {@code VertxRabbitMQ}
+   */
+  public static final String DEFAULT_CONNECTION_NAME = "VertxRabbitMQ";
+
   private String uri = null;
   private List<Address> addresses = Collections.emptyList();
   private String user;
@@ -111,6 +116,7 @@ public class RabbitMQOptions extends NetClientOptions {
   private boolean automaticRecoveryOnInitialConnection;
   private boolean includeProperties;
   private boolean useNio;
+  private String connectionName;
 
   public RabbitMQOptions() {
     super();
@@ -142,6 +148,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.includeProperties = other.includeProperties;
     this.requestedChannelMax = other.requestedChannelMax;
     this.useNio = other.useNio;
+    this.connectionName = other.connectionName;
   }
 
   private void init() {
@@ -161,6 +168,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.automaticRecoveryOnInitialConnection = DEFAULT_AUTOMATIC_RECOVERY_ON_INITIAL_CONNECTION;
     this.includeProperties = false;
     this.useNio = DEFAULT_USE_NIO_SOCKETS;
+    this.connectionName = DEFAULT_CONNECTION_NAME;
   }
 
 
@@ -510,5 +518,12 @@ public class RabbitMQOptions extends NetClientOptions {
     return this;
   }
 
+  public String getConnectionName() {
+    return connectionName;
+  }
 
+  public RabbitMQOptions setConnectionName(String connectionName) {
+    this.connectionName = connectionName;
+    return this;
+  }
 }
