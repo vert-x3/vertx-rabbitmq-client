@@ -585,7 +585,12 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
    */
   boolean isConnected();
-
+  /***
+   * restart the rabbitMQ connect.
+   * @param attempts  number of attempts
+   * @param resultHandler handler called when operation is done with a result of the operation
+   */
+  void restartConnect(int attempts, Handler<AsyncResult<Void>> resultHandler);
   /**
    * Check if a channel is open
    *

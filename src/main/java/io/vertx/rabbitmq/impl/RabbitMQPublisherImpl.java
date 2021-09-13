@@ -209,10 +209,8 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
                 synchronized(pendingAcks) {
                   pendingAcks.remove(md);
                 }
-                client.stop(v -> {
-                  client.start(v2 -> {
-                    doSend(md);
-                  });
+                client.restartConnect(0,rcRt->{
+                  doSend(md);
                 });
               }
             } finally {
@@ -222,10 +220,8 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
       synchronized(pendingAcks) {
         pendingAcks.remove(md);
       }
-      client.stop(v -> {
-        client.start(v2 -> {
-          doSend(md);
-        });
+      client.restartConnect(0,rcRt->{
+        doSend(md);
       });
     }
   }
