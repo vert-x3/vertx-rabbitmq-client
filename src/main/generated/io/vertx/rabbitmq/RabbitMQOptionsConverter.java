@@ -36,6 +36,11 @@ public class RabbitMQOptionsConverter {
             obj.setConnectTimeout(((Number)member.getValue()).intValue());
           }
           break;
+        case "connectionName":
+          if (member.getValue() instanceof String) {
+            obj.setConnectionName((String)member.getValue());
+          }
+          break;
         case "connectionTimeout":
           if (member.getValue() instanceof Number) {
             obj.setConnectionTimeout(((Number)member.getValue()).intValue());
@@ -136,6 +141,16 @@ public class RabbitMQOptionsConverter {
           }
           break;
         case "nioEnabled":
+          break;
+        case "nonProxyHosts":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.ArrayList<java.lang.String> list =  new java.util.ArrayList<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                list.add((String)item);
+            });
+            obj.setNonProxyHosts(list);
+          }
           break;
         case "openSslEngineOptions":
           if (member.getValue() instanceof JsonObject) {
@@ -323,6 +338,9 @@ public class RabbitMQOptionsConverter {
     }
     json.put("automaticRecoveryEnabled", obj.isAutomaticRecoveryEnabled());
     json.put("connectTimeout", obj.getConnectTimeout());
+    if (obj.getConnectionName() != null) {
+      json.put("connectionName", obj.getConnectionName());
+    }
     json.put("connectionTimeout", obj.getConnectionTimeout());
     if (obj.getCrlPaths() != null) {
       JsonArray array = new JsonArray();
@@ -371,6 +389,11 @@ public class RabbitMQOptionsConverter {
     }
     json.put("networkRecoveryInterval", obj.getNetworkRecoveryInterval());
     json.put("nioEnabled", obj.isNioEnabled());
+    if (obj.getNonProxyHosts() != null) {
+      JsonArray array = new JsonArray();
+      obj.getNonProxyHosts().forEach(item -> array.add(item));
+      json.put("nonProxyHosts", array);
+    }
     if (obj.getOpenSslEngineOptions() != null) {
       json.put("openSslEngineOptions", obj.getOpenSslEngineOptions().toJson());
     }

@@ -43,33 +43,34 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
 	}
 
 	@Test
-	public void shouldPropagateCausingExeption(TestContext ctx) throws Throwable {
+	public void shouldPropagateCausingExeption() {
 		try {
 		  connect(new RabbitMQOptions()
 				.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ": A32")
 				);
 		}catch(Exception e) {
-			assertTrue(ExceptionUtils.getRootCause(e) instanceof URISyntaxException);
-		}		
+			assertTrue("Was expecting " + e.getClass().getName() + " to be an instance of IllegalArgumentException", e instanceof IllegalArgumentException);
+			assertTrue("Was expecting " + e.getCause().getClass().getName() + " to be an instance of URISyntaxException", e.getCause() instanceof URISyntaxException);
+		}
 	}
 
-	
+
 	@Test
-	public void shouldConnectWithoutHostVerification(TestContext ctx) throws Exception {
+	public void shouldConnectWithoutHostVerification() throws Exception {
 		connect(config()
 				.setSsl(true)
 				.setTrustAll(true));
 		assertTrue(this.client.isConnected());
 	}
-	
+
 	@Test
-	public void shouldFailConnectingWithPlainText(TestContext ctx) {
+	public void shouldFailConnectingWithPlainText() {
 		try {
 			connect(config());
 			fail("Should have thrown exception");
 		} catch (Exception e) {
 			assertFalse(client.isConnected());
-			assertTrue(e.getCause() instanceof IOException);
+			assertTrue(e instanceof IOException);
 		}
 	}
 
@@ -80,7 +81,7 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
 				.setTrustOptions(TRUSTED));
 		assertTrue(this.client.isConnected());
 	}
-	
+
 	@Test
 	public void shouldConnectWithPemTrustStore(TestContext ctx) throws Exception {
 		connect(config()
@@ -98,7 +99,7 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
 			fail("Should have thrown exception");
 		} catch (Exception e) {
 			assertFalse(client.isConnected());
-			assertTrue(e.getCause() instanceof SSLHandshakeException);
+			assertTrue(e instanceof SSLHandshakeException);
 		}
 	}
 }
