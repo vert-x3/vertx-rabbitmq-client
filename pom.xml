@@ -1,141 +1,260 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
-  <parent>
-    <groupId>io.vertx</groupId>
-    <artifactId>vertx-ext-parent</artifactId>
-    <version>38</version>
-  </parent>
-
-  <modelVersion>4.0.0</modelVersion>
-
-  <artifactId>vertx-rabbitmq-client</artifactId>
-  <version>4.1.4-SNAPSHOT</version>
-
-  <properties>
-    <stack.version>4.1.4-SNAPSHOT</stack.version>
-    <rabbitmq.client.version>5.10.0</rabbitmq.client.version>
-    <slf4j.version>1.7.21</slf4j.version>
-    <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
-  </properties>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
+      
+    <parent>
+            
         <groupId>io.vertx</groupId>
-        <artifactId>vertx-dependencies</artifactId>
-        <version>${stack.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
+            
+        <artifactId>vertx-ext-parent</artifactId>
+            
+        <version>38</version>
+          
+    </parent>
+      
+    <modelVersion>4.0.0</modelVersion>
+      
+    <artifactId>vertx-rabbitmq-client</artifactId>
+      
+    <version>4.1.4</version>
+      
+    <properties>
+            
+        <stack.version>4.1.4</stack.version>
+            
+        <rabbitmq.client.version>5.10.0</rabbitmq.client.version>
+            
+        <slf4j.version>1.7.21</slf4j.version>
+            
+        <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
+          
+    </properties>
+      
+    <dependencyManagement>
+            
+        <dependencies>
+                  
+            <dependency>
+                        
+                <groupId>io.vertx</groupId>
+                        
+                <artifactId>vertx-dependencies</artifactId>
+                        
+                <version>${stack.version}</version>
+                        
+                <type>pom</type>
+                        
+                <scope>import</scope>
+                      
+            </dependency>
+                
+        </dependencies>
+          
+    </dependencyManagement>
+      
+    <dependencies>
+            
+        <dependency>
+                  
+            <groupId>io.vertx</groupId>
+                  
+            <artifactId>vertx-core</artifactId>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>io.vertx</groupId>
+                  
+            <artifactId>vertx-codegen</artifactId>
+                  
+            <optional>true</optional>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>io.vertx</groupId>
+                  
+            <artifactId>vertx-docgen</artifactId>
+                  
+            <optional>true</optional>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>org.slf4j</groupId>
+                  
+            <artifactId>slf4j-api</artifactId>
+                  
+            <version>${slf4j.version}</version>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>com.rabbitmq</groupId>
+                  
+            <artifactId>amqp-client</artifactId>
+                  
+            <version>${rabbitmq.client.version}</version>
+                  
+            <exclusions>
+                        
+                <exclusion>
+                              
+                    <groupId>org.slf4j</groupId>
+                              
+                    <artifactId>slf4j-api</artifactId>
+                            
+                </exclusion>
+                      
+            </exclusions>
+                
+        </dependency>
+            
+        <!-- Testing -->
+            
+        <dependency>
+                  
+            <groupId>junit</groupId>
+                  
+            <artifactId>junit</artifactId>
+                  
+            <version>4.13.1</version>
+                  
+            <scope>test</scope>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>io.vertx</groupId>
+                  
+            <artifactId>vertx-core</artifactId>
+                  
+            <type>test-jar</type>
+                  
+            <scope>test</scope>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>io.vertx</groupId>
+                  
+            <artifactId>vertx-unit</artifactId>
+                  
+            <scope>test</scope>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>io.vertx</groupId>
+                  
+            <artifactId>vertx-web-client</artifactId>
+                  
+            <scope>test</scope>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>com.fasterxml.jackson.core</groupId>
+                  
+            <artifactId>jackson-databind</artifactId>
+                  
+            <scope>test</scope>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>org.testcontainers</groupId>
+                  
+            <artifactId>testcontainers</artifactId>
+                  
+            <version>1.15.2</version>
+                  
+            <scope>test</scope>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>org.testcontainers</groupId>
+                  
+            <artifactId>toxiproxy</artifactId>
+                  
+            <version>1.15.2</version>
+                  
+            <scope>test</scope>
+                
+        </dependency>
+            
+        <dependency>
+                  
+            <groupId>org.slf4j</groupId>
+                  
+            <artifactId>slf4j-simple</artifactId>
+                  
+            <version>1.7.25</version>
+                  
+            <scope>test</scope>
+                
+        </dependency>
+          
     </dependencies>
-  </dependencyManagement>
-
-  <dependencies>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-codegen</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-docgen</artifactId>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.rabbitmq</groupId>
-      <artifactId>amqp-client</artifactId>
-      <version>${rabbitmq.client.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <!-- Testing -->
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.1</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-core</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-unit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers</artifactId>
-      <version>1.15.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>toxiproxy</artifactId>
-      <version>1.15.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>1.7.25</version>
-      <scope>test</scope>
-    </dependency>
-
-  </dependencies>
-
-  <profiles>
-    <profile>
-      <id>rabbitmq.local</id>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.19</version>
-            <configuration>
-              <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-              <systemPropertyVariables>
-                <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
-              </systemPropertyVariables>
-              <argLine>-server -Xmx1200M</argLine>
-              <forkCount>1</forkCount>
-              <reuseForks>true</reuseForks>
-              <systemProperties>
-                <rabbitmq.local>true</rabbitmq.local>
-              </systemProperties>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
+      
+    <profiles>
+            
+        <profile>
+                  
+            <id>rabbitmq.local</id>
+                  
+            <build>
+                        
+                <plugins>
+                              
+                    <plugin>
+                                    
+                        <artifactId>maven-surefire-plugin</artifactId>
+                                    
+                        <version>2.19</version>
+                                    
+                        <configuration>
+                                          
+                            <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+                                          
+                            <systemPropertyVariables>
+                                                
+                                <io.netty.leakDetectionLevel>PARANOID</io.netty.leakDetectionLevel>
+                                              
+                            </systemPropertyVariables>
+                                          
+                            <argLine>-server -Xmx1200M</argLine>
+                                          
+                            <forkCount>1</forkCount>
+                                          
+                            <reuseForks>true</reuseForks>
+                                          
+                            <systemProperties>
+                                                
+                                <rabbitmq.local>true</rabbitmq.local>
+                                              
+                            </systemProperties>
+                                        
+                        </configuration>
+                                  
+                    </plugin>
+                            
+                </plugins>
+                      
+            </build>
+                
+        </profile>
+          
+    </profiles>
+    
 </project>
