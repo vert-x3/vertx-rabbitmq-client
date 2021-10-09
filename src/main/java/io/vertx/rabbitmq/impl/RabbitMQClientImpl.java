@@ -717,29 +717,35 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   private Future<Void> start(ContextInternal ctx, int attempts) {
-    return ctx.<Void>executeBlocking(promise -> {
+    Promise<Void> promise = Promise.promise();
+    tryConnect(ctx,attempts,promise);
+    return promise.future();
+  }
+
+  public void tryConnect(ContextInternal ctx,int attempts,Promise<Void> promise){
+    ctx.<Void>executeBlocking(exePromise -> {
       try {
-        connect().onComplete(promise);
+        connect().onComplete(exePromise);
       } catch (IOException | TimeoutException e) {
         log.error("Could not connect to rabbitmq", e);
-        promise.fail(e);
+        exePromise.fail(e);
       }
-    }).recover(err -> {
+    }).onSuccess(h->{
+        promise.complete();
+    }).onFailure(err -> {
       if (retries == 0 || (!hasConnected && !config.isAutomaticRecoveryOnInitialConnection())) {
         log.error("Retries disabled. Will not attempt to restart");
-        return ctx.failedFuture(err);
+        promise.fail(err);
       } else if (attempts >= retries) {
         log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
-        return ctx.failedFuture(err);
+        promise.fail(err);
       } else {
         long delay = config.getReconnectInterval();
         log.info("Attempting to reconnect to rabbitmq...");
-        Promise<Void> promise = ctx.promise();
         vertx.setTimer(delay, id -> {
           log.debug("Reconnect attempt # " + attempts);
-          start(ctx, attempts + 1).onComplete(promise);
+          tryConnect(ctx,attempts + 1,promise);
         });
-        return promise.future();
       }
     });
   }
