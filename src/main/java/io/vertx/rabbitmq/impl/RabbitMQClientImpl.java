@@ -24,6 +24,8 @@ import com.rabbitmq.client.ShutdownListener;
 import com.rabbitmq.client.ShutdownSignalException;
 
 import com.rabbitmq.client.impl.AMQImpl;
+import com.rabbitmq.client.impl.CredentialsProvider;
+import com.rabbitmq.client.impl.DefaultCredentialsRefreshService;
 import io.netty.handler.ssl.JdkSslContext;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
@@ -121,6 +123,14 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
     if (config.isNioEnabled()) {
       cf.useNio();
+    }
+
+    if (config.getCredentialsProvider() != null) {
+      cf.setCredentialsProvider(config.getCredentialsProvider());
+    }
+
+    if (config.getCredentialsRefreshService() != null) {
+      cf.setCredentialsRefreshService(config.getCredentialsRefreshService());
     }
 
     //TODO: Support other configurations

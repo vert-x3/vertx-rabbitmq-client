@@ -7,6 +7,8 @@ import java.util.List;
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
 
+import com.rabbitmq.client.impl.CredentialsProvider;
+import com.rabbitmq.client.impl.CredentialsRefreshService;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
@@ -117,6 +119,8 @@ public class RabbitMQOptions extends NetClientOptions {
   private boolean includeProperties;
   private boolean useNio;
   private String connectionName;
+  private CredentialsProvider credentialsProvider;
+  private CredentialsRefreshService credentialsRefreshService;
 
   public RabbitMQOptions() {
     super();
@@ -149,6 +153,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.requestedChannelMax = other.requestedChannelMax;
     this.useNio = other.useNio;
     this.connectionName = other.connectionName;
+    this.credentialsProvider = other.credentialsProvider;
   }
 
   private void init() {
@@ -169,6 +174,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.includeProperties = false;
     this.useNio = DEFAULT_USE_NIO_SOCKETS;
     this.connectionName = DEFAULT_CONNECTION_NAME;
+    this.credentialsProvider = null;
   }
 
 
@@ -400,22 +406,22 @@ public class RabbitMQOptions extends NetClientOptions {
 
   /**
    * Enable or disable automatic recovery on initial connections.
-   * 
+   *
    * If automatic recovery is enabled it will, by default, make multiple attempts to connect on startup.
    * This can cause problems with the configuration is wrong, and it is this bad configuration that is preventing connection.
    * To work around this automaticRecoveryOnInitialConnection can be set to false (it default to true).
    * When automaticRecoveryOnInitialConnection is false (and automaticRecoveryEnabled is true) reconnection attempts will not be made until
    * after the first connection has been successful.
-   * 
+   *
    * @param automaticRecoveryOnInitialConnection if {@code false}, prevents automatic recovery on the first connection attempts.
    * @return a reference to this, so the API can be used fluently
-   * 
+   *
    */
   public RabbitMQOptions setAutomaticRecoveryOnInitialConnection(boolean automaticRecoveryOnInitialConnection) {
     this.automaticRecoveryOnInitialConnection = automaticRecoveryOnInitialConnection;
     return this;
-  }  
-  
+  }
+
   /**
    * @return wether to include properties when a broker message is passed on the event bus
    */
@@ -449,6 +455,43 @@ public class RabbitMQOptions extends NetClientOptions {
    */
   public RabbitMQOptions setUseNio(boolean useNio) {
     this.useNio = useNio;
+    return this;
+  }
+
+  /**
+   * @return A RabbitMQ credentials provider for using dynamic credentials.
+   */
+  public CredentialsProvider getCredentialsProvider() {
+    return credentialsProvider;
+  }
+
+  /**
+   * Provides a RabbitMQ credentials provider for using dynamic credentials.
+   *
+   * @implNote The value is not saved/restored when using JSON.
+   * @return a reference to this, so the API can be used fluently.
+   */
+  public RabbitMQOptions setCredentialsProvider(CredentialsProvider credentialsProvider) {
+    this.credentialsProvider = credentialsProvider;
+    return this;
+  }
+
+  /**
+   * @return A RabbitMQ credentials refresh service for refreshing dynamic credentials.
+   */
+  public CredentialsRefreshService getCredentialsRefreshService() {
+    return credentialsRefreshService;
+  }
+
+  /**
+   * Provides a RabbitMQ credentials refresh service for refreshing dynamic credentials.
+   *
+   * @implNote The value is not saved/restored when using JSON.
+   * @return a reference to this, so the API can be used fluently.
+   */
+  public RabbitMQOptions setCredentialsRefreshService(
+    CredentialsRefreshService credentialsRefreshService) {
+    this.credentialsRefreshService = credentialsRefreshService;
     return this;
   }
 
