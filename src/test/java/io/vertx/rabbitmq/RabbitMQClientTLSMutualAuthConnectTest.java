@@ -14,6 +14,7 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import io.vertx.core.net.JksOptions;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.test.tls.Cert;
+import java.net.SocketException;
 import javax.net.ssl.SSLException;
 
 /**
@@ -70,7 +71,8 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
       fail("Should have thrown exception");
     } catch (Exception e) {
       assertFalse(client.isConnected());
-      assertTrue("Was expecting " + e + " to be an instance of SSLException", e instanceof SSLException);
+      // JDK 17 on Ubuntu does not throw an SSLException in this instance
+      assertTrue("Was expecting " + e + " to be an instance of SSLException", e instanceof SSLException || e instanceof SocketException);
     }
   }
 }
