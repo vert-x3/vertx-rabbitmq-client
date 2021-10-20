@@ -124,7 +124,7 @@ public class RabbitMQClientBuiltInReconnectTest {
     this.networkedRabbitmq = new GenericContainer(DockerImageName.parse("rabbitmq:3.8.6-alpine"))
             .withExposedPorts(5672)
             .withNetwork(network);
-    this.toxiproxy = new ToxiproxyContainer(DockerImageName.parse("shopify/toxiproxy:2.1.0"))
+    this.toxiproxy = new ToxiproxyContainer(DockerImageName.parse("shopify/toxiproxy:2.1.4"))
             .withNetwork(network);
   }
 
