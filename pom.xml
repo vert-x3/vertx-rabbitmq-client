@@ -10,10 +10,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>vertx-rabbitmq-client</artifactId>
-  <version>4.2.1-SNAPSHOT</version>
+  <version>4.2.1</version>
 
   <properties>
-    <stack.version>4.2.1-SNAPSHOT</stack.version>
+    <stack.version>4.2.1</stack.version>
     <rabbitmq.client.version>5.10.0</rabbitmq.client.version>
     <slf4j.version>1.7.21</slf4j.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
