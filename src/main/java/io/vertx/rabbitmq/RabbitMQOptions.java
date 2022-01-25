@@ -7,6 +7,7 @@ import java.util.List;
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
 
+import com.rabbitmq.client.DefaultSaslConfig;
 import com.rabbitmq.client.impl.CredentialsProvider;
 import com.rabbitmq.client.impl.CredentialsRefreshService;
 import io.vertx.codegen.annotations.DataObject;
@@ -121,6 +122,7 @@ public class RabbitMQOptions extends NetClientOptions {
   private String connectionName;
   private CredentialsProvider credentialsProvider;
   private CredentialsRefreshService credentialsRefreshService;
+  private DefaultSaslConfig saslConfig;
 
   public RabbitMQOptions() {
     super();
@@ -154,6 +156,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.useNio = other.useNio;
     this.connectionName = other.connectionName;
     this.credentialsProvider = other.credentialsProvider;
+    this.saslConfig = other.saslConfig;
   }
 
   private void init() {
@@ -175,6 +178,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.useNio = DEFAULT_USE_NIO_SOCKETS;
     this.connectionName = DEFAULT_CONNECTION_NAME;
     this.credentialsProvider = null;
+    this.saslConfig = null;
   }
 
 
@@ -492,6 +496,22 @@ public class RabbitMQOptions extends NetClientOptions {
   public RabbitMQOptions setCredentialsRefreshService(
     CredentialsRefreshService credentialsRefreshService) {
     this.credentialsRefreshService = credentialsRefreshService;
+    return this;
+  }
+
+  /**
+   * @return The specified DefaultSaslConfiguration rabbitmq authentication mechanism
+   */
+  public DefaultSaslConfig getSaslConfig() { return saslConfig; }
+
+  /**
+   * Set the SASL mechanism for rabbitmq authentication
+   *
+   * @param saslConfig The
+   * @return a reference to this, so the API can be used fluently.
+   */
+  public RabbitMQOptions setSaslConfig(DefaultSaslConfig saslConfig) {
+    this.saslConfig = saslConfig;
     return this;
   }
 
