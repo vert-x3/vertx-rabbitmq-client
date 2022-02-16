@@ -20,6 +20,11 @@ public class RabbitMQOptionsConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, RabbitMQOptions obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
+        case "activityLogDataFormat":
+          if (member.getValue() instanceof String) {
+            obj.setActivityLogDataFormat(io.netty.handler.logging.ByteBufFormat.valueOf((String)member.getValue()));
+          }
+          break;
         case "applicationLayerProtocols":
           if (member.getValue() instanceof JsonArray) {
             java.util.ArrayList<java.lang.String> list =  new java.util.ArrayList<>();
@@ -345,6 +350,9 @@ public class RabbitMQOptionsConverter {
   }
 
   public static void toJson(RabbitMQOptions obj, java.util.Map<String, Object> json) {
+    if (obj.getActivityLogDataFormat() != null) {
+      json.put("activityLogDataFormat", obj.getActivityLogDataFormat().name());
+    }
     if (obj.getApplicationLayerProtocols() != null) {
       JsonArray array = new JsonArray();
       obj.getApplicationLayerProtocols().forEach(item -> array.add(item));
