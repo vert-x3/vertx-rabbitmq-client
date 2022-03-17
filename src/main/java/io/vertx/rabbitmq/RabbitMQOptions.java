@@ -135,7 +135,7 @@ public class RabbitMQOptions extends NetClientOptions {
     init();
     RabbitMQOptionsConverter.fromJson(json, this);
   }
-
+  
   public RabbitMQOptions(RabbitMQOptions other) {
     super(other);
     this.uri = other.uri;
@@ -181,6 +181,12 @@ public class RabbitMQOptions extends NetClientOptions {
     this.saslConfig = null;
   }
 
+  @Override
+  public JsonObject toJson() {
+    JsonObject result = new JsonObject();
+    RabbitMQOptionsConverter.toJson(this, result);
+    return result;
+  }
 
   public List<Address> getAddresses() {
     return Collections.unmodifiableList(addresses);

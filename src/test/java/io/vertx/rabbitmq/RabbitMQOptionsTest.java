@@ -15,6 +15,13 @@ import static org.junit.Assert.assertSame;
 public class RabbitMQOptionsTest {
 
   @Test
+  public void testToJson() {
+    RabbitMQOptions options = new RabbitMQOptions().setConnectionName("ConnectionName");
+    JsonObject json = options.toJson();
+    assertEquals("ConnectionName", json.getString("connectionName"));
+  }
+  
+  @Test
   public void testFromJsonAndCopy() {
     String expectedUri = TestUtils.randomAlphaString(50);
     String expectedUser = TestUtils.randomAlphaString(20);
@@ -81,6 +88,6 @@ public class RabbitMQOptionsTest {
       assertEquals(testOptions.getIncludeProperties(), expectedIncludeProperties);
       assertEquals(testOptions.isNioEnabled(), useNio);
       assertEquals(testOptions.getConnectionName(), connectionName);
-     }
+     }       
   }
 }
