@@ -68,7 +68,6 @@ public interface RabbitMQClient {
    *
    * @param connectionEstablishedCallback  callback to be called whenever a new connection is established.
    */
-  @GenIgnore
   void addConnectionEstablishedCallback(Handler<Promise<Void>> connectionEstablishedCallback);
 
   /**
