@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,6 +32,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.VertxInternal;
@@ -113,8 +116,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     if (config.isSsl()) {
       //The RabbitMQ Client connection needs a JDK SSLContext, so force this setting.
       config.setSslEngineOptions(new JdkSSLEngineOptions());
-      SSLHelper sslHelper = new SSLHelper(config, config.getKeyCertOptions(), config.getTrustOptions());
-      JdkSslContext ctx = (JdkSslContext) sslHelper.getContext((VertxInternal) vertx);
+      SSLHelper sslHelper = new SSLHelper(config, null);
+      try {
+        sslHelper.init(((VertxInternal)vertx).createEventLoopContext()).toCompletionStage().toCompletableFuture().get(1, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+        throw new VertxException(e);
+      } catch (ExecutionException e) {
+        throw new VertxException(e.getCause());
+      }
+      JdkSslContext ctx = (JdkSslContext) sslHelper.createContext((VertxInternal) vertx);
       cf.useSslProtocol(ctx.context());
     }
 
