@@ -147,6 +147,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       cf.setCredentialsRefreshService(config.getCredentialsRefreshService());
     }
 
+    if (config.getMetricsCollector() != null) {
+      cf.setMetricsCollector(config.getMetricsCollector());
+    }
+
     //TODO: Support other configurations
 
     return addresses == null
