@@ -41,6 +41,7 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JdkSSLEngineOptions;
 import io.vertx.core.net.impl.SSLHelper;
+import io.vertx.core.net.impl.SslContextProvider;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
@@ -116,15 +117,16 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     if (config.isSsl()) {
       //The RabbitMQ Client connection needs a JDK SSLContext, so force this setting.
       config.setSslEngineOptions(new JdkSSLEngineOptions());
-      SSLHelper sslHelper = new SSLHelper(config, null);
+      SslContextProvider provider;
       try {
-        sslHelper.init(((VertxInternal)vertx).createEventLoopContext()).toCompletionStage().toCompletableFuture().get(1, TimeUnit.MINUTES);
+        SSLHelper sslHelper = new SSLHelper(config, null);
+        provider = sslHelper.init(config.getSslOptions(), ((VertxInternal) vertx).createEventLoopContext()).toCompletionStage().toCompletableFuture().get(1, TimeUnit.MINUTES);
       } catch (InterruptedException e) {
         throw new VertxException(e);
       } catch (ExecutionException e) {
         throw new VertxException(e.getCause());
       }
-      JdkSslContext ctx = (JdkSslContext) sslHelper.createContext((VertxInternal) vertx);
+      JdkSslContext ctx = (JdkSslContext) provider.createContext((VertxInternal) vertx);
       cf.useSslProtocol(ctx.context());
     }
 
