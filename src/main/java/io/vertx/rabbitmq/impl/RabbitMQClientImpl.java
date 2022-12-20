@@ -233,6 +233,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   public void restartConnect(int attempts, Handler<AsyncResult<Void>> resultHandler) {
     if (retries == 0) {
       log.error("Retries disabled. Will not attempt to restart");
+      resultHandler.handle(Future.failedFuture("Retries disabled. Will not attempt to restart"));
       return;
     }
     if (isReconnecting.compareAndSet(false, true)) {
