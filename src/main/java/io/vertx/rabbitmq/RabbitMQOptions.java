@@ -8,6 +8,7 @@ import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
 
 import com.rabbitmq.client.DefaultSaslConfig;
+import com.rabbitmq.client.MetricsCollector;
 import com.rabbitmq.client.impl.CredentialsProvider;
 import com.rabbitmq.client.impl.CredentialsRefreshService;
 import io.vertx.codegen.annotations.DataObject;
@@ -123,6 +124,7 @@ public class RabbitMQOptions extends NetClientOptions {
   private CredentialsProvider credentialsProvider;
   private CredentialsRefreshService credentialsRefreshService;
   private DefaultSaslConfig saslConfig;
+  private MetricsCollector metricsCollector;
 
   public RabbitMQOptions() {
     super();
@@ -135,7 +137,7 @@ public class RabbitMQOptions extends NetClientOptions {
     init();
     RabbitMQOptionsConverter.fromJson(json, this);
   }
-  
+
   public RabbitMQOptions(RabbitMQOptions other) {
     super(other);
     this.uri = other.uri;
@@ -157,6 +159,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.connectionName = other.connectionName;
     this.credentialsProvider = other.credentialsProvider;
     this.saslConfig = other.saslConfig;
+    this.metricsCollector = other.metricsCollector;
   }
 
   private void init() {
@@ -179,6 +182,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.connectionName = DEFAULT_CONNECTION_NAME;
     this.credentialsProvider = null;
     this.saslConfig = null;
+    this.metricsCollector = null;
   }
 
   @Override
@@ -518,6 +522,22 @@ public class RabbitMQOptions extends NetClientOptions {
    */
   public RabbitMQOptions setSaslConfig(DefaultSaslConfig saslConfig) {
     this.saslConfig = saslConfig;
+    return this;
+  }
+
+  public MetricsCollector getMetricsCollector() {
+    return metricsCollector;
+  }
+
+  /**
+   * Provides a metrics collector for RabbitMQ.
+   *
+   * @implNote The value is not saved/restored when using JSON.
+   * @return a reference to this, so the API can be used fluently.
+   * @see <a href="https://www.rabbitmq.com/api-guide.html#metrics">RabbitMQ Metrics and Monitoring guide</a>
+   */
+  public RabbitMQOptions setMetricsCollector(MetricsCollector metricsCollector) {
+    this.metricsCollector = metricsCollector;
     return this;
   }
 
