@@ -113,7 +113,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     cf.setRequestedChannelMax(config.getRequestedChannelMax());
     cf.setNetworkRecoveryInterval(config.getNetworkRecoveryInterval());
     cf.setAutomaticRecoveryEnabled(config.isAutomaticRecoveryEnabled());
-
+    
     if (config.isSsl()) {
       //The RabbitMQ Client connection needs a JDK SSLContext, so force this setting.
       config.setSslEngineOptions(new JdkSSLEngineOptions());
@@ -129,6 +129,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       JdkSslContext ctx = (JdkSslContext) provider.createContext((VertxInternal) vertx);
       cf.useSslProtocol(ctx.context());
     }
+    
 
     if (config.isNioEnabled()) {
       cf.useNio();
