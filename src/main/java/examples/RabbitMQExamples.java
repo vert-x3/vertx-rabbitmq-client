@@ -84,7 +84,7 @@ public class RabbitMQExamples {
   }
 
   public void basicPublish(RabbitMQClient client) {
-    Buffer message = Buffer.buffer("body", "Hello RabbitMQ, from Vert.x !");
+    Buffer message = Buffer.buffer("Hello RabbitMQ, from Vert.x !");
     client.basicPublish("", "my.queue", message, pubResult -> {
       if (pubResult.succeeded()) {
         System.out.println("Message published !");
@@ -95,7 +95,7 @@ public class RabbitMQExamples {
   }
 
   public void basicPublishWithConfirm(RabbitMQClient client) {
-    Buffer message = Buffer.buffer("body", "Hello RabbitMQ, from Vert.x !");
+    Buffer message = Buffer.buffer("Hello RabbitMQ, from Vert.x !");
 
     // Put the channel in confirm mode. This can be done once at init.
     client.confirmSelect(confirmResult -> {
