@@ -15,7 +15,6 @@
   <properties>
     <stack.version>4.4.0-SNAPSHOT</stack.version>
     <rabbitmq.client.version>5.16.0</rabbitmq.client.version>
-    <slf4j.version>1.7.21</slf4j.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
@@ -49,7 +48,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>${slf4j.version}</version>
     </dependency>
     <dependency>
       <groupId>com.rabbitmq</groupId>
@@ -107,7 +105,6 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>${slf4j.version}</version>
       <scope>test</scope>
     </dependency>
 
