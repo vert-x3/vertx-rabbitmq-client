@@ -226,6 +226,11 @@ public class RabbitMQOptionsConverter {
             obj.setReconnectInterval(((Number)member.getValue()).longValue());
           }
           break;
+        case "registerWriteHandler":
+          if (member.getValue() instanceof Boolean) {
+            obj.setRegisterWriteHandler((Boolean)member.getValue());
+          }
+          break;
         case "requestedChannelMax":
           if (member.getValue() instanceof Number) {
             obj.setRequestedChannelMax(((Number)member.getValue()).intValue());
@@ -448,6 +453,7 @@ public class RabbitMQOptionsConverter {
     json.put("receiveBufferSize", obj.getReceiveBufferSize());
     json.put("reconnectAttempts", obj.getReconnectAttempts());
     json.put("reconnectInterval", obj.getReconnectInterval());
+    json.put("registerWriteHandler", obj.isRegisterWriteHandler());
     json.put("requestedChannelMax", obj.getRequestedChannelMax());
     json.put("requestedHeartbeat", obj.getRequestedHeartbeat());
     json.put("reuseAddress", obj.isReuseAddress());
