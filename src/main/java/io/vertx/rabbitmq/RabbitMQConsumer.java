@@ -12,7 +12,7 @@ import io.vertx.core.streams.ReadStream;
  */
 @VertxGen
 public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
-  
+
   /**
    * Set an exception handler on the read stream.
    *
@@ -61,7 +61,7 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
    * @return the name of the queue
    */
   String queueName();
-  
+
   /**
    * Set the name of the queue.
    * This method is typically only required during a connectionEstablishedCallback when the queue name has changed.
@@ -70,7 +70,7 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
    */
   @Fluent
   RabbitMQConsumer setQueueName(String name);
-  
+
   /**
    * @return a consumer tag
    */
@@ -80,7 +80,7 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
    * Stop message consumption from a queue.
    * <p>
    * The operation is asynchronous. When consumption is stopped, you can also be notified via {@link RabbitMQConsumer#endHandler(Handler)}
-   * 
+   *
    * @return a future through which you can find out the operation status.
    */
   Future<Void> cancel();
@@ -92,19 +92,20 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
    *
    * @param cancelResult contains information about operation status: success/fail.
    */
+  @Deprecated
   void cancel(Handler<AsyncResult<Void>> cancelResult);
 
   /**
    * Return {@code true} if cancel() has been called.
-   * @return {@code true}  if cancel() has been called. 
+   * @return {@code true}  if cancel() has been called.
    */
   boolean isCancelled();
-  
+
   /**
    * @return is the stream paused?
    */
   boolean isPaused();
-  
+
   /**
    * Fetch the specified {@code amount} of elements. If the {@code ReadStream} has been paused, reading will
    * recommence with the specified {@code amount} of items, otherwise the specified {@code amount} will
@@ -113,5 +114,5 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
    * @return a reference to this, so the API can be used fluently
    */
   RabbitMQConsumer fetch(long amount);
-  
+
 }
