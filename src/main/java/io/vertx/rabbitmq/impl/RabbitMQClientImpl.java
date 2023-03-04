@@ -128,7 +128,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       } catch (ExecutionException e) {
         throw new VertxException(e.getCause());
       }
-      VertxSslContext ctx = provider.createClientContext(null, false, false);
+      VertxSslContext ctx = provider.createClientContext(null, false, config.isTrustAll());
       cf.useSslProtocol(((JdkSslContext)ctx.unwrap()).context());
     }
 
