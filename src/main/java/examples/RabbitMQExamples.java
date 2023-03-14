@@ -25,7 +25,9 @@ public class RabbitMQExamples {
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
 
     // Connect
-    client.start(asyncResult -> {
+    client
+      .start()
+      .onComplete(asyncResult -> {
       if (asyncResult.succeeded()) {
         System.out.println("RabbitMQ successfully connected!");
       } else {
@@ -53,7 +55,9 @@ public class RabbitMQExamples {
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
 
     // Connect
-    client.start(asyncResult -> {
+    client
+      .start()
+      .onComplete(asyncResult -> {
       if (asyncResult.succeeded()) {
         System.out.println("RabbitMQ successfully connected!");
       } else {
@@ -74,7 +78,9 @@ public class RabbitMQExamples {
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
 
     // Connect
-    client.start(asyncResult -> {
+    client
+      .start()
+      .onComplete(asyncResult -> {
       if (asyncResult.succeeded()) {
         System.out.println("RabbitMQ successfully connected!");
       } else {
@@ -85,53 +91,47 @@ public class RabbitMQExamples {
 
   public void basicPublish(RabbitMQClient client) {
     Buffer message = Buffer.buffer("Hello RabbitMQ, from Vert.x !");
-    client.basicPublish("", "my.queue", message, pubResult -> {
-      if (pubResult.succeeded()) {
-        System.out.println("Message published !");
-      } else {
-        pubResult.cause().printStackTrace();
-      }
-    });
+    client
+      .basicPublish("", "my.queue", message)
+      .onComplete(pubResult -> {
+        if (pubResult.succeeded()) {
+          System.out.println("Message published !");
+        } else {
+          pubResult.cause().printStackTrace();
+        }
+      });
   }
 
   public void basicPublishWithConfirm(RabbitMQClient client) {
     Buffer message = Buffer.buffer("Hello RabbitMQ, from Vert.x !");
 
     // Put the channel in confirm mode. This can be done once at init.
-    client.confirmSelect(confirmResult -> {
-      if(confirmResult.succeeded()) {
-        client.basicPublish("", "my.queue", message, pubResult -> {
-          if (pubResult.succeeded()) {
-            // Check the message got confirmed by the broker.
-            client.waitForConfirms(waitResult -> {
-              if(waitResult.succeeded())
-                System.out.println("Message published !");
-              else
-                waitResult.cause().printStackTrace();
-            });
-          } else {
-            pubResult.cause().printStackTrace();
-          }
-        });
-      } else {
-        confirmResult.cause().printStackTrace();
-      }
-    });
-
+    client
+      .confirmSelect()
+      .compose(v -> client.basicPublish("", "my.queue", message))
+      .compose(v -> client.waitForConfirms()) // Check the message got confirmed by the broker.
+      .onComplete(waitResult -> {
+        if(waitResult.succeeded())
+          System.out.println("Message published !");
+        else
+          waitResult.cause().printStackTrace();
+      });
   }
 
   public void basicConsumer(Vertx vertx, RabbitMQClient client) {
-    client.basicConsumer("my.queue", rabbitMQConsumerAsyncResult -> {
-      if (rabbitMQConsumerAsyncResult.succeeded()) {
-        System.out.println("RabbitMQ consumer created !");
-        RabbitMQConsumer mqConsumer = rabbitMQConsumerAsyncResult.result();
-        mqConsumer.handler(message -> {
-          System.out.println("Got message: " + message.body().toString());
-        });
-      } else {
-        rabbitMQConsumerAsyncResult.cause().printStackTrace();
-      }
-    });
+    client
+      .basicConsumer("my.queue")
+      .onComplete(rabbitMQConsumerAsyncResult -> {
+        if (rabbitMQConsumerAsyncResult.succeeded()) {
+          System.out.println("RabbitMQ consumer created !");
+          RabbitMQConsumer mqConsumer = rabbitMQConsumerAsyncResult.result();
+          mqConsumer.handler(message -> {
+            System.out.println("Got message: " + message.body().toString());
+          });
+        } else {
+          rabbitMQConsumerAsyncResult.cause().printStackTrace();
+        }
+      });
   }
 
   public void basicConsumerOptions(Vertx vertx, RabbitMQClient client) {
@@ -139,13 +139,15 @@ public class RabbitMQExamples {
       .setMaxInternalQueueSize(1000)
       .setKeepMostRecent(true);
 
-    client.basicConsumer("my.queue", options, rabbitMQConsumerAsyncResult -> {
-      if (rabbitMQConsumerAsyncResult.succeeded()) {
-        System.out.println("RabbitMQ consumer created !");
-      } else {
-        rabbitMQConsumerAsyncResult.cause().printStackTrace();
-      }
-    });
+    client
+      .basicConsumer("my.queue", options)
+      .onComplete(rabbitMQConsumerAsyncResult -> {
+        if (rabbitMQConsumerAsyncResult.succeeded()) {
+          System.out.println("RabbitMQ consumer created !");
+        } else {
+          rabbitMQConsumerAsyncResult.cause().printStackTrace();
+        }
+      });
   }
 
   public void pauseAndResumeConsumer(RabbitMQConsumer consumer){
@@ -160,14 +162,16 @@ public class RabbitMQExamples {
   }
 
   public void cancelConsumer(RabbitMQConsumer rabbitMQConsumer) {
-    rabbitMQConsumer.cancel(cancelResult -> {
-      if (cancelResult.succeeded()) {
-        System.out.println("Consumption successfully stopped");
-      } else {
-        System.out.println("Tired in attempt to stop consumption");
-        cancelResult.cause().printStackTrace();
-      }
-    });
+    rabbitMQConsumer
+      .cancel()
+      .onComplete(cancelResult -> {
+        if (cancelResult.succeeded()) {
+          System.out.println("Consumption successfully stopped");
+        } else {
+          System.out.println("Tired in attempt to stop consumption");
+          cancelResult.cause().printStackTrace();
+        }
+      });
   }
 
   public void exceptionHandler(RabbitMQConsumer consumer) {
@@ -183,14 +187,16 @@ public class RabbitMQExamples {
   }
 
   public void getMessage(RabbitMQClient client) {
-    client.basicGet("my.queue", true, getResult -> {
-      if (getResult.succeeded()) {
-        RabbitMQMessage msg = getResult.result();
-        System.out.println("Got message: " + msg.body());
-      } else {
-        getResult.cause().printStackTrace();
-      }
-    });
+    client
+      .basicGet("my.queue", true)
+      .onComplete(getResult -> {
+        if (getResult.succeeded()) {
+          RabbitMQMessage msg = getResult.result();
+          System.out.println("Got message: " + msg.body());
+        } else {
+          getResult.cause().printStackTrace();
+        }
+      });
   }
 
   //pass the additional config for the exchange as JSON, check RabbitMQ documentation for specific config parameters
@@ -201,34 +207,37 @@ public class RabbitMQExamples {
     config.put("x-dead-letter-exchange", "my.deadletter.exchange");
     config.put("alternate-exchange", "my.alternate.exchange");
     // ...
-    client.exchangeDeclare("my.exchange", "fanout", true, false, config, onResult -> {
-      if (onResult.succeeded()) {
-        System.out.println("Exchange successfully declared with config");
-      } else {
-        onResult.cause().printStackTrace();
-      }
-    });
+    client
+      .exchangeDeclare("my.exchange", "fanout", true, false, config)
+      .onComplete(onResult -> {
+        if (onResult.succeeded()) {
+          System.out.println("Exchange successfully declared with config");
+        } else {
+          onResult.cause().printStackTrace();
+        }
+      });
   }
 
   public void consumeWithManualAck(Vertx vertx, RabbitMQClient client) {
     // Setup the rabbitmq consumer
-    client.basicConsumer("my.queue", new QueueOptions().setAutoAck(false), consumeResult -> {
-      if (consumeResult.succeeded()) {
-        System.out.println("RabbitMQ consumer created !");
-        RabbitMQConsumer consumer = consumeResult.result();
+    client
+      .basicConsumer("my.queue", new QueueOptions().setAutoAck(false))
+      .onComplete(consumeResult -> {
+        if (consumeResult.succeeded()) {
+          System.out.println("RabbitMQ consumer created !");
+          RabbitMQConsumer consumer = consumeResult.result();
 
-        // Set the handler which messages will be sent to
-        consumer.handler(msg -> {
-          JsonObject json = (JsonObject) msg.body();
-          System.out.println("Got message: " + json.getString("body"));
-          // ack
-          client.basicAck(json.getLong("deliveryTag"), false, asyncResult -> {
+          // Set the handler which messages will be sent to
+          consumer.handler(msg -> {
+            JsonObject json = (JsonObject) msg.body();
+            System.out.println("Got message: " + json.getString("body"));
+            // ack
+            client.basicAck(json.getLong("deliveryTag"), false);
           });
-        });
-      } else {
-        consumeResult.cause().printStackTrace();
-      }
-    });
+        } else {
+          consumeResult.cause().printStackTrace();
+        }
+      });
   }
 
   //pass the additional config for the queue as JSON, check RabbitMQ documentation for specific config parameters
@@ -236,14 +245,16 @@ public class RabbitMQExamples {
     JsonObject config = new JsonObject();
     config.put("x-message-ttl", 10_000L);
 
-    client.queueDeclare("my-queue", true, false, true, config, queueResult -> {
-      if (queueResult.succeeded()) {
-        System.out.println("Queue declared!");
-      } else {
-        System.err.println("Queue failed to be declared!");
-        queueResult.cause().printStackTrace();
-      }
-    });
+    client
+      .queueDeclare("my-queue", true, false, true, config)
+      .onComplete(queueResult -> {
+        if (queueResult.succeeded()) {
+          System.out.println("Queue declared!");
+        } else {
+          System.err.println("Queue failed to be declared!");
+          queueResult.cause().printStackTrace();
+        }
+      });
   }
 
   // Use the connectionEstablishedCallback to declare an Exchange
@@ -261,13 +272,12 @@ public class RabbitMQExamples {
     });
 
     // At this point the exchange, queue and binding will have been declared even if the client connects to a new server
-    client.basicConsumer("queue", rabbitMQConsumerAsyncResult -> {
-    });
+    client.basicConsumer("queue");
   }
 
   public void connectionEstablishedCallbackForServerNamedAutoDeleteQueue(Vertx vertx, RabbitMQOptions config) {
     RabbitMQClient client = RabbitMQClient.create(vertx, config);
-    AtomicReference<RabbitMQConsumer> consumer = new AtomicReference<>();
+    AtomicReference<RabbitMQConsumer> consumerRef = new AtomicReference<>();
     AtomicReference<String> queueName = new AtomicReference<>();
     client.addConnectionEstablishedCallback(promise -> {
           client.exchangeDeclare("exchange", "fanout", true, false)
@@ -276,7 +286,7 @@ public class RabbitMQExamples {
                       queueName.set(dok.getQueue());
                       // The first time this runs there will be no existing consumer
                       // on subsequent connections the consumer needs to be update with the new queue name
-                      RabbitMQConsumer currentConsumer = consumer.get();
+                      RabbitMQConsumer currentConsumer = consumerRef.get();
                       if (currentConsumer != null) {
                         currentConsumer.setQueueName(queueName.get());
                       }
@@ -288,11 +298,9 @@ public class RabbitMQExamples {
     client.start()
             .onSuccess(v -> {
                 // At this point the exchange, queue and binding will have been declared even if the client connects to a new server
-                client.basicConsumer(queueName.get(), rabbitMQConsumerAsyncResult -> {
-                    if (rabbitMQConsumerAsyncResult.succeeded()) {
-                        consumer.set(rabbitMQConsumerAsyncResult.result());
-                    }
-                });
+                client
+                  .basicConsumer(queueName.get())
+                  .onSuccess(c -> consumerRef.set(c));
             })
             .onFailure(ex -> {
                 System.out.println("It went wrong: " + ex.getMessage());

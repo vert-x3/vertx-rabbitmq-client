@@ -5,7 +5,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 
 /**
- * Aimed to specify queue consumer settings when calling {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)}
+ * Aimed to specify queue consumer settings when calling {@link RabbitMQClient#basicConsumer(String, QueueOptions)}
  */
 @DataObject(generateConverter = true)
 public class QueueOptions {
