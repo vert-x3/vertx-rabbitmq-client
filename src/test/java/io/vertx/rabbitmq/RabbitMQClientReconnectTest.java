@@ -42,7 +42,7 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
         serverSocket.close();
       } else {
         serverSocket.pause();
-        proxyClient.connect(port, host, ar -> {
+        proxyClient.connect(port, host).onComplete(ar -> {
           if (ar.succeeded()) {
             NetSocket clientSocket = ar.result();
             serverSocket.handler(clientSocket::write);
@@ -57,7 +57,8 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
           }
         });
       }
-    }).listen(PROXY_PORT, "localhost", ar -> {
+    });
+    proxyServer.listen(PROXY_PORT, "localhost").onComplete(ar -> {
       if (ar.succeeded()) {
         latch.complete(null);
       } else {
@@ -105,7 +106,7 @@ public class RabbitMQClientReconnectTest extends RabbitMQClientTestBase {
     connectionRetries = 2;
     startProxy(2);
     connect();
-    client.stop(ctx.asyncAssertSuccess());
+    client.stop().onComplete(ctx.asyncAssertSuccess());
   }
 
   @Test

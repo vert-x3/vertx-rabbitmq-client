@@ -45,7 +45,7 @@ public class RabbitMQManagementClient {
   private void getBindings(String url, Handler<AsyncResult<List<Binding>>> resultHandler) {
     this.webClient.get(port, host, url)
       .basicAuthentication(user, password)
-      .send(ar -> {
+      .send().onComplete(ar -> {
         if (ar.succeeded()) {
           HttpResponse<Buffer> response = ar.result();
           if (response.bodyAsString() == null) {
@@ -66,7 +66,7 @@ public class RabbitMQManagementClient {
     String url = "/api/exchanges/%2f/" + name;
     this.webClient.get(port, host, url)
       .basicAuthentication(user, password)
-      .send(ar -> {
+      .send().onComplete(ar -> {
         if (ar.succeeded()) {
           HttpResponse<Buffer> response = ar.result();
 

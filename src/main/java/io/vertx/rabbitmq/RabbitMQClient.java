@@ -619,6 +619,7 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.ShutdownNotifier#isOpen()
    */
   boolean isConnected();
+
   /***
    * restart the rabbitMQ connect.
    * @param attempts  number of attempts
@@ -626,6 +627,15 @@ public interface RabbitMQClient {
    */
   @Deprecated
   void restartConnect(int attempts, Handler<AsyncResult<Void>> resultHandler);
+
+  /***
+   * restart the rabbitMQ connect.
+   * @param attempts  number of attempts
+   * @return a future of the async result
+   */
+  default Future<Void> restartConnect(int attempts) {
+    return Future.future(h -> restartConnect(attempts, h));
+  }
 
   /**
    * Check if a channel is open

@@ -41,7 +41,7 @@ public class RabbitMQClientTestBase {
     RabbitMQOptions config = config();
     client = RabbitMQClient.create(vertx, config);
     CompletableFuture<Void> latch = new CompletableFuture<>();
-    client.start(ar -> {
+    client.start().onComplete(ar -> {
       if (ar.succeeded()) {
         latch.complete(null);
       } else {
@@ -80,13 +80,13 @@ public class RabbitMQClientTestBase {
     client = null;
     if (c != null) {
       Async async = ctx.async();
-      c.stop(ctx.asyncAssertSuccess(v -> async.complete()));
+      c.stop().onComplete(ctx.asyncAssertSuccess(v -> async.complete()));
       async.awaitSuccess(20_000);
     }
     Vertx v = vertx;
     vertx = null;
     if (v != null) {
-      v.close(ctx.asyncAssertSuccess());
+      v.close().onComplete(ctx.asyncAssertSuccess());
     }
   }
 

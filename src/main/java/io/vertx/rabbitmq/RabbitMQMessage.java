@@ -41,7 +41,7 @@ public interface RabbitMQMessage {
   BasicProperties properties();
 
   /**
-   * @return the message count for messages obtained with {@link RabbitMQClient#basicGet(String, boolean, Handler)}
+   * @return the message count for messages obtained with {@link RabbitMQClient#basicGet(String, boolean)}
    */
   @CacheReturn
   Integer messageCount();

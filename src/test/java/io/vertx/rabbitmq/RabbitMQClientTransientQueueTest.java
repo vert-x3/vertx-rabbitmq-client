@@ -38,9 +38,9 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
   private static final Logger logger = LoggerFactory.getLogger(RabbitMQClientTransientQueueTest.class);
 
   private static final String EXCHANGE_NAME = "RabbitMQClientTransientQueueTest";
-  
+
   private String queueName;
-  
+
   private static final int getFreePort() {
     try (ServerSocket s = new ServerSocket(0)) {
       return s.getLocalPort();
@@ -48,12 +48,12 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
       return -1;
     }
   }
-  
+
   @ClassRule
   public static final GenericContainer fixedRabbitmq = new FixedHostPortGenericContainer<>("rabbitmq:3.7")
     .withCreateContainerCmdModifier(cmd -> cmd.withHostName("bouncing-rabbit2"))
     .withFixedExposedPort(getFreePort(), 5672);
-  
+
   @Override
   public RabbitMQOptions config() throws Exception {
     RabbitMQOptions options = super.config();
@@ -63,7 +63,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     options.setReconnectInterval(500);
     return options;
   }
-  
+
   static class MessageDefinition {
     final int i;
     final String messageId;
@@ -74,12 +74,12 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
       this.messageId = messageId;
       this.messageBody = messageBody;
     }
-    
+
   }
-  
+
   @Test
   public void testStopEmpty(TestContext ctx) throws Throwable {
-    
+
     this.client = RabbitMQClient.create(vertx, config());
 
     RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx
@@ -90,37 +90,37 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
             .setMaxInternalQueueSize(Integer.MAX_VALUE)
     );
     CompletableFuture startLatch = new CompletableFuture();
-    publisher.start(ar -> {
+    publisher.start().onComplete(ar -> {
       startLatch.complete(null);
     });
     startLatch.get();
-    
+
     CompletableFuture stopLatch = new CompletableFuture();
-    publisher.stop(ar -> {
+    publisher.stop().onComplete(ar -> {
       stopLatch.complete(null);
     });
     stopLatch.get();
-    
+
   }
-  
+
   @Test
   public void testPublishOverReconnect(TestContext ctx) throws Throwable {
 
     int count = 1000;
-    
+
     Map<String, MessageDefinition> messages = new HashMap<>(count);
     for (int i = 0; i < count; ++i) {
       String messageId = Integer.toString(i);
       messages.put(messageId, new MessageDefinition(i, messageId, "Message " + i));
-    }    
+    }
     Map<String, RabbitMQMessage> messagesReceived = new HashMap<>(count);
-        
+
     CompletableFuture<Void> receivedLastMessageLatch = new CompletableFuture<>();
-    
+
     // Now that publishers start asynchronously there is a race condition where messages can be published
     // before the connection established callbacks have run, which means that the queue doesn't exist and
     // messages get lost.
-    // Unfortunately, with transient queues that is inevitable, consumers must ensure their state is correct 
+    // Unfortunately, with transient queues that is inevitable, consumers must ensure their state is correct
     // at the point that they create their binding.
     CompletableFuture<Void> letConsumerStartFirst = new CompletableFuture<>();
 
@@ -129,16 +129,16 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     AtomicLong duplicateCount = new AtomicLong();
     prepareClient(consumerClient
         , p -> {
-          consumerClient.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false, ar1 -> {
+          consumerClient.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false).onComplete(ar1 -> {
             if (ar1.succeeded()) {
-              consumerClient.queueDeclare("", false, true, true, ar2 -> {
+              consumerClient.queueDeclare("", false, true, true).onComplete(ar2 -> {
                 if (ar2.succeeded()) {
                   queueName = ar2.result().getQueue();
                   RabbitMQConsumer currentConsumer = consumer.get();
                   if (currentConsumer != null) {
                     currentConsumer.setQueueName(queueName);
                   }
-                  consumerClient.queueBind(queueName, EXCHANGE_NAME, "", ar3 -> {
+                  consumerClient.queueBind(queueName, EXCHANGE_NAME, "").onComplete(ar3 -> {
                     if (ar3.succeeded()) {
                       p.complete();
                     } else {
@@ -157,7 +157,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
         , p -> {
           consumerClient.basicConsumer(queueName
                   , new QueueOptions().setAutoAck(false)
-                  , ar4 -> {
+          ).onComplete(ar4 -> {
             if (ar4.succeeded()) {
               letConsumerStartFirst.complete(null);
               consumer.set(ar4.result());
@@ -185,15 +185,15 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
             }
           });
         }
-    ); 
-    
+    );
+
     letConsumerStartFirst.get(2, TimeUnit.MINUTES);
     logger.info("Consumer started, preparing producer");
-            
+
     this.client = RabbitMQClient.create(vertx, config());
     prepareClient(client
         , p -> {
-          client.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false, ar1 -> {
+          client.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false).onComplete(ar1 -> {
             if (ar1.succeeded()) {
               p.complete();
             } else {
@@ -202,8 +202,8 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
           });
         }
         , null
-    ); 
-    
+    );
+
     vertx.setTimer(200, l -> {
       vertx.executeBlocking(f -> {
         logger.info("Stopping rabbitmq container");
@@ -214,7 +214,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
         f.complete();
       });
     });
-        
+
     RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx
         , client
         , new RabbitMQPublisherOptions()
@@ -222,14 +222,14 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
             .setReconnectInterval(100)
             .setMaxInternalQueueSize(Integer.MAX_VALUE)
     );
-    publisher.start(ar -> {
+    publisher.start().onComplete(ar -> {
       publisher.getConfirmationStream().handler(c -> {
         synchronized(messages) {
           messages.remove(c.getMessageId());
         }
       });
     });
-    
+
     List<MessageDefinition> messagesCopy;
     synchronized(messages) {
       messagesCopy = new ArrayList<>(messages.values());
@@ -242,13 +242,11 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
           , new AMQP.BasicProperties.Builder()
               .messageId(message.messageId)
               .build()
-          , Buffer.buffer(message.messageBody)
-          , null
-      );
+          , Buffer.buffer(message.messageBody));
     }
     logger.info("Still got " + publisher.queueSize() + " messages in the send queue, waiting for that to clear");
     CompletableFuture<Void> emptyPublisherLatch = new CompletableFuture<>();
-    publisher.stop(ar -> {
+    publisher.stop().onComplete(ar -> {
       if (ar.succeeded()) {
         emptyPublisherLatch.complete(null);
       } else {
@@ -270,11 +268,9 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
           , new AMQP.BasicProperties.Builder()
               .messageId(message.messageId)
               .build()
-          , Buffer.buffer(message.messageBody)
-          , null
-      );
+          , Buffer.buffer(message.messageBody));
     }
-    
+
     logger.info("Waiting up to 20s for the last message to be received (noting that it may not be)");
     try {
       receivedLastMessageLatch.get(20, TimeUnit.SECONDS);
@@ -285,18 +281,18 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
 
     List<String> got = new ArrayList<>(messagesReceived.keySet());
     analyzeReceivedMessages(got);
-    
+
     logger.info("Shutting down");
-    consumer.get().cancel(ar1 -> {
+    consumer.get().cancel().onComplete(ar1 -> {
       logger.info("Consumer cancelled");
-      consumerClient.stop(ar2 -> {
+      consumerClient.stop().onComplete(ar2 -> {
         logger.info("Consumer client stopped");
-        client.stop(ar3 -> {
+        client.stop().onComplete(ar3 -> {
           logger.info("Producer client stopped");
           ctx.async().complete();
         });
       });
-    });        
+    });
   }
 
   static void prepareClient(
@@ -308,7 +304,7 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
       client.addConnectionEstablishedCallback(connectionEstablishedCallback);
     }
     CompletableFuture<Void> latch = new CompletableFuture<>();
-    client.start(ar -> {
+    client.start().onComplete(ar -> {
       if (ar.succeeded()) {
         if (startHandler != null) {
           startHandler.handle(latch);
@@ -335,9 +331,9 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     public String toString() {
       return "[" + from + '-' + to + ']';
     }
-    
+
   };
-  
+
   private void analyzeReceivedMessages(List<String> received) {
     int values[] = received.stream().mapToInt(v -> Integer.parseInt(v)).sorted().toArray();
     // logger.info("Received messages: " + Arrays.toString(values));
@@ -349,5 +345,5 @@ public class RabbitMQClientTransientQueueTest extends RabbitMQClientTestBase {
     }
     logger.info("Received messages had " + gaps.size() + " gaps (expected one): " + gaps);
   }
-  
+
 }

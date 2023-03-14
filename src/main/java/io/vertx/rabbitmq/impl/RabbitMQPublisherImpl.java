@@ -157,7 +157,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
           , RabbitMQPublisherOptions options1
           , Promise<Void> promise
   ) {
-    client1.addConfirmListener(options1.getMaxInternalQueueSize(),
+    client1.addConfirmListener(options1.getMaxInternalQueueSize()).onComplete(
             ar -> {
               if (ar.succeeded()) {
                 ar.result().handler(confirmation -> {
@@ -192,35 +192,32 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   private void doSend(MessageDetails md) {
     try {
       client.basicPublishWithDeliveryTag(md.exchange, md.routingKey, md.properties, md.message
-          , dt -> { md.setDeliveryTag(dt); }
-          , publishResult -> {
-            try {
-              if (publishResult.succeeded()) {
-                if (md.publishHandler != null) {
-                  try {
-                    md.publishHandler.handle(publishResult);
-                  } catch(Throwable ex) {
-                    log.warn("Failed to handle publish result", ex);
-                  }
+          , dt -> { md.setDeliveryTag(dt); }).onComplete(
+          publishResult -> {
+            if (publishResult.succeeded()) {
+              if (md.publishHandler != null) {
+                try {
+                  md.publishHandler.handle(publishResult);
+                } catch(Throwable ex) {
+                  log.warn("Failed to handle publish result", ex);
                 }
-                sendQueue.resume();
-              } else {
-                log.info("Failed to publish message: " + publishResult.cause().toString());
-                synchronized(pendingAcks) {
-                  pendingAcks.remove(md);
-                }
-                client.restartConnect(0,rcRt->{
-                  doSend(md);
-                });
               }
-            } finally {
+              sendQueue.resume();
+            } else {
+              log.info("Failed to publish message: " + publishResult.cause().toString());
+              synchronized(pendingAcks) {
+                pendingAcks.remove(md);
+              }
+              client.restartConnect(0).onComplete(rcRt->{
+                doSend(md);
+              });
             }
           });
     } catch(Throwable ex) {
       synchronized(pendingAcks) {
         pendingAcks.remove(md);
       }
-      client.restartConnect(0,rcRt->{
+      client.restartConnect(0).onComplete(rcRt->{
         doSend(md);
       });
     }
