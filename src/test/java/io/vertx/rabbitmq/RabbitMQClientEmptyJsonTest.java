@@ -50,7 +50,7 @@ public class RabbitMQClientEmptyJsonTest {
       this.testContext = testContext;
       this.async = async;
     }
-    
+
     @Override
     public void start() {
 
@@ -95,7 +95,7 @@ public class RabbitMQClientEmptyJsonTest {
       final Integer period = config().getInteger("queue_process_period");
 
       vertx.setPeriodic(period, timer -> {
-        rabbit.basicGet(QUEUE_NAME, true, get -> {
+        rabbit.basicGet(QUEUE_NAME, true).onComplete(get -> {
           if (get.succeeded()) {
             processMessage(get.result());
           } else {
@@ -120,10 +120,10 @@ public class RabbitMQClientEmptyJsonTest {
   @Test
   public void testStart(TestContext testContext) throws InterruptedException {
     Vertx vertx = Vertx.vertx();
-    
+
     Async async = testContext.async();
     vertx.deployVerticle(new NotificationsVerticle(testContext, async));
-    
+
     async.awaitSuccess(1000000);
   }
 

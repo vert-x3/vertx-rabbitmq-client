@@ -53,7 +53,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     List<String> receivedOrder = Collections.synchronizedList(new ArrayList<>());
 
     Async async = ctx.async(sendingOrder.size());
-    client.basicConsumer(queueName, consumerHandler -> {
+    client.basicConsumer(queueName).onComplete(consumerHandler -> {
       if (consumerHandler.succeeded()) {
         consumerHandler.result().handler(msg -> {
           ctx.assertNotNull(msg);
@@ -85,7 +85,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     long timeOutFailTimer = vertx.setTimer(10_000, t -> ctx.fail());
 
     vertx.setPeriodic(100, id -> {
-      client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+      client.basicGet(q, true).onComplete(ctx.asyncAssertSuccess(msg -> {
         if (msg != null) {
           String body = msg.body().toString();
           ctx.assertTrue(messages.contains(body));
@@ -104,8 +104,8 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     String q = setupQueue(ctx, null);
     String body = randomAlphaString(100);
     Buffer message = Buffer.buffer(body);
-    client.basicPublish("", q, message, ctx.asyncAssertSuccess(v -> {
-      client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+    client.basicPublish("", q, message).onComplete(ctx.asyncAssertSuccess(v -> {
+      client.basicGet(q, true).onComplete(ctx.asyncAssertSuccess(msg -> {
         ctx.assertNotNull(msg);
         ctx.assertEquals(body, msg.body().toString());
       }));
@@ -118,10 +118,10 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     String body = randomAlphaString(100);
     Buffer message = Buffer.buffer(body);
 
-    client.confirmSelect(ctx.asyncAssertSuccess(v -> {
-      client.basicPublish("", q, message, ctx.asyncAssertSuccess(vv -> {
-        client.waitForConfirms(ctx.asyncAssertSuccess(vvv -> {
-          client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+    client.confirmSelect().onComplete(ctx.asyncAssertSuccess(v -> {
+      client.basicPublish("", q, message).onComplete(ctx.asyncAssertSuccess(vv -> {
+        client.waitForConfirms().onComplete(ctx.asyncAssertSuccess(vvv -> {
+          client.basicGet(q, true).onComplete(ctx.asyncAssertSuccess(msg -> {
             ctx.assertNotNull(msg);
             ctx.assertEquals(body, msg.body().toString());
           }));
@@ -138,15 +138,15 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Async async = ctx.async();
     long deliveryTag[] = {0};
-    
-    client.addConfirmListener(1000, v -> {
+
+    client.addConfirmListener(1000).onComplete(v -> {
       v.result().handler(conf -> {
         long channelInstance = conf.getChannelInstance();
         ctx.assertEquals(1L, channelInstance);
         long dt = conf.getDeliveryTag();
         ctx.assertTrue(dt > 0);
         ctx.assertEquals(deliveryTag[0], dt);
-        client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+        client.basicGet(q, true).onComplete(ctx.asyncAssertSuccess(msg -> {
           ctx.assertNotNull(msg);
           ctx.assertEquals(body, msg.body().toString());
           async.complete();
@@ -156,8 +156,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
           , message
           , dt -> {
             deliveryTag[0] = dt;
-          }
-          , ctx.asyncAssertSuccess(dt -> {         
+          }).onComplete(ctx.asyncAssertSuccess(dt -> {
       }));
     });
   }
@@ -168,10 +167,10 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     String body = randomAlphaString(100);
     Buffer message = Buffer.buffer(body);
 
-    client.confirmSelect(ctx.asyncAssertSuccess(v -> {
-      client.basicPublish("", q, message, ctx.asyncAssertSuccess(vv -> {
-        client.waitForConfirms(1000, ctx.asyncAssertSuccess(vvv -> {
-          client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+    client.confirmSelect().onComplete(ctx.asyncAssertSuccess(v -> {
+      client.basicPublish("", q, message).onComplete(ctx.asyncAssertSuccess(vv -> {
+        client.waitForConfirms(1000).onComplete(ctx.asyncAssertSuccess(vvv -> {
+          client.basicGet(q, true).onComplete(ctx.asyncAssertSuccess(msg -> {
             ctx.assertNotNull(msg);
             ctx.assertEquals(body, msg.body().toString());
           }));
@@ -188,8 +187,8 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
       .contentType("application/json")
       .build();
-    client.basicPublish("", q, props, message, ctx.asyncAssertSuccess(v -> {
-      client.basicGet(q, true, ctx.asyncAssertSuccess(msg -> {
+    client.basicPublish("", q, props, message).onComplete(ctx.asyncAssertSuccess(v -> {
+      client.basicGet(q, true).onComplete(ctx.asyncAssertSuccess(msg -> {
         ctx.assertNotNull(msg);
         JsonObject b = msg.body().toJsonObject();
         ctx.assertNotNull(b);
@@ -207,7 +206,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Async latch = ctx.async(count);
 
-    client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+    client.basicConsumer(q).onComplete(ctx.asyncAssertSuccess(consumer -> {
       consumer.handler(msg -> {
         ctx.assertNotNull(msg);
         String body = msg.body().toString();
@@ -228,7 +227,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Handler<Throwable> errorHandler = throwable -> latch.countDown();
 
-    client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+    client.basicConsumer(q).onComplete(ctx.asyncAssertSuccess(consumer -> {
       consumer.exceptionHandler(errorHandler);
       consumer.handler(json -> {
         throw new IllegalStateException("Getting message with malformed json");
@@ -245,7 +244,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Async latch = ctx.async(count);
 
-    client.basicConsumer(q, new QueueOptions().setAutoAck(false), consumerHandler -> {
+    client.basicConsumer(q, new QueueOptions().setAutoAck(false)).onComplete(consumerHandler -> {
       if (consumerHandler.succeeded()) {
         log.info("Consumer started successfully");
         RabbitMQConsumer result = consumerHandler.result();
@@ -271,14 +270,14 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     log.info("message arrived: " + message.body().toString(message.properties().getContentEncoding()));
     log.info("redelivered? : " + message.envelope().isRedeliver());
     if (message.envelope().isRedeliver()) {
-      client.basicAck(deliveryTag, false, ctx.asyncAssertSuccess(v -> {
+      client.basicAck(deliveryTag, false).onComplete(ctx.asyncAssertSuccess(v -> {
         // remove the message if is redeliver (unacked)
         messages.remove(body);
         async.countDown();
       }));
     } else {
       // send and Nack for every ready message
-      client.basicNack(deliveryTag, false, true, ctx.asyncAssertSuccess());
+      client.basicNack(deliveryTag, false, true).onComplete(ctx.asyncAssertSuccess());
     }
   }
 
@@ -286,10 +285,10 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
   public void testQueueDeclareAndDelete(TestContext ctx) {
     String queueName = randomAlphaString(10);
 
-    client.queueDeclare(queueName, false, false, true, ctx.asyncAssertSuccess(result -> {
+    client.queueDeclare(queueName, false, false, true).onComplete(ctx.asyncAssertSuccess(result -> {
       ctx.assertEquals(result.getQueue(), queueName);
 
-      client.queueDelete(queueName, ctx.asyncAssertSuccess());
+      client.queueDelete(queueName).onComplete(ctx.asyncAssertSuccess());
     }));
   }
 
@@ -299,10 +298,10 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     JsonObject config = new JsonObject();
     config.put("x-message-ttl", 10_000L);
 
-    client.queueDeclare(queueName, false, false, true, config, ctx.asyncAssertSuccess(result -> {
+    client.queueDeclare(queueName, false, false, true, config).onComplete(ctx.asyncAssertSuccess(result -> {
       ctx.assertEquals(result.getQueue(), queueName);
 
-      client.queueDelete(queueName, ctx.asyncAssertSuccess());
+      client.queueDelete(queueName).onComplete(ctx.asyncAssertSuccess());
     }));
   }
 
@@ -312,7 +311,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     String exName = randomAlphaString(10);
     JsonObject params = new JsonObject();
     params.put("alternate-exchange", "alt.ex");
-    client.exchangeDeclare(exName, "direct", false, true, params, ctx.asyncAssertSuccess());
+    client.exchangeDeclare(exName, "direct", false, true, params).onComplete(ctx.asyncAssertSuccess());
 
   }
 
@@ -322,7 +321,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     String exName = randomAlphaString(10);
     JsonObject params = new JsonObject();
     params.put("x-dead-letter-exchange", "dlx.exchange");
-    client.exchangeDeclare(exName, "direct", false, true, params, ctx.asyncAssertSuccess());
+    client.exchangeDeclare(exName, "direct", false, true, params).onComplete(ctx.asyncAssertSuccess());
   }
 
   @Test
@@ -332,7 +331,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     ctx.assertTrue(result);
 
-    client.stop(ctx.asyncAssertSuccess(v -> {
+    client.stop().onComplete(ctx.asyncAssertSuccess(v -> {
       ctx.assertFalse(client.isOpenChannel());
     }));
   }
@@ -344,7 +343,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     ctx.assertTrue(result);
 
-    client.stop(ctx.asyncAssertSuccess(v -> {
+    client.stop().onComplete(ctx.asyncAssertSuccess(v -> {
       ctx.assertFalse(client.isConnected());
     }));
   }
@@ -357,11 +356,11 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.messageCount(queue, ctx.asyncAssertSuccess(messageCount -> {
+      client.messageCount(queue).onComplete(ctx.asyncAssertSuccess(messageCount -> {
           ctx.assertEquals(count, messageCount.intValue());
 
           // remove the queue
-          client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+          client.queueDelete(queue).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
         })
       )
     );
@@ -376,7 +375,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     int amountOfUnAckMessages = count - 1;
 
     Async prefetchDone = ctx.async();
-    client.basicQos(amountOfUnAckMessages, ctx.asyncAssertSuccess(v -> prefetchDone.complete()));
+    client.basicQos(amountOfUnAckMessages).onComplete(ctx.asyncAssertSuccess(v -> prefetchDone.complete()));
     prefetchDone.await();
 
     Set<String> messages = createMessages(count);
@@ -384,7 +383,7 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
 
     Async receivedExpectedNumberOfMessages = ctx.async(amountOfUnAckMessages);
 
-    client.basicConsumer(queue, new QueueOptions().setAutoAck(false), ctx.asyncAssertSuccess(consumer -> {
+    client.basicConsumer(queue, new QueueOptions().setAutoAck(false)).onComplete(ctx.asyncAssertSuccess(consumer -> {
       consumer.handler(msg -> {
         ctx.assertFalse(receivedExpectedNumberOfMessages.isCompleted());
         receivedExpectedNumberOfMessages.countDown();
@@ -409,15 +408,15 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.exchangeBind(destination, source, routingKey, ctx.asyncAssertSuccess(v ->
+      client.exchangeBind(destination, source, routingKey).onComplete(ctx.asyncAssertSuccess(v ->
         managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> {
           ctx.assertTrue(bindings.size() == 1);
           RabbitMQManagementClient.Binding binding = bindings.get(0);
           ctx.assertEquals(binding.getRoutingKey(), routingKey);
           ctx.assertTrue(binding.getArguments().isEmpty());
 
-          client.exchangeDelete(source, ctx.asyncAssertSuccess());
-          client.exchangeDelete(destination, ctx.asyncAssertSuccess(json -> async.complete()));
+          client.exchangeDelete(source).onComplete(ctx.asyncAssertSuccess());
+          client.exchangeDelete(destination).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
         })))
       )
     );
@@ -437,15 +436,15 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.exchangeBind(destination, source, routingKey, arguments, ctx.asyncAssertSuccess(v ->
+      client.exchangeBind(destination, source, routingKey, arguments).onComplete(ctx.asyncAssertSuccess(v ->
         managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> {
           ctx.assertTrue(bindings.size() == 1);
           RabbitMQManagementClient.Binding binding = bindings.get(0);
           ctx.assertEquals(binding.getRoutingKey(), routingKey);
           ctx.assertEquals(binding.getArguments(), arguments);
 
-          client.exchangeDelete(source, ctx.asyncAssertSuccess());
-          client.exchangeDelete(destination, ctx.asyncAssertSuccess(json -> async.complete()));
+          client.exchangeDelete(source).onComplete(ctx.asyncAssertSuccess());
+          client.exchangeDelete(destination).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
         })))
       )
     );
@@ -462,12 +461,12 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.exchangeUnbind(destination, source, routingKey, ctx.asyncAssertSuccess(v -> {
+      client.exchangeUnbind(destination, source, routingKey).onComplete(ctx.asyncAssertSuccess(v -> {
           managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> {
             ctx.assertTrue(bindings.isEmpty());
 
-            client.exchangeDelete(source, ctx.asyncAssertSuccess());
-            client.exchangeDelete(destination, ctx.asyncAssertSuccess(json -> async.complete()));
+            client.exchangeDelete(source).onComplete(ctx.asyncAssertSuccess());
+            client.exchangeDelete(destination).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
           }));
         })
       )
@@ -489,12 +488,12 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.exchangeUnbind(destination, source, routingKey, arguments, ctx.asyncAssertSuccess(v -> {
+      client.exchangeUnbind(destination, source, routingKey, arguments).onComplete(ctx.asyncAssertSuccess(v -> {
           managementClient.getExchangeBindings(destination, source, ctx.asyncAssertSuccess(bindings -> {
             ctx.assertTrue(bindings.isEmpty());
 
-            client.exchangeDelete(source, ctx.asyncAssertSuccess());
-            client.exchangeDelete(destination, ctx.asyncAssertSuccess(json -> async.complete()));
+            client.exchangeDelete(source).onComplete(ctx.asyncAssertSuccess());
+            client.exchangeDelete(destination).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
           }));
         })
       )
@@ -511,15 +510,15 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.queueBind(queue, exchange, routingKey, ctx.asyncAssertSuccess(v ->
+      client.queueBind(queue, exchange, routingKey).onComplete(ctx.asyncAssertSuccess(v ->
         managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> {
           ctx.assertTrue(bindings.size() == 1);
           RabbitMQManagementClient.Binding binding = bindings.get(0);
           ctx.assertEquals(binding.getRoutingKey(), routingKey);
           ctx.assertTrue(binding.getArguments().isEmpty());
 
-          client.exchangeDelete(exchange, ctx.asyncAssertSuccess());
-          client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+          client.exchangeDelete(exchange).onComplete(ctx.asyncAssertSuccess());
+          client.queueDelete(queue).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
         })))
       )
     );
@@ -539,15 +538,15 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.queueBind(queue, exchange, routingKey, arguments, ctx.asyncAssertSuccess(v -> {
+      client.queueBind(queue, exchange, routingKey, arguments).onComplete(ctx.asyncAssertSuccess(v -> {
           managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> {
             ctx.assertTrue(bindings.size() == 1);
             RabbitMQManagementClient.Binding binding = bindings.get(0);
             ctx.assertEquals(binding.getRoutingKey(), routingKey);
             ctx.assertEquals(binding.getArguments(), arguments);
 
-            client.exchangeDelete(exchange, ctx.asyncAssertSuccess());
-            client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+            client.exchangeDelete(exchange).onComplete(ctx.asyncAssertSuccess());
+            client.queueDelete(queue).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
           }));
         })
       )
@@ -565,12 +564,12 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.queueUnbind(queue, exchange, routingKey, ctx.asyncAssertSuccess(v -> {
+      client.queueUnbind(queue, exchange, routingKey).onComplete(ctx.asyncAssertSuccess(v -> {
           managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> {
             ctx.assertTrue(bindings.isEmpty());
 
-            client.exchangeDelete(exchange, ctx.asyncAssertSuccess());
-            client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+            client.exchangeDelete(exchange).onComplete(ctx.asyncAssertSuccess());
+            client.queueDelete(queue).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
           }));
         })
       )
@@ -592,12 +591,12 @@ public class RabbitMQServiceTest extends RabbitMQClientTestBase {
     Async async = ctx.async();
 
     vertx.setTimer(2000, t ->
-      client.queueUnbind(queue, exchange, routingKey, arguments, ctx.asyncAssertSuccess(v -> {
+      client.queueUnbind(queue, exchange, routingKey, arguments).onComplete(ctx.asyncAssertSuccess(v -> {
           managementClient.getQueueBindings(queue, exchange, ctx.asyncAssertSuccess(bindings -> {
             ctx.assertTrue(bindings.isEmpty());
 
-            client.exchangeDelete(exchange, ctx.asyncAssertSuccess());
-            client.queueDelete(queue, ctx.asyncAssertSuccess(json -> async.complete()));
+            client.exchangeDelete(exchange).onComplete(ctx.asyncAssertSuccess());
+            client.queueDelete(queue).onComplete(ctx.asyncAssertSuccess(json -> async.complete()));
           }));
         })
       )

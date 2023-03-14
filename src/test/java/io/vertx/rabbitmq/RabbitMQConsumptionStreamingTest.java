@@ -33,7 +33,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
 
     Async messagesReceived = ctx.async(count);
 
-    client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+    client.basicConsumer(q).onComplete(ctx.asyncAssertSuccess(consumer -> {
       consumer.handler(msg -> {
         ctx.assertNotNull(msg);
         String tag = msg.consumerTag();
@@ -57,7 +57,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     Async resumed = ctx.async();
     Async messageReceived = ctx.async();
 
-    client.basicConsumer(q, new QueueOptions(), ctx.asyncAssertSuccess(consumer -> {
+    client.basicConsumer(q, new QueueOptions()).onComplete(ctx.asyncAssertSuccess(consumer -> {
       consumer.pause();
       consumer.handler(msg -> {
         ctx.assertNotNull(msg);
@@ -91,11 +91,11 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     Async canceled = ctx.async();
     Async endOfStream = ctx.async();
 
-    client.basicConsumer(q, ctx.asyncAssertSuccess(consumer -> {
+    client.basicConsumer(q).onComplete(ctx.asyncAssertSuccess(consumer -> {
       consumer.endHandler(v -> endOfStream.complete());
       consumer.handler(msg -> ctx.fail());
       vertx.executeBlocking(p -> {
-        consumer.cancel(ctx.asyncAssertSuccess(v -> canceled.complete()));
+        consumer.cancel().onComplete(ctx.asyncAssertSuccess(v -> canceled.complete()));
         p.complete();
       });
     }));
@@ -130,7 +130,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
       .setKeepMostRecent(true)
       .setMaxInternalQueueSize(queueSize);
 
-    client.basicConsumer(q, queueOptions, ctx.asyncAssertSuccess(consumer -> {
+    client.basicConsumer(q, queueOptions).onComplete(ctx.asyncAssertSuccess(consumer -> {
       mqConsumer.set(consumer);
       consumer.pause();
       consumer.handler(msg -> {

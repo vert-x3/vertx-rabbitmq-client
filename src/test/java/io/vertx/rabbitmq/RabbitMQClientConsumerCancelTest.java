@@ -30,19 +30,19 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
 
   private static final String EXCHANGE_NAME = "RabbitMQClientConsumerCancelTest";
   private static final String QUEUE_NAME = "RabbitMQClientConsumerCancelTestQueue";
-  
+
   @Test
   public void testConsumerShutdown(TestContext ctx) throws Throwable {
 
     int count = 1000;
-    
+
     Map<String, MessageDefinition> messages = new HashMap<>(count);
     for (int i = 0; i < count; ++i) {
       String messageId = "ID-" + i;
       messages.put(messageId, new MessageDefinition(i, messageId, "Message " + i));
-    }    
+    }
     Map<String, RabbitMQMessage> messagesReceived = new HashMap<>(count);
-    
+
     CompletableFuture<Void> consumerLatch = new CompletableFuture<>();
 
     // Now that publishers start asynchronously there is a race condition where messages can be published
@@ -54,11 +54,11 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
     RabbitMQClient consumerClient = RabbitMQClient.create(vertx, config());
     prepareClient(consumerClient
         , p -> {
-          consumerClient.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false, ar1 -> {
+          consumerClient.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false).onComplete(ar1 -> {
             if (ar1.succeeded()) {
-              consumerClient.queueDeclare(QUEUE_NAME, true, false, false, ar2 -> {
+              consumerClient.queueDeclare(QUEUE_NAME, true, false, false).onComplete(ar2 -> {
                 if (ar2.succeeded()) {
-                  consumerClient.queueBind(QUEUE_NAME, EXCHANGE_NAME, "", ar3 -> {
+                  consumerClient.queueBind(QUEUE_NAME, EXCHANGE_NAME, "").onComplete(ar3 -> {
                     if (ar3.succeeded()) {
                       p.complete();
                     } else {
@@ -77,7 +77,7 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
         , p -> {
           consumerClient.basicConsumer(QUEUE_NAME
                   , new QueueOptions().setAutoAck(false)
-                  , ar4 -> {
+          ).onComplete(ar4 -> {
             if (ar4.succeeded()) {
               letConsumerStartFirst.complete(null);
               consumer.set(ar4.result());
@@ -97,18 +97,18 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
             }
           });
         }
-    ); 
-    
+    );
+
     letConsumerStartFirst.get(2, TimeUnit.MINUTES);
-            
+
     this.client = RabbitMQClient.create(vertx, config());
     prepareClient(client
         , p -> {
-          client.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false, ar1 -> {
+          client.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false).onComplete(ar1 -> {
             if (ar1.succeeded()) {
-              client.queueDeclare(QUEUE_NAME, true, false, false, ar2 -> {
+              client.queueDeclare(QUEUE_NAME, true, false, false).onComplete(ar2 -> {
                 if (ar2.succeeded()) {
-                  client.queueBind(QUEUE_NAME, EXCHANGE_NAME, "", ar3 -> {
+                  client.queueBind(QUEUE_NAME, EXCHANGE_NAME, "").onComplete(ar3 -> {
                     if (ar3.succeeded()) {
                       p.complete();
                     } else {
@@ -125,10 +125,10 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
           });
         }
         , null
-    ); 
-    
+    );
+
     CompletableFuture<Void> publisherLatch = new CompletableFuture<>();
-    
+
     RabbitMQPublisher publisher = RabbitMQPublisher.create(vertx
         , client
         , new RabbitMQPublisherOptions()
@@ -136,7 +136,7 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
             .setReconnectInterval(100)
             .setMaxInternalQueueSize(Integer.MAX_VALUE)
     );
-    publisher.start(ar -> {
+    publisher.start().onComplete(ar -> {
       publisher.getConfirmationStream().handler(c -> {
         synchronized(messages) {
           messages.remove(c.getMessageId());
@@ -146,7 +146,7 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
         }
       });
     });
-    
+
     List<MessageDefinition> messagesCopy;
     synchronized(messages) {
       messagesCopy = new ArrayList<>(messages.values());
@@ -159,9 +159,7 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
           , new AMQP.BasicProperties.Builder()
               .messageId(message.messageId)
               .build()
-          , Buffer.buffer(message.messageBody)
-          , null
-      );
+          , Buffer.buffer(message.messageBody));
     }
     publisherLatch.get(1, TimeUnit.MINUTES);
     logger.info("Publisher has sent everything and got confirmations for all of them");
@@ -171,9 +169,9 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
     ctx.assertTrue(messagesReceived.size() >= count / 2, "Have received " + messagesReceived.size() + " messages, which is fewer than the expected " + count / 2);
     ctx.assertTrue(messagesReceived.size() <= count / 2 + 10, "Have received " + messagesReceived.size() + " messages, which is too many more than the expected " + count / 2);
 
-    consumerClient.stop(ar2 -> {
+    consumerClient.stop().onComplete(ar2 -> {
       logger.info("Consumer client stopped");
-      client.stop(ar3 -> {
+      client.stop().onComplete(ar3 -> {
         logger.info("Producer client stopped");
         ctx.async().complete();
       });

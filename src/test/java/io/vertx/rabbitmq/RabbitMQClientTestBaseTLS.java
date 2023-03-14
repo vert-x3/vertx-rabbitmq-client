@@ -58,7 +58,7 @@ public class RabbitMQClientTestBaseTLS {
   @After
   public void tearDown(TestContext ctx) throws Exception {
     CompletableFuture<Void> latch = new CompletableFuture<>();
-    client.stop(ar -> {
+    client.stop().onComplete(ar -> {
       if (ar.succeeded()) {
         latch.complete(null);
       } else {
@@ -68,7 +68,7 @@ public class RabbitMQClientTestBaseTLS {
     latch.get(100L, TimeUnit.SECONDS);
     client = null;
     if (vertx != null) {
-      vertx.close(ctx.asyncAssertSuccess());
+      vertx.close().onComplete(ctx.asyncAssertSuccess());
       vertx = null;
     }
   }
