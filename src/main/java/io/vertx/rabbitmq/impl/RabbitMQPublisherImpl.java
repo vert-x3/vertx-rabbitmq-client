@@ -107,19 +107,12 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   }
 
   @Override
-  public void start(Handler<AsyncResult<Void>> resultHandler) {
-    Promise<Void> promise = startForPromise();
-    promise.future().onComplete(resultHandler);
-  }
-
-  @Override
   public Future<Void> start() {
     Promise<Void> promise = startForPromise();
     return promise.future();
   }
 
-  @Override
-  public void stop(Handler<AsyncResult<Void>> resultHandler) {
+  private void stop(Handler<AsyncResult<Void>> resultHandler) {
     stopped = true;
     sendQueue.pause();
     if (sendQueue.isEmpty()) {
@@ -251,18 +244,13 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   }
 
   @Override
-  public void publish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
-    if (!stopped) {
-      context.runOnContext(e -> {
-        sendQueue.write(new MessageDetails(exchange, routingKey, properties, body, resultHandler));
-      });
-    }
-  }
-
-  @Override
   public Future<Void> publish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
     Promise<Void> promise = Promise.promise();
-    publish(exchange, routingKey, properties, body, promise);
+    if (!stopped) {
+      context.runOnContext(e -> {
+        sendQueue.write(new MessageDetails(exchange, routingKey, properties, body, promise));
+      });
+    }
     return promise.future();
   }
 

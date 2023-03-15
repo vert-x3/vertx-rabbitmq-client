@@ -19,7 +19,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
 
   private Handler<Throwable> exceptionHandler;
   private Handler<Void> endHandler;
-  private String queueName;  
+  private String queueName;
   private final QueueConsumerHandler consumerHandler;
   private final boolean keepMostRecent;
   private final InboundBuffer<RabbitMQMessage> pending;
@@ -99,12 +99,6 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   @Override
   public Future<Void> cancel() {
     Promise<Void> promise = Promise.promise();
-    cancel(promise);
-    return promise.future();
-  }
-
-  @Override
-  public void cancel(Handler<AsyncResult<Void>> cancelResult) {
     AsyncResult<Void> operationResult;
     try {
       log.debug("Cancelling " + consumerTag());
@@ -114,10 +108,8 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
     } catch (IOException e) {
       operationResult = Future.failedFuture(e);
     }
-    if (cancelResult != null) {
-      cancelResult.handle(operationResult);
-    }
     handleEnd();
+    return promise.future();
   }
 
   @Override

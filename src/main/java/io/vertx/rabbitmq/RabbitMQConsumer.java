@@ -2,7 +2,6 @@ package io.vertx.rabbitmq;
 
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.streams.ReadStream;
@@ -84,16 +83,6 @@ public interface RabbitMQConsumer extends ReadStream<RabbitMQMessage> {
    * @return a future through which you can find out the operation status.
    */
   Future<Void> cancel();
-
-  /**
-   * Stop message consumption from a queue.
-   * <p>
-   * The operation is asynchronous. When consumption is stopped, you can also be notified via {@link RabbitMQConsumer#endHandler(Handler)}
-   *
-   * @param cancelResult contains information about operation status: success/fail.
-   */
-  @Deprecated
-  void cancel(Handler<AsyncResult<Void>> cancelResult);
 
   /**
    * Return {@code true} if cancel() has been called.

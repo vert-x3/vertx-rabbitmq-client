@@ -89,24 +89,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicAck(long, boolean)
    */
-  @Deprecated
-  void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #basicAck(long, boolean, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> basicAck(long deliveryTag, boolean multiple);
 
   /**
    * Reject one or several received messages.
    *
    * @see com.rabbitmq.client.Channel#basicNack(long, boolean, boolean)
-   */
-  @Deprecated
-  void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #basicNack(long, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> basicNack(long deliveryTag, boolean multiple, boolean requeue);
 
@@ -115,25 +103,11 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicGet(String, boolean)
    */
-  @Deprecated
-  void basicGet(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQMessage>> resultHandler);
-
-  /**
-   * Like {@link #basicGet(String, boolean, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<RabbitMQMessage> basicGet(String queue, boolean autoAck);
 
  /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
    * @see RabbitMQClient#basicConsumer(String, Handler)
-   */
- @Deprecated
-  default void basicConsumer(String queue, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
-    basicConsumer(queue, new QueueOptions(), resultHandler);
-  }
-
-  /**
-   * Like {@link #basicConsumer(String, Handler)} but returns a {@code Future} of the asynchronous result
    */
   default Future<RabbitMQConsumer> basicConsumer(String queue) {
     return basicConsumer(queue, new QueueOptions());
@@ -149,12 +123,6 @@ public interface RabbitMQClient {
    *                       through an instance of {@link RabbitMQConsumer}
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
-  @Deprecated
-  void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler);
-
-  /**
-   * Like {@link #basicConsumer(String, QueueOptions, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<RabbitMQConsumer> basicConsumer(String queue, QueueOptions options);
 
   /**
@@ -163,12 +131,6 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
-  @Deprecated
-  void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #basicPublish(String, String, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> basicPublish(String exchange, String routingKey, Buffer body);
 
   /**
@@ -176,13 +138,6 @@ public interface RabbitMQClient {
    * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
    *
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
-   */
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  @Deprecated
-  void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #basicPublish(String, String, BasicProperties, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body);
@@ -199,17 +154,6 @@ public interface RabbitMQClient {
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  @Deprecated
-  void basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Publish a message. Publishing to a non-existent exchange will result in a channel-level protocol exception,
-   * which closes the channel. Invocations of Channel#basicPublish will eventually block if a resource-driven alarm is in effect.
-   *
-   * @param deliveryTagHandler callback to capture the deliveryTag for this message.  Note that this will be called synchronously in the context of the client.
-   * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
-   */
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<Void> basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler);
 
   /**
@@ -218,20 +162,6 @@ public interface RabbitMQClient {
    *
    * @param maxQueueSize   maximum size of the queue of confirmations
    * @param resultHandler  a handler through which you can find out the operation status;
-   *                       if the operation succeeds you can begin to receive confirmations
-   *                       through an instance of {@link RabbitMQConfirmListener}
-   * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
-   */
-  @Deprecated
-  void addConfirmListener(int maxQueueSize, Handler<AsyncResult<ReadStream<RabbitMQConfirmation>>> resultHandler);
-
-  /**
-   * Add a Confirm Listener to the channel.
-   * Like {@link #addConfirmListener(Handler)} but returns a {@code Future} of the asynchronous result
-   * Note that this will automatically call confirmSelect, it is not necessary to call that too.
-   *
-   * @param maxQueueSize   maximum size of the queue of confirmations
-   * @return a future through which you can find out the operation status;
    *                       if the operation succeeds you can begin to receive confirmations
    *                       through an instance of {@link RabbitMQConfirmListener}
    * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
@@ -245,12 +175,6 @@ public interface RabbitMQClient {
    * @see Channel#confirmSelect()
    * @link http://www.rabbitmq.com/confirms.html
    */
-  @Deprecated
-  void confirmSelect(Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #confirmSelect(Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> confirmSelect();
 
   /**
@@ -262,12 +186,6 @@ public interface RabbitMQClient {
    * @link http://www.rabbitmq.com/confirms.html
    *
    * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
-   */
-  @Deprecated
-  void waitForConfirms(Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #waitForConfirms(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> waitForConfirms();
 
@@ -281,12 +199,6 @@ public interface RabbitMQClient {
    *
    * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
-  @Deprecated
-  void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #waitForConfirms(long, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> waitForConfirms(long timeout);
 
   /**
@@ -297,14 +209,6 @@ public interface RabbitMQClient {
    * @param prefetchCount maximum number of messages that the server
    * will deliver, 0 if unlimited
    * @param resultHandler handler called when operation is done with a result of the operation
-   */
-  @Deprecated
-  default void basicQos(int prefetchCount, Handler<AsyncResult<Void>> resultHandler) {
-    basicQos(prefetchCount, false, resultHandler);
-  }
-
-  /**
-   * Like {@link #basicQos(int, Handler)} but returns a {@code Future} of the asynchronous result
    */
   default Future<Void> basicQos(int prefetchCount) {
     return basicQos(prefetchCount, false);
@@ -320,14 +224,6 @@ public interface RabbitMQClient {
    * @param global true if the settings should be applied to the
    * entire channel rather than each consumer
    * @param resultHandler handler called when operation is done with a result of the operation
-   */
-  @Deprecated
-  default void basicQos(int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler) {
-    basicQos(0, prefetchCount, global, resultHandler);
-  }
-
-  /**
-   * Like {@link #basicQos(int, boolean, Handler)} but returns a {@code Future} of the asynchronous result
    */
   default Future<Void> basicQos(int prefetchCount, boolean global) {
     return basicQos(0, prefetchCount, global);
@@ -348,24 +244,12 @@ public interface RabbitMQClient {
    * entire channel rather than each consumer
    * @param resultHandler handler called when operation is done with a result of the operation
    */
-  @Deprecated
-  void basicQos(int prefetchSize, int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #basicQos(int, int, boolean, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> basicQos(int prefetchSize, int prefetchCount, boolean global);
 
   /**
    * Declare an exchange.
    *
    * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
-   */
-  @Deprecated
-  void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #exchangeDeclare(String, String, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete);
 
@@ -374,24 +258,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#exchangeDeclare(String, String, boolean, boolean, Map)
    */
-  @Deprecated
-  void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #exchangeDeclare(String, String, boolean, boolean, JsonObject, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config);
 
   /**
    * Delete an exchange, without regard for whether it is in use or not.
    *
    * @see com.rabbitmq.client.Channel#exchangeDelete(String)
-   */
-  @Deprecated
-  void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #exchangeDelete(String, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> exchangeDelete(String exchange);
 
@@ -400,24 +272,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#exchangeBind(String, String, String)
    */
-  @Deprecated
-  void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #exchangeBind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> exchangeBind(String destination, String source, String routingKey);
 
   /**
    * Bind an exchange to an exchange.
    *
    * @see com.rabbitmq.client.Channel#exchangeBind(String, String, String, Map<String, Object>)
-   */
-  @Deprecated
-  void exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #exchangeBind(String, String, String, Map, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments);
 
@@ -426,24 +286,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#exchangeUnbind(String, String, String)
    */
-  @Deprecated
-  void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #exchangeUnbind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> exchangeUnbind(String destination, String source, String routingKey);
 
   /**
    * Unbind an exchange from an exchange.
    *
    * @see com.rabbitmq.client.Channel#exchangeUnbind(String, String, String, Map<String, Object>)
-   */
-  @Deprecated
-  void exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #exchangeUnbind(String, String, String, Map, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments);
 
@@ -452,26 +300,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#queueDeclare()
    */
-  //TODO: Auto ?
-  @Deprecated
-  void queueDeclareAuto(Handler<AsyncResult<JsonObject>> resultHandler);
-
-  /**
-   * Like {@link #queueDeclareAuto(Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<JsonObject> queueDeclareAuto();
 
   /**
    * Declare a queue
    *
    * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
-   */
-  @Deprecated
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler);
-
-  /**
-   * Like {@link #queueDeclare(String, boolean, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete);
@@ -481,13 +315,6 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#queueDeclare(String, boolean, boolean, boolean, java.util.Map)
    */
-  @Deprecated
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler);
-
-  /**
-   * Like {@link #queueDeclare(String, boolean, boolean, boolean, JsonObject, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config);
 
@@ -495,13 +322,6 @@ public interface RabbitMQClient {
    * Delete a queue, without regard for whether it is in use or has messages on it
    *
    * @see com.rabbitmq.client.Channel#queueDelete(String)
-   */
-  @Deprecated
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void queueDelete(String queue, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler);
-
-  /**
-   * Like {@link #queueDelete(String, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<AMQP.Queue.DeleteOk> queueDelete(String queue);
@@ -511,13 +331,6 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#queueDelete(String, boolean, boolean)
    */
-  @Deprecated
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler);
-
-  /**
-   * Like {@link #queueDeleteIf(String, boolean, boolean, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<AMQP.Queue.DeleteOk> queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty);
 
@@ -526,24 +339,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#queueBind(String, String, String)
    */
-  @Deprecated
-  void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #queueBind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> queueBind(String queue, String exchange, String routingKey);
 
   /**
    * Bind a queue to an exchange
    *
    * @see com.rabbitmq.client.Channel#queueBind(String, String, String, Map<String, Object>)
-   */
-  @Deprecated
-  void queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #queueBind(String, String, String, Map, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments);
 
@@ -552,24 +353,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#queueUnbind(String, String, String)
    */
-  @Deprecated
-  void queueUnbind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #queueUnbind(String, String, String, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> queueUnbind(String queue, String exchange, String routingKey);
 
   /**
    * Unbind a queue from an exchange
    *
    * @see com.rabbitmq.client.Channel#queueUnbind(String, String, String, Map<String, Object>)
-   */
-  @Deprecated
-  void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #queueUnbind(String, String, String, Map, Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments);
 
@@ -578,12 +367,6 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Channel#messageCount(String)
    */
-  @Deprecated
-  void messageCount(String queue, Handler<AsyncResult<Long>> resultHandler);
-
-  /**
-   * Like {@link #messageCount(String, Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Long> messageCount(String queue);
 
   /**
@@ -591,24 +374,12 @@ public interface RabbitMQClient {
    *
    * @see com.rabbitmq.client.Connection#createChannel()
    */
-  @Deprecated
-  void start(Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #start(Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> start();
 
   /**
    * Stop the rabbitMQ client. Close the connection and its channel.
    *
    * @see com.rabbitmq.client.Connection#close()
-   */
-  @Deprecated
-  void stop(Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #stop(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> stop();
 
@@ -623,19 +394,9 @@ public interface RabbitMQClient {
   /***
    * restart the rabbitMQ connect.
    * @param attempts  number of attempts
-   * @param resultHandler handler called when operation is done with a result of the operation
+   * @return a future notified when the operation is done with a result of the operation
    */
-  @Deprecated
-  void restartConnect(int attempts, Handler<AsyncResult<Void>> resultHandler);
-
-  /***
-   * restart the rabbitMQ connect.
-   * @param attempts  number of attempts
-   * @return a future of the async result
-   */
-  default Future<Void> restartConnect(int attempts) {
-    return Future.future(h -> restartConnect(attempts, h));
-  }
+  Future<Void> restartConnect(int attempts);
 
   /**
    * Check if a channel is open

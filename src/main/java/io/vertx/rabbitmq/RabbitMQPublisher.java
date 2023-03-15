@@ -4,7 +4,6 @@ import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.BasicProperties;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -47,12 +46,6 @@ public interface RabbitMQPublisher {
    * The RabbitMQClient should have been started before this.
    *
    */
-  @Deprecated
-  void start(Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #start(Handler)} but returns a {@code Future} of the asynchronous result
-   */
   Future<Void> start();
 
   /**
@@ -60,12 +53,6 @@ public interface RabbitMQPublisher {
    * Calling this is optional, but it gives the opportunity to drain the send queue without losing messages.
    * Future calls to publish will be ignored.
    *
-   */
-  @Deprecated
-  void stop(Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #stop(Handler)} but returns a {@code Future} of the asynchronous result
    */
   Future<Void> stop();
 
@@ -90,13 +77,6 @@ public interface RabbitMQPublisher {
    * Publish a message.
    *
    * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
-   */
-  @GenIgnore(GenIgnore.PERMITTED_TYPE)
-  @Deprecated
-  void publish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler);
-
-  /**
-   * Like {@link #basicPublish(String, String, BasicProperties, Buffer, Handler)} but returns a {@code Future} of the asynchronous result
    */
   @GenIgnore(GenIgnore.PERMITTED_TYPE)
   Future<Void> publish(String exchange, String routingKey, BasicProperties properties, Buffer body);

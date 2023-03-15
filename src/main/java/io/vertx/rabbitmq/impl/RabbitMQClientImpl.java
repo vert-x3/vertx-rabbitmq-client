@@ -178,27 +178,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicAck(long deliveryTag, boolean multiple, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = basicAck(deliveryTag, multiple);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> basicAck(long deliveryTag, boolean multiple) {
     return forChannel((channel) -> {
       channel.basicAck(deliveryTag, multiple);
       return null;
     });
-  }
-
-  @Override
-  public void basicNack(long deliveryTag, boolean multiple, boolean requeue, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = basicNack(deliveryTag, multiple, requeue);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -232,12 +216,17 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   }
 
+  @Override
+  public Future<Void> restartConnect(int attempts) {
+    return Future.future(h -> restartConnect(attempts, h));
+  }
+
   /***
    * Restore connection and channel. Both queue consumers and producers call this method. To avoid repeated creation and overwriting of connections and channel, CAS-Lock are used here
    * @param attempts  number of attempts
    * @param resultHandler handler called when operation is done with a result of the operation
    */
-  public void restartConnect(int attempts, Handler<AsyncResult<Void>> resultHandler) {
+  private void restartConnect(int attempts, Handler<AsyncResult<Void>> resultHandler) {
     if (retries == 0) {
       log.error("Retries disabled. Will not attempt to restart");
       resultHandler.handle(Future.failedFuture("Retries disabled. Will not attempt to restart"));
@@ -265,12 +254,12 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   private void execRestart(int attempts, Handler<AsyncResult<Void>> resultHandler) {
-      stop(ar -> {
+      stop().onComplete(ar -> {
       if (ar.succeeded()) {
         if (attempts >= retries) {
           log.error("Max number of consumer restart attempts (" + retries + ") reached. Will not attempt to restart again");
         } else {
-          start((arStart) -> {
+          start().onComplete((arStart) -> {
             if (arStart.succeeded()) {
               if (channelConfirms) {
                 //Restore confirmSelect
@@ -296,14 +285,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       }
 
     });
-  }
-
-  @Override
-  public void basicConsumer(String queue, QueueOptions options, Handler<AsyncResult<RabbitMQConsumer>> resultHandler) {
-    Future<RabbitMQConsumer> fut = basicConsumer(queue, options);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -334,14 +315,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicGet(String queue, boolean autoAck, Handler<AsyncResult<RabbitMQMessage>> resultHandler) {
-    Future<RabbitMQMessage> fut = basicGet(queue, autoAck);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<RabbitMQMessage> basicGet(String queue, boolean autoAck) {
     return forChannel(channel -> {
       GetResponse response = channel.basicGet(queue, autoAck);
@@ -354,31 +327,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void basicPublish(String exchange, String routingKey, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
-    basicPublishWithDeliveryTag(exchange, routingKey, new AMQP.BasicProperties(), body, null, resultHandler);
-  }
-
-  @Override
   public Future<Void> basicPublish(String exchange, String routingKey, Buffer body) {
     return basicPublishWithDeliveryTag(exchange, routingKey, new AMQP.BasicProperties(), body, null);
   }
 
   @Override
-  public void basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<AsyncResult<Void>> resultHandler) {
-    basicPublishWithDeliveryTag(exchange, routingKey, properties, body, null, resultHandler);
-  }
-
-  @Override
   public Future<Void> basicPublish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
     return basicPublishWithDeliveryTag(exchange, routingKey, properties, body, null);
-  }
-
-  @Override
-  public void basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = basicPublishWithDeliveryTag(exchange, routingKey, properties, body, deliveryTagHandler);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -391,14 +346,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       channel.basicPublish(exchange, routingKey, (AMQP.BasicProperties) properties, body.getBytes());
       return null;
     });
-  }
-
-  @Override
-  public void addConfirmListener(int maxQueueSize, Handler<AsyncResult<ReadStream<RabbitMQConfirmation>>> resultHandler) {
-    Future<ReadStream<RabbitMQConfirmation>> fut = addConfirmListener(maxQueueSize);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -416,28 +363,12 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void confirmSelect(Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = confirmSelect();
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> confirmSelect() {
     return forChannel(channel -> {
       channel.confirmSelect();
       channelConfirms = true;
       return null;
     });
-  }
-
-  @Override
-  public void waitForConfirms(Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = waitForConfirms();
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -449,27 +380,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void waitForConfirms(long timeout, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = waitForConfirms(timeout);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> waitForConfirms(long timeout) {
     return forChannel(channel -> {
       channel.waitForConfirmsOrDie(timeout);
       return null;
     });
-  }
-
-  @Override
-  public void basicQos(int prefetchSize, int prefetchCount, boolean global, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = basicQos(prefetchSize, prefetchCount, global);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -481,24 +396,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = exchangeDeclare(exchange, type, durable, autoDelete);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete) {
     return exchangeDeclare(exchange, type, durable, autoDelete, emptyConfig);
-  }
-
-  @Override
-  public void exchangeDeclare(String exchange, String type, boolean durable, boolean autoDelete, JsonObject config, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = exchangeDeclare(exchange, type, durable, autoDelete, config);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -510,27 +409,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void exchangeDelete(String exchange, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = exchangeDelete(exchange);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> exchangeDelete(String exchange) {
     return forChannel(channel -> {
       channel.exchangeDelete(exchange);
       return null;
     });
-  }
-
-  @Override
-  public void exchangeBind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = exchangeBind(destination, source, routingKey);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -542,27 +425,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = exchangeBind(destination, source, routingKey, arguments);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> exchangeBind(String destination, String source, String routingKey, Map<String, Object> arguments) {
     return forChannel(channel -> {
       channel.exchangeBind(destination, source, routingKey, arguments);
       return null;
     });
-  }
-
-  @Override
-  public void exchangeUnbind(String destination, String source, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = exchangeUnbind(destination, source, routingKey);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -574,27 +441,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = exchangeUnbind(destination, source, routingKey, arguments);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> exchangeUnbind(String destination, String source, String routingKey, Map<String, Object> arguments) {
     return forChannel(channel -> {
       channel.exchangeUnbind(destination, source, routingKey, arguments);
       return null;
     });
-  }
-
-  @Override
-  public void queueDeclareAuto(Handler<AsyncResult<JsonObject>> resultHandler) {
-    Future<JsonObject> fut = queueDeclareAuto();
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -606,24 +457,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler) {
-    Future<AMQP.Queue.DeclareOk> fut = queueDeclare(queue, durable, exclusive, autoDelete);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<AMQP.Queue.DeclareOk> queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete) {
     return queueDeclare(queue, durable, exclusive, autoDelete, emptyConfig);
-  }
-
-  @Override
-  public void queueDeclare(String queue, boolean durable, boolean exclusive, boolean autoDelete, JsonObject config, Handler<AsyncResult<AMQP.Queue.DeclareOk>> resultHandler) {
-    Future<AMQP.Queue.DeclareOk> fut = queueDeclare(queue, durable, exclusive, autoDelete, config);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -632,37 +467,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void queueDelete(String queue, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler) {
-    Future<AMQP.Queue.DeleteOk> fut = queueDelete(queue);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<AMQP.Queue.DeleteOk> queueDelete(String queue) {
     return forChannel(channel -> channel.queueDelete(queue));
   }
 
   @Override
-  public void queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty, Handler<AsyncResult<AMQP.Queue.DeleteOk>> resultHandler) {
-    Future<AMQP.Queue.DeleteOk> fut = queueDeleteIf(queue, ifUnused, ifEmpty);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<AMQP.Queue.DeleteOk> queueDeleteIf(String queue, boolean ifUnused, boolean ifEmpty) {
     return forChannel(channel -> channel.queueDelete(queue, ifUnused, ifEmpty));
-  }
-
-  @Override
-  public void queueBind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = queueBind(queue, exchange, routingKey);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -674,27 +485,11 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = queueBind(queue, exchange, routingKey, arguments);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> queueBind(String queue, String exchange, String routingKey, Map<String, Object> arguments) {
     return forChannel(channel -> {
       channel.queueBind(queue, exchange, routingKey, arguments);
       return null;
     });
-  }
-
-  @Override
-  public void queueUnbind(String queue, String exchange, String routingKey, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = queueUnbind(queue, exchange, routingKey);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -706,14 +501,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments, Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = queueUnbind(queue, exchange, routingKey, arguments);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Void> queueUnbind(String queue, String exchange, String routingKey, Map<String, Object> arguments) {
     return forChannel(channel -> {
       channel.queueUnbind(queue, exchange, routingKey, arguments);
@@ -722,24 +509,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   @Override
-  public void messageCount(String queue, Handler<AsyncResult<Long>> resultHandler) {
-    Future<Long> fut = messageCount(queue);
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
-  }
-
-  @Override
   public Future<Long> messageCount(String queue) {
     return forChannel(channel -> channel.messageCount(queue));
-  }
-
-  @Override
-  public void start(Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = start();
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
@@ -780,14 +551,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         });
       }
     });
-  }
-
-  @Override
-  public void stop(Handler<AsyncResult<Void>> resultHandler) {
-    Future<Void> fut = stop();
-    if (resultHandler != null) {
-      fut.onComplete(resultHandler);
-    }
   }
 
   @Override
