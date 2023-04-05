@@ -98,8 +98,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
 
   @Override
   public Future<Void> cancel() {
-    Promise<Void> promise = Promise.promise();
-    AsyncResult<Void> operationResult;
+    Future<Void> operationResult;
     try {
       log.debug("Cancelling " + consumerTag());
       cancelled = true;
@@ -109,7 +108,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
       operationResult = Future.failedFuture(e);
     }
     handleEnd();
-    return promise.future();
+    return operationResult;
   }
 
   @Override

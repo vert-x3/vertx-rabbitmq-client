@@ -83,7 +83,7 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
 
 
   @Test
-  public void endHandlerAndCancelShouldWorks(TestContext ctx) throws Exception {
+  public void endHandlerAndCancelShouldWork(TestContext ctx) throws Exception {
     String q = randomAlphaString(10);
 
     channel.queueDeclare(q, false, false, true, null);
