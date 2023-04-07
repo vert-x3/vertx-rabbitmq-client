@@ -129,7 +129,7 @@ public class RabbitMQClientBuiltInReconnectTest {
   }
 
   @Before
-  public void setup() {
+  public void setup() throws InterruptedException {
     LOGGER.info("Starting");
     this.networkedRabbitmq.start();
     this.toxiproxy.start();
