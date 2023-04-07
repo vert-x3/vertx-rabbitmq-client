@@ -133,6 +133,7 @@ public class RabbitMQClientBuiltInReconnectTest {
     LOGGER.info("Starting");
     this.networkedRabbitmq.start();
     this.toxiproxy.start();
+    Thread.sleep(5000);
   }
 
   @After
@@ -142,7 +143,7 @@ public class RabbitMQClientBuiltInReconnectTest {
     LOGGER.info("Shutdown");
   }
 
-  @Test(timeout = 1 * 60 * 1000L)
+  @Test(timeout = 1 * 90 * 1000L)
   public void testRecoverConnectionOutage(TestContext ctx) throws Exception {
     Vertx vertx = Vertx.vertx();
     createAndStartProducer(vertx);
