@@ -95,7 +95,6 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     List<Address> addresses = null;
     if (uri != null) {
       try {
-        log.info("Connecting to " + uri);
         cf.setUri(uri);
       } catch (Exception e) {
         throw new IllegalArgumentException("Invalid rabbitmq connection uri ", e);
