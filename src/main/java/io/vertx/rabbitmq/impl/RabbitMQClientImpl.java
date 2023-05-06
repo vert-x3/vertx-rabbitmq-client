@@ -96,6 +96,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     if (uri != null) {
       try {
         cf.setUri(uri);
+        log.info("Connecting to " + cf.getHost());
       } catch (Exception e) {
         throw new IllegalArgumentException("Invalid rabbitmq connection uri ", e);
       }
@@ -106,6 +107,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         ? Collections.singletonList(new Address(config.getHost(), config.getPort()))
         : config.getAddresses();
       cf.setVirtualHost(config.getVirtualHost());
+      log.info("Connecting to " + addresses);
     }
 
     cf.setConnectionTimeout(config.getConnectionTimeout());
