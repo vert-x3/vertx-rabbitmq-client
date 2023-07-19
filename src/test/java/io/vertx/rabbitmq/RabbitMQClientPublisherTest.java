@@ -203,13 +203,13 @@ public class RabbitMQClientPublisherTest extends RabbitMQClientTestBase {
     );
 
     vertx.setTimer(100, l -> {
-      vertx.executeBlocking(f -> {
+      vertx.executeBlocking(() -> {
         logger.info("Stopping rabbitmq container");
         fixedRabbitmq.stop();
         logger.info("Starting rabbitmq container");
         fixedRabbitmq.start();
         logger.info("Started rabbitmq container");
-        f.complete();
+        return null;
       });
     });
 

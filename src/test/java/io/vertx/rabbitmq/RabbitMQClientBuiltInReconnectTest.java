@@ -34,8 +34,8 @@ public class RabbitMQClientBuiltInReconnectTest {
   /**
    * This test verifies that the RabbitMQ Java client reconnection logic works as long as the vertx reconnect attempts is set to zero.
    *
-   * The change that makes this work is in the basicConsumer, where the shutdown handler is only set if retries > 0. 
-   * Without that change the vertx client shutdown handler is called, 
+   * The change that makes this work is in the basicConsumer, where the shutdown handler is only set if retries > 0.
+   * Without that change the vertx client shutdown handler is called,
    * interrupting the java client reconnection logic, even though the vertx reconnection won't work because retries is zero.
    *
    */
@@ -158,15 +158,16 @@ public class RabbitMQClientBuiltInReconnectTest {
     };
 
     Handler<AsyncResult<String>> firstMessageHandler = ar -> {
-      vertx.executeBlocking(f -> {
+      vertx.executeBlocking(() -> {
         LOGGER.info("Got a message, Shutdown rabbitmq.");
         networkedRabbitmq.stop();
-        f.complete();
+        return null;
       }).compose(a -> {
-        return vertx.executeBlocking(f -> {
+        return vertx.executeBlocking(() -> {
           LOGGER.info("Restore RabbitMQ and wait for one more message.");
           networkedRabbitmq.start();
           handlerReference.set(secondMessageHandler);
+          return null;
         });
       });
     };

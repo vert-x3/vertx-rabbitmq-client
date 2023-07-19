@@ -527,12 +527,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   public void tryConnect(ContextInternal ctx,int attempts,Promise<Void> promise){
-    ctx.<Void>executeBlocking(exePromise -> {
+    ctx.<Void>executeBlocking(() -> {
       try {
-        connect().onComplete(exePromise);
+        connect();
+        return null;
       } catch (IOException | TimeoutException e) {
         log.error("Could not connect to rabbitmq", e);
-        exePromise.fail(e);
+        throw e;
       }
     }).onSuccess(h->{
         promise.complete();
@@ -557,13 +558,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public Future<Void> stop() {
     log.info("Stopping rabbitmq client");
-    return vertx.executeBlocking(future -> {
-      try {
-        disconnect();
-        future.complete();
-      } catch (IOException e) {
-        future.fail(e);
-      }
+    return vertx.executeBlocking(() -> {
+      disconnect();
+      return null;
     });
   }
 
@@ -589,14 +586,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         return ctx.failedFuture(e);
       }
     }
-    return vertx.executeBlocking(future -> {
-      try {
-        T t = channelHandler.handle(channel);
-        future.complete(t);
-      } catch (Throwable t) {
-        future.fail(t);
-      }
-    });
+    return vertx.executeBlocking(() -> channelHandler.handle(channel));
   }
 
   private Future<Void> connect() throws IOException, TimeoutException {
