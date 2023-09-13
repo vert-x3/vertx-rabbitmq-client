@@ -1,7 +1,8 @@
 package io.vertx.rabbitmq;
 
+import java.util.Map;
+
 import io.vertx.codegen.annotations.DataObject;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -13,10 +14,17 @@ public class QueueOptions {
   private static final int DEFAULT_QUEUE_SIZE = Integer.MAX_VALUE;
   private static final boolean DEFAULT_AUTO_ACK = true;
   private static final boolean DEFAULT_KEEP_MOST_RECENT = false;
+  private static final boolean DEFAULT_NO_LOCAL = false;
+  private static final boolean DEFAULT_CONSUMER_EXCLUSIVE = false;
+  private static final String DEFAULT_CONSUMER_TAG = "";
 
   private boolean autoAck = DEFAULT_AUTO_ACK;
   private boolean keepMostRecent = DEFAULT_KEEP_MOST_RECENT;
   private int maxInternalQueueSize = DEFAULT_QUEUE_SIZE;
+  private boolean noLocal = DEFAULT_NO_LOCAL;
+  private boolean consumerExclusive = DEFAULT_CONSUMER_EXCLUSIVE;
+  private String consumerTag = DEFAULT_CONSUMER_TAG;
+  private Map<String, Object> consumerArguments = null;
 
 
   public QueueOptions() {
@@ -77,5 +85,37 @@ public class QueueOptions {
    */
   public boolean isKeepMostRecent() {
     return keepMostRecent;
+  }
+
+  public boolean isNoLocal() {
+    return noLocal;
+  }
+
+  public void setNoLocal(boolean noLocal) {
+    this.noLocal = noLocal;
+  }
+
+  public boolean isConsumerExclusive() {
+    return consumerExclusive;
+  }
+
+  public void setConsumerExclusive(boolean consumerExclusive) {
+    this.consumerExclusive = consumerExclusive;
+  }
+
+  public String getConsumerTag() {
+    return consumerTag;
+  }
+
+  public void setConsumerTag(String consumerTag) {
+    this.consumerTag = consumerTag;
+  }
+
+  public Map<String, Object> getConsumerArguments() {
+    return consumerArguments;
+  }
+
+  public void setConsumerArguments(Map<String, Object> consumerArguments) {
+    this.consumerArguments = consumerArguments;
   }
 }
