@@ -26,7 +26,6 @@ import com.rabbitmq.client.ShutdownListener;
 import com.rabbitmq.client.ShutdownSignalException;
 
 import io.netty.handler.ssl.JdkSslContext;
-import io.netty.handler.ssl.SslContext;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -206,7 +205,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     restartConnect(0, rh -> {
       forChannel(chan -> {
         RabbitMQConsumer q = handler.queue();
-        chan.basicConsume(q.queueName(), options.isAutoAck(), handler);
+        chan.basicConsume(q.queueName(), options.isAutoAck(), options.getConsumerTag(),
+                options.isNoLocal(), options.isConsumerExclusive(), options.getConsumerArguments(),
+                handler);
         log.info("Reconsume queue: " + q.queueName() + " success");
         return q.resume();
       }).onComplete(arChan -> {
@@ -304,7 +305,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
         });
       }
       try {
-        channel.basicConsume(queue, options.isAutoAck(), handler);
+        channel.basicConsume(queue, options.isAutoAck(), options.getConsumerTag(),
+                options.isNoLocal(), options.isConsumerExclusive(), options.getConsumerArguments(),
+                handler);
       } catch (Throwable ex) {
         log.warn("Failed to consume: ", ex);
         restartConsumer(0, handler, options);
