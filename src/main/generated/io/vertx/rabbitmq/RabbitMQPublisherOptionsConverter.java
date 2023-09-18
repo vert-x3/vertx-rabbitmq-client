@@ -20,11 +20,6 @@ public class RabbitMQPublisherOptionsConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, RabbitMQPublisherOptions obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
-        case "maxInternalQueueSize":
-          if (member.getValue() instanceof Number) {
-            obj.setMaxInternalQueueSize(((Number)member.getValue()).intValue());
-          }
-          break;
         case "reconnectAttempts":
           if (member.getValue() instanceof Number) {
             obj.setReconnectAttempts(((Number)member.getValue()).intValue());
@@ -33,6 +28,11 @@ public class RabbitMQPublisherOptionsConverter {
         case "reconnectInterval":
           if (member.getValue() instanceof Number) {
             obj.setReconnectInterval(((Number)member.getValue()).longValue());
+          }
+          break;
+        case "maxInternalQueueSize":
+          if (member.getValue() instanceof Number) {
+            obj.setMaxInternalQueueSize(((Number)member.getValue()).intValue());
           }
           break;
       }
@@ -44,10 +44,10 @@ public class RabbitMQPublisherOptionsConverter {
   }
 
   public static void toJson(RabbitMQPublisherOptions obj, java.util.Map<String, Object> json) {
-    json.put("maxInternalQueueSize", obj.getMaxInternalQueueSize());
     if (obj.getReconnectAttempts() != null) {
       json.put("reconnectAttempts", obj.getReconnectAttempts());
     }
     json.put("reconnectInterval", obj.getReconnectInterval());
+    json.put("maxInternalQueueSize", obj.getMaxInternalQueueSize());
   }
 }

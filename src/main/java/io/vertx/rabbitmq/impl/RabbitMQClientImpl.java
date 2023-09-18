@@ -42,6 +42,7 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JdkSSLEngineOptions;
 import io.vertx.core.net.impl.SSLHelper;
+import io.vertx.core.net.impl.SslChannelProvider;
 import io.vertx.core.net.impl.SslContextProvider;
 import io.vertx.core.net.impl.VertxSslContext;
 import io.vertx.core.streams.ReadStream;
@@ -122,8 +123,12 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       config.setSslEngineOptions(new JdkSSLEngineOptions());
       SslContextProvider provider;
       try {
-        SSLHelper sslHelper = new SSLHelper(config, null);
-        provider = sslHelper.buildContextProvider(config.getSslOptions(), ((VertxInternal) vertx).createEventLoopContext()).toCompletionStage().toCompletableFuture().get(1, TimeUnit.MINUTES);
+        SSLHelper sslHelper = new SSLHelper(SSLHelper.resolveEngineOptions(config.getSslEngineOptions(), config.isUseAlpn()));
+        SslChannelProvider scp = sslHelper.resolveSslChannelProvider(config.getSslOptions(), "", false, null, null, ((VertxInternal) vertx).createEventLoopContext())
+          .toCompletionStage()
+          .toCompletableFuture()
+          .get(1, TimeUnit.MINUTES);
+        provider = scp.sslContextProvider();
       } catch (InterruptedException e) {
         throw new VertxException(e);
       } catch (ExecutionException e) {
