@@ -82,6 +82,14 @@ public interface RabbitMQPublisher {
   Future<Void> publish(String exchange, String routingKey, BasicProperties properties, Buffer body);
 
   /**
+   * Publish a message and complete when publish confirm has returned.
+   *
+   * @see com.rabbitmq.client.Channel#basicPublish(String, String, AMQP.BasicProperties, byte[])
+   */
+  @GenIgnore(GenIgnore.PERMITTED_TYPE)
+  Future<Long> publishConfirm(String exchange, String routingKey, BasicProperties properties, Buffer body);
+
+  /**
    * Get the number of published, but not sent, messages.
    * @return the number of published, but not sent, messages.
    */
