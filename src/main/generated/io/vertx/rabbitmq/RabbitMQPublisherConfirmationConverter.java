@@ -20,6 +20,8 @@ public class RabbitMQPublisherConfirmationConverter {
   public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, RabbitMQPublisherConfirmation obj) {
     for (java.util.Map.Entry<String, Object> member : json) {
       switch (member.getKey()) {
+        case "deliveryTag":
+          break;
         case "messageId":
           break;
         case "succeeded":
@@ -33,6 +35,7 @@ public class RabbitMQPublisherConfirmationConverter {
   }
 
   public static void toJson(RabbitMQPublisherConfirmation obj, java.util.Map<String, Object> json) {
+    json.put("deliveryTag", obj.getDeliveryTag());
     if (obj.getMessageId() != null) {
       json.put("messageId", obj.getMessageId());
     }
