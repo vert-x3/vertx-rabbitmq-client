@@ -22,6 +22,8 @@ public class RabbitMQPublisherConfirmationConverter {
       switch (member.getKey()) {
         case "messageId":
           break;
+        case "deliveryTag":
+          break;
         case "succeeded":
           break;
       }
@@ -36,6 +38,7 @@ public class RabbitMQPublisherConfirmationConverter {
     if (obj.getMessageId() != null) {
       json.put("messageId", obj.getMessageId());
     }
+    json.put("deliveryTag", obj.getDeliveryTag());
     json.put("succeeded", obj.isSucceeded());
   }
 }

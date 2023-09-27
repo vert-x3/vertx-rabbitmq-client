@@ -8,6 +8,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.rabbitmq.RabbitMQClientPublisherTest.MessageDefinition;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,9 +55,10 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
     RabbitMQClient consumerClient = RabbitMQClient.create(vertx, config());
     prepareClient(consumerClient
         , p -> {
-          consumerClient.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false).onComplete(ar1 -> {
+        consumerClient.queueDeclare(QUEUE_NAME, true, false, false)
+          .onComplete(ar1 -> {
             if (ar1.succeeded()) {
-              consumerClient.queueDeclare(QUEUE_NAME, true, false, false).onComplete(ar2 -> {
+              consumerClient.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false).onComplete(ar2 -> {
                 if (ar2.succeeded()) {
                   consumerClient.queueBind(QUEUE_NAME, EXCHANGE_NAME, "").onComplete(ar3 -> {
                     if (ar3.succeeded()) {
@@ -104,9 +106,9 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
     this.client = RabbitMQClient.create(vertx, config());
     prepareClient(client
         , p -> {
-          client.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false).onComplete(ar1 -> {
+        client.queueDeclare(QUEUE_NAME, true, false, false).onComplete(ar1 -> {
             if (ar1.succeeded()) {
-              client.queueDeclare(QUEUE_NAME, true, false, false).onComplete(ar2 -> {
+              client.exchangeDeclare(EXCHANGE_NAME, "fanout", true, false).onComplete(ar2 -> {
                 if (ar2.succeeded()) {
                   client.queueBind(QUEUE_NAME, EXCHANGE_NAME, "").onComplete(ar3 -> {
                     if (ar3.succeeded()) {
@@ -150,7 +152,7 @@ public class RabbitMQClientConsumerCancelTest extends RabbitMQClientTestBase {
     List<MessageDefinition> messagesCopy;
     synchronized(messages) {
       messagesCopy = new ArrayList<>(messages.values());
-      Collections.sort(messagesCopy, (l,r) -> l.messageId.compareTo(r.messageId));
+      messagesCopy.sort(Comparator.comparing(l -> l.messageId));
     }
     for (MessageDefinition message : messagesCopy) {
       Thread.sleep(1);

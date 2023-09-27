@@ -26,14 +26,16 @@ import io.vertx.core.json.JsonObject;
 public class RabbitMQPublisherConfirmation {
 
   private String messageId;
+  private long deliveryTag;
   private boolean succeeded;
 
   public RabbitMQPublisherConfirmation(JsonObject json) {
     RabbitMQPublisherConfirmationConverter.fromJson(json, this);
   }
-  
-  public RabbitMQPublisherConfirmation(String messageId, boolean succeeded) {
+
+  public RabbitMQPublisherConfirmation(String messageId, long deliveryTag, boolean succeeded) {
     this.messageId = messageId;
+    this.deliveryTag = deliveryTag;
     this.succeeded = succeeded;
   }
 
@@ -42,9 +44,13 @@ public class RabbitMQPublisherConfirmation {
     RabbitMQPublisherConfirmationConverter.toJson(this, json);
     return json;
   }
-  
+
   public String getMessageId() {
     return messageId;
+  }
+
+  public long getDeliveryTag() {
+    return deliveryTag;
   }
 
   public boolean isSucceeded() {
