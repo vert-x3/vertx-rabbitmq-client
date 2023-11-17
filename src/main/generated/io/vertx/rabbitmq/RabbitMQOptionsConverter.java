@@ -95,36 +95,6 @@ public class RabbitMQOptionsConverter {
             obj.setSsl((Boolean)member.getValue());
           }
           break;
-        case "keyStoreOptions":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setKeyStoreOptions(new io.vertx.core.net.JksOptions((io.vertx.core.json.JsonObject)member.getValue()));
-          }
-          break;
-        case "pfxKeyCertOptions":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setPfxKeyCertOptions(new io.vertx.core.net.PfxOptions((io.vertx.core.json.JsonObject)member.getValue()));
-          }
-          break;
-        case "pemKeyCertOptions":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setPemKeyCertOptions(new io.vertx.core.net.PemKeyCertOptions((io.vertx.core.json.JsonObject)member.getValue()));
-          }
-          break;
-        case "trustStoreOptions":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setTrustStoreOptions(new io.vertx.core.net.JksOptions((io.vertx.core.json.JsonObject)member.getValue()));
-          }
-          break;
-        case "pfxTrustOptions":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setPfxTrustOptions(new io.vertx.core.net.PfxOptions((io.vertx.core.json.JsonObject)member.getValue()));
-          }
-          break;
-        case "pemTrustOptions":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setPemTrustOptions(new io.vertx.core.net.PemTrustOptions((io.vertx.core.json.JsonObject)member.getValue()));
-          }
-          break;
         case "enabledCipherSuites":
           if (member.getValue() instanceof JsonArray) {
             ((Iterable<Object>)member.getValue()).forEach( item -> {
@@ -152,11 +122,6 @@ public class RabbitMQOptionsConverter {
         case "useAlpn":
           if (member.getValue() instanceof Boolean) {
             obj.setUseAlpn((Boolean)member.getValue());
-          }
-          break;
-        case "jdkSslEngineOptions":
-          if (member.getValue() instanceof JsonObject) {
-            obj.setJdkSslEngineOptions(new io.vertx.core.net.JdkSSLEngineOptions((io.vertx.core.json.JsonObject)member.getValue()));
           }
           break;
         case "openSslEngineOptions":
@@ -379,24 +344,6 @@ public class RabbitMQOptionsConverter {
       json.put("idleTimeoutUnit", obj.getIdleTimeoutUnit().name());
     }
     json.put("ssl", obj.isSsl());
-    if (obj.getKeyStoreOptions() != null) {
-      json.put("keyStoreOptions", obj.getKeyStoreOptions().toJson());
-    }
-    if (obj.getPfxKeyCertOptions() != null) {
-      json.put("pfxKeyCertOptions", obj.getPfxKeyCertOptions().toJson());
-    }
-    if (obj.getPemKeyCertOptions() != null) {
-      json.put("pemKeyCertOptions", obj.getPemKeyCertOptions().toJson());
-    }
-    if (obj.getTrustStoreOptions() != null) {
-      json.put("trustStoreOptions", obj.getTrustStoreOptions().toJson());
-    }
-    if (obj.getPfxTrustOptions() != null) {
-      json.put("pfxTrustOptions", obj.getPfxTrustOptions().toJson());
-    }
-    if (obj.getPemTrustOptions() != null) {
-      json.put("pemTrustOptions", obj.getPemTrustOptions().toJson());
-    }
     if (obj.getEnabledCipherSuites() != null) {
       JsonArray array = new JsonArray();
       obj.getEnabledCipherSuites().forEach(item -> array.add(item));
@@ -413,9 +360,6 @@ public class RabbitMQOptionsConverter {
       json.put("crlValues", array);
     }
     json.put("useAlpn", obj.isUseAlpn());
-    if (obj.getJdkSslEngineOptions() != null) {
-      json.put("jdkSslEngineOptions", obj.getJdkSslEngineOptions().toJson());
-    }
     if (obj.getOpenSslEngineOptions() != null) {
       json.put("openSslEngineOptions", obj.getOpenSslEngineOptions().toJson());
     }

@@ -25,26 +25,6 @@ public class QueueOptionsConverter {
             obj.setAutoAck((Boolean)member.getValue());
           }
           break;
-        case "consumerArguments":
-          if (member.getValue() instanceof JsonObject) {
-            java.util.Map<String, java.lang.Object> map = new java.util.LinkedHashMap<>();
-            ((Iterable<java.util.Map.Entry<String, Object>>)member.getValue()).forEach(entry -> {
-              if (entry.getValue() instanceof Object)
-                map.put(entry.getKey(), entry.getValue());
-            });
-            obj.setConsumerArguments(map);
-          }
-          break;
-        case "consumerExclusive":
-          if (member.getValue() instanceof Boolean) {
-            obj.setConsumerExclusive((Boolean)member.getValue());
-          }
-          break;
-        case "consumerTag":
-          if (member.getValue() instanceof String) {
-            obj.setConsumerTag((String)member.getValue());
-          }
-          break;
         case "keepMostRecent":
           if (member.getValue() instanceof Boolean) {
             obj.setKeepMostRecent((Boolean)member.getValue());
@@ -60,6 +40,26 @@ public class QueueOptionsConverter {
             obj.setNoLocal((Boolean)member.getValue());
           }
           break;
+        case "consumerExclusive":
+          if (member.getValue() instanceof Boolean) {
+            obj.setConsumerExclusive((Boolean)member.getValue());
+          }
+          break;
+        case "consumerTag":
+          if (member.getValue() instanceof String) {
+            obj.setConsumerTag((String)member.getValue());
+          }
+          break;
+        case "consumerArguments":
+          if (member.getValue() instanceof JsonObject) {
+            java.util.Map<String, java.lang.Object> map = new java.util.LinkedHashMap<>();
+            ((Iterable<java.util.Map.Entry<String, Object>>)member.getValue()).forEach(entry -> {
+              if (entry.getValue() instanceof Object)
+                map.put(entry.getKey(), entry.getValue());
+            });
+            obj.setConsumerArguments(map);
+          }
+          break;
       }
     }
   }
@@ -70,16 +70,16 @@ public class QueueOptionsConverter {
 
   public static void toJson(QueueOptions obj, java.util.Map<String, Object> json) {
     json.put("autoAck", obj.isAutoAck());
+    json.put("keepMostRecent", obj.isKeepMostRecent());
+    json.put("noLocal", obj.isNoLocal());
+    json.put("consumerExclusive", obj.isConsumerExclusive());
+    if (obj.getConsumerTag() != null) {
+      json.put("consumerTag", obj.getConsumerTag());
+    }
     if (obj.getConsumerArguments() != null) {
       JsonObject map = new JsonObject();
       obj.getConsumerArguments().forEach((key, value) -> map.put(key, value));
       json.put("consumerArguments", map);
     }
-    json.put("consumerExclusive", obj.isConsumerExclusive());
-    if (obj.getConsumerTag() != null) {
-      json.put("consumerTag", obj.getConsumerTag());
-    }
-    json.put("keepMostRecent", obj.isKeepMostRecent());
-    json.put("noLocal", obj.isNoLocal());
   }
 }

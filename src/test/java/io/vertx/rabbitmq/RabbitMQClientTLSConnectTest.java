@@ -85,7 +85,7 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
 	public void shouldConnectWithPemTrustStore(TestContext ctx) throws Exception {
 		connect(config()
 				.setSsl(true)
-				.setPemTrustOptions(Trust.SERVER_PEM.get()));
+				.setTrustOptions(Trust.SERVER_PEM.get()));
 		assertTrue(this.client.isConnected());
 	}
 

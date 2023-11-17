@@ -572,38 +572,8 @@ public class RabbitMQOptions extends NetClientOptions {
   }
 
   @Override
-  public RabbitMQOptions setKeyStoreOptions(JksOptions options) {
-    super.setKeyStoreOptions(options);
-    return this;
-  }
-
-  @Override
-  public RabbitMQOptions setPfxKeyCertOptions(PfxOptions options) {
-    super.setPfxKeyCertOptions(options);
-    return this;
-  }
-
-  @Override
-  public RabbitMQOptions setPemKeyCertOptions(PemKeyCertOptions options) {
-    super.setPemKeyCertOptions(options);
-    return this;
-  }
-
-  @Override
   public RabbitMQOptions setTrustOptions(TrustOptions options) {
     super.setTrustOptions(options);
-    return this;
-  }
-
-  @Override
-  public RabbitMQOptions setPemTrustOptions(PemTrustOptions options) {
-    super.setPemTrustOptions(options);
-    return this;
-  }
-
-  @Override
-  public RabbitMQOptions setPfxTrustOptions(PfxOptions options) {
-    super.setPfxTrustOptions(options);
     return this;
   }
 
