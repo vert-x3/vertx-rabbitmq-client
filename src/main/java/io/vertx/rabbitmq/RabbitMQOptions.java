@@ -12,6 +12,7 @@ import com.rabbitmq.client.MetricsCollector;
 import com.rabbitmq.client.impl.CredentialsProvider;
 import com.rabbitmq.client.impl.CredentialsRefreshService;
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.KeyCertOptions;
@@ -26,7 +27,8 @@ import io.vertx.core.net.TrustOptions;
  *
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-@DataObject(generateConverter = true, inheritConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class RabbitMQOptions extends NetClientOptions {
 
   /**

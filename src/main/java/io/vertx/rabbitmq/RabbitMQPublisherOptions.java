@@ -1,6 +1,7 @@
 package io.vertx.rabbitmq;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 
 
@@ -9,7 +10,8 @@ import io.vertx.core.json.JsonObject;
  *
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class RabbitMQPublisherOptions {
 
   /**
@@ -26,12 +28,12 @@ public class RabbitMQPublisherOptions {
    * The default internal queue size = {@code Integer.MAX_VALUE}
    */
   private static final int DEFAULT_QUEUE_SIZE = Integer.MAX_VALUE;
-  
+
   private Integer reconnectAttempts = 	DEFAULT_RECONNECT_ATTEMPTS;
   private long reconnectInterval = DEFAULT_RECONNECT_INTERVAL;
   private int maxInternalQueueSize = DEFAULT_QUEUE_SIZE;
 
-  
+
   public RabbitMQPublisherOptions() {
   }
 
@@ -88,7 +90,7 @@ public class RabbitMQPublisherOptions {
   public int getMaxInternalQueueSize() {
     return maxInternalQueueSize;
   }
-  
+
   /**
    * @param maxInternalQueueSize the size of internal queue
    * @return a reference to this, so the API can be used fluently
@@ -97,5 +99,5 @@ public class RabbitMQPublisherOptions {
     this.maxInternalQueueSize = maxInternalQueueSize;
     return this;
   }
-  
+
 }
