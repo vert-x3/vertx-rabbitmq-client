@@ -3,12 +3,14 @@ package io.vertx.rabbitmq;
 import java.util.Map;
 
 import io.vertx.codegen.annotations.DataObject;
+import io.vertx.codegen.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 
 /**
  * Aimed to specify queue consumer settings when calling {@link RabbitMQClient#basicConsumer(String, QueueOptions, Handler)}
  */
-@DataObject(generateConverter = true)
+@DataObject
+@JsonGen(publicConverter = false)
 public class QueueOptions {
 
   private static final int DEFAULT_QUEUE_SIZE = Integer.MAX_VALUE;
