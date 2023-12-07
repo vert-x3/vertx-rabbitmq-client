@@ -12,7 +12,7 @@ import com.rabbitmq.client.MetricsCollector;
 import com.rabbitmq.client.impl.CredentialsProvider;
 import com.rabbitmq.client.impl.CredentialsRefreshService;
 import io.vertx.codegen.annotations.DataObject;
-import io.vertx.codegen.annotations.JsonGen;
+import io.vertx.codegen.json.annotations.JsonGen;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.KeyCertOptions;
