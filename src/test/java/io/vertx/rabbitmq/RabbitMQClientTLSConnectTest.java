@@ -38,6 +38,7 @@ public class RabbitMQClientTLSConnectTest extends RabbitMQClientTestBaseTLS {
 		RabbitMQOptions config = new RabbitMQOptions();
 		config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5671));
 		config.setPort(rabbitmq.getMappedPort(5671));
+    config.setHostnameVerificationAlgorithm("HTTPS");
 		return config;
 	}
 
