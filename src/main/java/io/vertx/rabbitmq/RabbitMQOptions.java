@@ -609,6 +609,12 @@ public class RabbitMQOptions extends NetClientOptions {
     return this;
   }
 
+  @Override
+  public RabbitMQOptions setHostnameVerificationAlgorithm(String algorithm) {
+    super.setHostnameVerificationAlgorithm(algorithm);
+    return this;
+  }
+
   public String getConnectionName() {
     return connectionName;
   }
