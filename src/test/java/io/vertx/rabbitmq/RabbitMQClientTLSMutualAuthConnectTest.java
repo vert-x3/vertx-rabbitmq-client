@@ -38,6 +38,7 @@ public class RabbitMQClientTLSMutualAuthConnectTest extends RabbitMQClientTestBa
     RabbitMQOptions config = new RabbitMQOptions();
 
     config.setUri("amqp://" + rabbitmq.getContainerIpAddress() + ":" + rabbitmq.getMappedPort(5671));
+    config.setHostnameVerificationAlgorithm("HTTPS");
     return config;
   }
 

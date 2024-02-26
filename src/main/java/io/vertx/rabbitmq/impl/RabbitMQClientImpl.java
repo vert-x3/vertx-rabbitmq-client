@@ -123,7 +123,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       SslContextProvider provider;
       try {
         SSLHelper sslHelper = new SSLHelper(SSLHelper.resolveEngineOptions(config.getSslEngineOptions(), config.isUseAlpn()));
-        SslChannelProvider scp = sslHelper.resolveSslChannelProvider(config.getSslOptions(), "", false, null, null, ((VertxInternal) vertx).createEventLoopContext())
+        SslChannelProvider scp = sslHelper.resolveSslChannelProvider(config.getSslOptions(), config.getHostnameVerificationAlgorithm(), false, null, null, ((VertxInternal) vertx).createEventLoopContext())
           .toCompletionStage()
           .toCompletableFuture()
           .get(1, TimeUnit.MINUTES);
