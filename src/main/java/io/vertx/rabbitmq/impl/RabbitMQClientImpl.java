@@ -67,8 +67,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private long channelInstance;
   private boolean channelConfirms = false;
   private boolean hasConnected = false;
-  private AtomicBoolean isReconnecting = new AtomicBoolean(false);
-  private List<Handler<Promise<Void>>> connectionEstablishedCallbacks = new ArrayList<>();
+  private final AtomicBoolean isStopped = new AtomicBoolean(false);
+  private final AtomicBoolean isReconnecting = new AtomicBoolean(false);
+  private final List<Handler<Promise<Void>>> connectionEstablishedCallbacks = new ArrayList<>();
 
   public RabbitMQClientImpl(Vertx vertx, RabbitMQOptions config) {
     this.vertx = vertx;
@@ -159,7 +160,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     }
 
     //TODO: Support other configurations
-
+    
     return addresses == null
            ? cf.newConnection(config.getConnectionName())
            : cf.newConnection(addresses, config.getConnectionName());
@@ -260,10 +261,15 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   }
 
   private void execRestart(int attempts, Handler<AsyncResult<Void>> resultHandler) {
-      stop().onComplete(ar -> {
+      vertx.executeBlocking(() -> {
+        disconnect();
+        return null;
+      }).onComplete(ar -> {
       if (ar.succeeded()) {
         if (attempts >= retries) {
           log.error("Max number of consumer restart attempts (" + retries + ") reached. Will not attempt to restart again");
+        } else if (isStopped.get()) {
+          log.info("RabbitMQ client shutdown. Will not attempt to restart again");
         } else {
           start().onComplete((arStart) -> {
             if (arStart.succeeded()) {
@@ -524,6 +530,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public Future<Void> start() {
     log.info("Starting rabbitmq client");
+    isStopped.set(false);
     return start((ContextInternal) vertx.getOrCreateContext(), 0);
   }
 
@@ -548,6 +555,9 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       if (retries == 0 || (!hasConnected && !config.isAutomaticRecoveryOnInitialConnection())) {
         log.error("Retries disabled. Will not attempt to restart");
         promise.fail(err);
+      } else if (isStopped.get()) {
+        log.error("Client stopped.  Will not attempt to restart");
+        promise.complete();
       } else if (attempts >= retries) {
         log.info("Max number of connect attempts (" + retries + ") reached. Will not attempt to connect again");
         promise.fail(err);
@@ -565,6 +575,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   @Override
   public Future<Void> stop() {
     log.info("Stopping rabbitmq client");
+    isStopped.set(true);
     return vertx.executeBlocking(() -> {
       disconnect();
       return null;
@@ -599,6 +610,13 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
   private Future<Void> connect() throws IOException, TimeoutException {
     log.debug("Connecting to rabbitmq...");
     connection = newConnection(vertx, config);
+    
+    if (vertx instanceof VertxInternal) {
+      ((VertxInternal) vertx).addCloseHook(completion -> {
+        stop().andThen(completion);
+      });
+    }
+    
     connection.addShutdownListener(this);
     ++channelInstance;
     channel = connection.createChannel();
