@@ -8,8 +8,8 @@ import com.rabbitmq.client.ShutdownSignalException;
 import io.vertx.core.Context;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
@@ -65,5 +65,5 @@ public class QueueConsumerHandler extends DefaultConsumer {
   public RabbitMQConsumer queue() {
     return queue;
   }
-  
+
 }

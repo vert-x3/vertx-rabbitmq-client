@@ -2,12 +2,11 @@ package io.vertx.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.rabbitmq.RabbitMQClientPublisherTest.MessageDefinition;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
