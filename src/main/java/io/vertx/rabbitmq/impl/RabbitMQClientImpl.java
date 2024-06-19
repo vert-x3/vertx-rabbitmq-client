@@ -38,10 +38,13 @@ import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
+import io.vertx.core.internal.tls.SslContextManager;
+import io.vertx.core.internal.tls.SslContextProvider;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.ClientSSLOptions;
 import io.vertx.core.net.JdkSSLEngineOptions;
-import io.vertx.core.net.impl.*;
+import io.vertx.core.internal.net.VertxSslContext;
+import io.vertx.core.net.impl.NetServerImpl;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
@@ -120,13 +123,12 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       config.setSslEngineOptions(new JdkSSLEngineOptions());
       SslContextProvider provider;
       try {
-        SSLHelper sslHelper = new SSLHelper(SSLHelper.resolveEngineOptions(config.getSslEngineOptions(), config.isUseAlpn()));
+        SslContextManager sslHelper = new SslContextManager(NetServerImpl.resolveEngineOptions(config.getSslEngineOptions(), config.isUseAlpn()));
         ClientSSLOptions options = config.getSslOptions().copy();
-        SslChannelProvider scp = sslHelper.resolveSslChannelProvider(options, config.getHostnameVerificationAlgorithm(), false, null, null, ((VertxInternal) vertx).createEventLoopContext())
+        provider = sslHelper.resolveSslContextProvider(options, config.getHostnameVerificationAlgorithm(), null, null, ((VertxInternal) vertx).createEventLoopContext())
           .toCompletionStage()
           .toCompletableFuture()
           .get(1, TimeUnit.MINUTES);
-        provider = scp.sslContextProvider();
       } catch (InterruptedException e) {
         throw new VertxException(e);
       } catch (ExecutionException e) {
