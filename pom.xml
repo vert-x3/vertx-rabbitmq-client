@@ -14,7 +14,7 @@
 
   <properties>
     <stack.version>5.0.0-SNAPSHOT</stack.version>
-    <rabbitmq.client.version>5.17.0</rabbitmq.client.version>
+    <rabbitmq.client.version>5.21.0</rabbitmq.client.version>
     <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
@@ -93,13 +93,13 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
-      <version>1.18.3</version>
+      <version>1.19.8</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>toxiproxy</artifactId>
-      <version>1.18.3</version>
+      <version>1.19.8</version>
       <scope>test</scope>
     </dependency>
     <dependency>
