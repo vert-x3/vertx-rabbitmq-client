@@ -15,11 +15,11 @@
       
     <artifactId>vertx-rabbitmq-client</artifactId>
       
-    <version>4.5.10</version>
+    <version>4.5.11-SNAPSHOT</version>
       
     <properties>
             
-        <stack.version>4.5.10</stack.version>
+        <stack.version>4.5.11-SNAPSHOT</stack.version>
             
         <rabbitmq.client.version>5.20.0</rabbitmq.client.version>
             
