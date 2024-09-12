@@ -27,12 +27,7 @@ import com.rabbitmq.client.ShutdownSignalException;
 
 import io.netty.handler.ssl.JdkSslContext;
 import io.vertx.codegen.annotations.Nullable;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxException;
+import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.internal.ContextInternal;
 import io.vertx.core.internal.VertxInternal;
@@ -203,7 +198,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     if (handler.queue().isCancelled()) {
       return;
     }
-    restartConnect(0, rh -> {
+    restartConnect(0, (res, err) -> {
       forChannel(chan -> {
         RabbitMQConsumer q = handler.queue();
         chan.basicConsume(q.queueName(), options.isAutoAck(), options.getConsumerTag(),
@@ -234,16 +229,16 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
    * @param attempts  number of attempts
    * @param resultHandler handler called when operation is done with a result of the operation
    */
-  private void restartConnect(int attempts, Handler<AsyncResult<Void>> resultHandler) {
+  private void restartConnect(int attempts, Completable<Void> resultHandler) {
     if (retries == 0) {
       log.error("Retries disabled. Will not attempt to restart");
-      resultHandler.handle(Future.failedFuture("Retries disabled. Will not attempt to restart"));
+      resultHandler.fail("Retries disabled. Will not attempt to restart");
       return;
     }
     if (isReconnecting.compareAndSet(false, true)) {
       if (channel != null && channel.isOpen()) {
         log.debug("Other consumers or producers reconnect successfully. Reuse their channel");
-        resultHandler.handle(Future.succeededFuture());
+        resultHandler.succeed();
         isReconnecting.set(false);
         return;
       }
@@ -261,7 +256,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
 
   }
 
-  private void execRestart(int attempts, Handler<AsyncResult<Void>> resultHandler) {
+  private void execRestart(int attempts, Completable<Void> resultHandler) {
       stop().onComplete(ar -> {
       if (ar.succeeded()) {
         if (attempts >= retries) {
@@ -275,7 +270,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
               }
               log.info("Successed to restart client. ");
               isReconnecting.set(false);
-              resultHandler.handle(arStart);
+              resultHandler.succeed();
             } else {
               log.error("Failed to restart client: ", arStart.cause());
               long delay = config.getReconnectInterval();
@@ -659,7 +654,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
     }
     log.info("RabbitMQ connection shutdown! The client will attempt to reconnect automatically", cause);
     //Make sure to perform reconnection
-    restartConnect(0, rh -> {
+    restartConnect(0, (err, res) -> {
       log.info("reconnect success");
     });
   }

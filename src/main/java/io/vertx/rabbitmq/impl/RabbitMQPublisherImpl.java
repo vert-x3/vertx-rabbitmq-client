@@ -63,13 +63,13 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
     private final String routingKey;
     private final BasicProperties properties;
     private final Buffer message;
-    private final Handler<AsyncResult<Void>> publishHandler;
-    private final Handler<AsyncResult<Long>> confirmHandler;
+    private final Promise<Void> publishHandler;
+    private final Promise<Long> confirmHandler;
     private volatile long deliveryTag;
 
     MessageDetails(String exchange, String routingKey, BasicProperties properties, Buffer message,
-                   Handler<AsyncResult<Void>> publishHandler,
-                   Handler<AsyncResult<Long>> confirmHandler) {
+                   Promise<Void> publishHandler,
+                   Promise<Long> confirmHandler) {
       this.exchange = exchange;
       this.routingKey = routingKey;
       this.properties = properties;
@@ -113,7 +113,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
     return promise.future();
   }
 
-  private void stop(Handler<AsyncResult<Void>> resultHandler) {
+  private void stop(Promise<Void> resultHandler) {
     stopped = true;
     sendQueue.pause();
     if (sendQueue.isEmpty()) {
