@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -7,6 +7,8 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQOptions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;

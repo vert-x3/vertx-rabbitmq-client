@@ -1,11 +1,12 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.rabbitmq.RabbitMQClientPublisherTest.MessageDefinition;
+import io.vertx.rabbitmq.*;
+import io.vertx.rabbitmq.tests.RabbitMQClientPublisherTest.MessageDefinition;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.vertx.rabbitmq.RabbitMQClientPublisherTest.prepareClient;
+import static io.vertx.rabbitmq.tests.RabbitMQClientPublisherTest.prepareClient;
 
 /**
  * Test to ensure that the newly added shutdown handler for the consumer does not obstruct a normal consumer cancel.

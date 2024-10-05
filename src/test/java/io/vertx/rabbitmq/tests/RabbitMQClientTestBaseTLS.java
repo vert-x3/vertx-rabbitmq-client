@@ -1,10 +1,12 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQOptions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;

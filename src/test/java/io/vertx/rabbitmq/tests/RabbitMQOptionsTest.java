@@ -1,6 +1,7 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.rabbitmq.RabbitMQOptions;
 import io.vertx.test.core.TestUtils;
 import org.junit.Test;
 
@@ -20,7 +21,7 @@ public class RabbitMQOptionsTest {
     JsonObject json = options.toJson();
     assertEquals("ConnectionName", json.getString("connectionName"));
   }
-  
+
   @Test
   public void testFromJsonAndCopy() {
     String expectedUri = TestUtils.randomAlphaString(50);
@@ -88,6 +89,6 @@ public class RabbitMQOptionsTest {
       assertEquals(testOptions.getIncludeProperties(), expectedIncludeProperties);
       assertEquals(testOptions.isNioEnabled(), useNio);
       assertEquals(testOptions.getConnectionName(), connectionName);
-     }       
+     }
   }
 }

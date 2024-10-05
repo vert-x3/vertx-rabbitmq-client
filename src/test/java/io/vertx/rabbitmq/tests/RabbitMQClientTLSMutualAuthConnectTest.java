@@ -1,9 +1,10 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import io.vertx.rabbitmq.RabbitMQOptions;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -12,7 +13,6 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import io.vertx.core.net.JksOptions;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.test.tls.Cert;
 import java.net.SocketException;
 import javax.net.ssl.SSLException;

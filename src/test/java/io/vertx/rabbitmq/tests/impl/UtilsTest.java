@@ -1,10 +1,11 @@
-package io.vertx.rabbitmq.impl;
+package io.vertx.rabbitmq.tests.impl;
 
 import static org.junit.Assert.*;
 
 import java.time.Instant;
 import java.util.*;
 
+import io.vertx.rabbitmq.impl.Utils;
 import org.junit.Test;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.impl.LongStringHelper;

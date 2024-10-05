@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
@@ -22,6 +22,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.rabbitmq.RabbitMQClient;
+import io.vertx.rabbitmq.RabbitMQMessage;
+import io.vertx.rabbitmq.RabbitMQOptions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;

@@ -1,9 +1,11 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import com.rabbitmq.client.AMQP;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.rabbitmq.QueueOptions;
+import io.vertx.rabbitmq.RabbitMQConsumer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

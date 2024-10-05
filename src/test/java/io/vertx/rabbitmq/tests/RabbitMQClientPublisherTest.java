@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import com.rabbitmq.client.AMQP;
 
@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.vertx.rabbitmq.*;
 import org.junit.Before;
 import org.junit.Test;
 

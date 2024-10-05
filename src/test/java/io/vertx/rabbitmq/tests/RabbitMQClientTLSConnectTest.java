@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 
 import javax.net.ssl.SSLHandshakeException;
 
+import io.vertx.rabbitmq.RabbitMQOptions;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.testcontainers.containers.BindMode;

@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * @author <a href="mailto:nscavell@redhat.com">Nick Scavelli</a>
  */
-class Utils {
+public class Utils {
 
   public static void populate(JsonObject json, Envelope envelope) {
     if (envelope == null) return;

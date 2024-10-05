@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import com.rabbitmq.client.AMQP;
 import io.vertx.core.Handler;
@@ -8,6 +8,9 @@ import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.rabbitmq.QueueOptions;
+import io.vertx.rabbitmq.RabbitMQConsumer;
+import io.vertx.rabbitmq.RabbitMQMessage;
 import org.junit.Test;
 
 import java.io.IOException;

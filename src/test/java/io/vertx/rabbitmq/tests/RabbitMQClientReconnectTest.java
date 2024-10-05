@@ -1,8 +1,9 @@
-package io.vertx.rabbitmq;
+package io.vertx.rabbitmq.tests;
 
 import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.core.net.*;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.rabbitmq.RabbitMQOptions;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
