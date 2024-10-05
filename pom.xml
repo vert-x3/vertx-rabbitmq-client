@@ -20,7 +20,6 @@
 
   <properties>
     <rabbitmq.client.version>5.17.0</rabbitmq.client.version>
-    <jar.manifest>${project.basedir}/src/main/resources/META-INF/MANIFEST.MF</jar.manifest>
   </properties>
 
   <dependencyManagement>
