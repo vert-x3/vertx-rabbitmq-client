@@ -63,9 +63,10 @@ There are two, separate and incompatible, mechanisms for handling reconnections 
 Neither mechanism is enabled by default.
 
 The reconnections provided by the Java RabbitMQ client library do not work in all situations (if the connection to the server disconnects nicely the client will shut down and not recover).
-----
-[source, java]
+
 In order to use the Java RabbitMQ client library auto recovery it is necessary to both enable it and disable the RabbitMQClient library reconnect attempts:
+[source, java]
+----
 RabbitMQOptions options = new RabbitMQOptions();
 options.setAutomaticRecoveryEnabled(true);
 options.setReconnectAttempts(0);
@@ -228,7 +229,7 @@ The RabbitMQPublisher works by:
 ----
 
 
-Delivery Tags
+==== Delivery Tags
 
 This section is an implementation detail that is useful for anyone that wants to implement their own alternative to RabbitMQPublisher.
 
@@ -244,7 +245,6 @@ To capture the delivery tag one of the RabbitMqClient::basicPublishWithDeliveryT
   void basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, Handler<Long> deliveryTagHandler, Handler<AsyncResult<Void>> resultHandler);
   Future<Void> basicPublishWithDeliveryTag(String exchange, String routingKey, BasicProperties properties, Buffer body, @Nullable Handler<Long> deliveryTagHandler);
 ----
-These methods 
 
 === Consume
 
