@@ -218,6 +218,7 @@ Also, until messages are confirmed by the server it may be necessary to resend t
 The RabbitMQPublisher class implements a standard approach to handling asynchronous confirmations, avoiding much of the boiler plate code that would otherwise be required.
 
 The RabbitMQPublisher works by:
+
 * Adding all sent messages to an internal queue.
 * Sending messages from the queue when it is able, keeping track of these messages pending acknowledgement in a separate queue.
 * Handling asynchronous confirmations from RabbitMQ, removing messages from the pendingAck queue once they are confirmed.
