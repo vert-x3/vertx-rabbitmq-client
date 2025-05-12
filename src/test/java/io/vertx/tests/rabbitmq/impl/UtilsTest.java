@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq.tests.impl;
+package io.vertx.tests.rabbitmq.impl;
 
 import static org.junit.Assert.*;
 
