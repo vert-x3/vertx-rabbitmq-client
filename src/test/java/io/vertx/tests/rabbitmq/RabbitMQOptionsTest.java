@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq.tests;
+package io.vertx.tests.rabbitmq;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.rabbitmq.RabbitMQOptions;

@@ -136,8 +136,7 @@ public class RabbitMQExamples {
 
   public void basicConsumerOptions(Vertx vertx, RabbitMQClient client) {
     QueueOptions options = new QueueOptions()
-      .setMaxInternalQueueSize(1000)
-      .setKeepMostRecent(true);
+      .setMaxInternalQueueSize(1000);
 
     client
       .basicConsumer("my.queue", options)

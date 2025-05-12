@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq.tests;
+package io.vertx.tests.rabbitmq;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

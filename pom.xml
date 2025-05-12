@@ -19,7 +19,8 @@
   </scm>
 
   <properties>
-    <rabbitmq.client.version>5.17.0</rabbitmq.client.version>
+    <rabbitmq.client.version>5.25.0</rabbitmq.client.version>
+    <vertx.surefire.useModulePath>false</vertx.surefire.useModulePath>
   </properties>
 
   <dependencyManagement>
@@ -140,6 +141,12 @@
                     <classifier>processor</classifier>
                   </annotationProcessorPath>
                 </annotationProcessorPaths>
+              </configuration>
+            </execution>
+            <execution>
+              <id>default-testCompile</id>
+              <configuration>
+                <useModulePath>false</useModulePath>
               </configuration>
             </execution>
           </executions>

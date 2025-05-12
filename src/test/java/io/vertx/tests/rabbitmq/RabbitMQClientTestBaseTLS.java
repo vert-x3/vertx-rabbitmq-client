@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq.tests;
+package io.vertx.tests.rabbitmq;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;

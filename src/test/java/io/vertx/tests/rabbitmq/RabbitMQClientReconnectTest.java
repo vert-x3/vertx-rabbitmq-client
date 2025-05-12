@@ -1,4 +1,4 @@
-package io.vertx.rabbitmq.tests;
+package io.vertx.tests.rabbitmq;
 
 import com.rabbitmq.client.ConnectionFactory;
 import io.vertx.core.net.*;

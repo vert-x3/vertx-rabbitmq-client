@@ -15,13 +15,11 @@ public class QueueOptions {
 
   private static final int DEFAULT_QUEUE_SIZE = Integer.MAX_VALUE;
   private static final boolean DEFAULT_AUTO_ACK = true;
-  private static final boolean DEFAULT_KEEP_MOST_RECENT = false;
   private static final boolean DEFAULT_NO_LOCAL = false;
   private static final boolean DEFAULT_CONSUMER_EXCLUSIVE = false;
   private static final String DEFAULT_CONSUMER_TAG = "";
 
   private boolean autoAck = DEFAULT_AUTO_ACK;
-  private boolean keepMostRecent = DEFAULT_KEEP_MOST_RECENT;
   private int maxInternalQueueSize = DEFAULT_QUEUE_SIZE;
   private boolean noLocal = DEFAULT_NO_LOCAL;
   private boolean consumerExclusive = DEFAULT_CONSUMER_EXCLUSIVE;
@@ -44,15 +42,6 @@ public class QueueOptions {
    */
   public QueueOptions setAutoAck(boolean autoAck) {
     this.autoAck = autoAck;
-    return this;
-  }
-
-  /**
-   * @param keepMostRecent {@code true} for discarding old messages instead of recent ones,
-   *                       otherwise use {@code false}
-   */
-  public QueueOptions setKeepMostRecent(boolean keepMostRecent) {
-    this.keepMostRecent = keepMostRecent;
     return this;
   }
 
@@ -79,14 +68,6 @@ public class QueueOptions {
    */
   public int maxInternalQueueSize() {
     return maxInternalQueueSize;
-  }
-
-  /**
-   * @return {@code true} if old messages will be discarded instead of recent ones,
-   * otherwise use {@code false}
-   */
-  public boolean isKeepMostRecent() {
-    return keepMostRecent;
   }
 
   public boolean isNoLocal() {

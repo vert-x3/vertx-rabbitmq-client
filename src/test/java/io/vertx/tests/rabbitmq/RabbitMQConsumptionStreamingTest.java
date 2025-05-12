@@ -1,17 +1,14 @@
-package io.vertx.rabbitmq.tests;
+package io.vertx.tests.rabbitmq;
 
 import com.rabbitmq.client.AMQP;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.rabbitmq.QueueOptions;
-import io.vertx.rabbitmq.RabbitMQConsumer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.vertx.test.core.TestUtils.randomAlphaString;
 
@@ -111,45 +108,5 @@ public class RabbitMQConsumptionStreamingTest extends RabbitMQClientTestBase {
     // wait some time to ensure that handler will not receive any messages when the stream is ended
     Async done = ctx.async();
     vertx.setTimer(1000, l -> done.complete());
-  }
-
-  @Test
-  public void keepMostRecentOptionShouldWorks(TestContext ctx) throws Exception {
-    int count = 2;
-    int queueSize = 1;
-    Set<String> messages = createMessages(count);
-    Iterator<String> iterator = messages.iterator();
-
-    iterator.next();
-    String secondMessage = iterator.next();
-
-    String q = setupQueue(ctx, messages);
-
-    Async paused = ctx.async();
-    Async secondReceived = ctx.async();
-    AtomicReference<RabbitMQConsumer> mqConsumer = new AtomicReference<>(null);
-    QueueOptions queueOptions = new QueueOptions()
-      .setKeepMostRecent(true)
-      .setMaxInternalQueueSize(queueSize);
-
-    client.basicConsumer(q, queueOptions).onComplete(ctx.asyncAssertSuccess(consumer -> {
-      mqConsumer.set(consumer);
-      consumer.pause();
-      consumer.handler(msg -> {
-        ctx.assertTrue(msg.body().toString().equals(secondMessage), "only second message should be stored");
-        secondReceived.complete();
-      });
-      paused.complete();
-    }));
-
-    paused.awaitSuccess(15000);
-
-    Async done = ctx.async();
-    // resume in 10 seconds, so message should be received and stored
-    vertx.setTimer(1000, l -> {
-      mqConsumer.get().resume();
-      // wait some time to ensure that handler will be called only with the second message
-      vertx.setTimer(1000, t -> done.complete());
-    });
   }
 }

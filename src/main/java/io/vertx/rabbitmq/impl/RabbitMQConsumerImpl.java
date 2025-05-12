@@ -1,9 +1,10 @@
 package io.vertx.rabbitmq.impl;
 
 import io.vertx.core.*;
+import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.concurrent.InboundMessageQueue;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
-import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQConsumer;
 import io.vertx.rabbitmq.RabbitMQMessage;
@@ -21,16 +22,60 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
   private Handler<Void> endHandler;
   private String queueName;
   private final QueueConsumerHandler consumerHandler;
-  private final boolean keepMostRecent;
-  private final InboundBuffer<RabbitMQMessage> pending;
+  private final PendingQueue pending;
   private final int maxQueueSize;
   private volatile boolean cancelled;
 
+  class PendingQueue extends InboundMessageQueue<RabbitMQMessage> {
+
+    private final ContextInternal context;
+    private Handler<RabbitMQMessage> handler;
+    private int size;
+
+    public PendingQueue(ContextInternal context) {
+      super(context.executor(), context.executor());
+      this.context = context;
+    }
+
+    @Override
+    protected void handleMessage(RabbitMQMessage msg) {
+      size--;
+      Handler<RabbitMQMessage> h = handler;
+      if (h != null) {
+        context.dispatch(msg, m -> {
+          try {
+            h.handle(m);
+          } catch (Exception e) {
+            handleException(e);
+          }
+        });
+      }
+    }
+
+    /**
+     * Push message to stream.
+     * <p>
+     * Should be called from a vertx thread.
+     *
+     * @param message received message to deliver
+     */
+    void enqueue(RabbitMQMessage message) {
+      context.execute(message, m -> {
+        if (size++ < maxQueueSize) {
+          write(m);
+        }
+      });
+    }
+  }
+
   RabbitMQConsumerImpl(Context context, QueueConsumerHandler consumerHandler, QueueOptions options, String queueName) {
+
+    PendingQueue pending = new PendingQueue((ContextInternal) context);
+    pending.pause();
+
     this.consumerHandler = consumerHandler;
-    this.keepMostRecent = options.isKeepMostRecent();
     this.maxQueueSize = options.maxInternalQueueSize();
-    this.pending = new InboundBuffer<RabbitMQMessage>(context, maxQueueSize).pause();
+    this.pending = pending;
     this.queueName = queueName;
   }
 
@@ -53,17 +98,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
 
   @Override
   public RabbitMQConsumer handler(Handler<RabbitMQMessage> handler) {
-    if (handler != null) {
-      pending.handler(msg -> {
-        try {
-          handler.handle(msg);
-        } catch (Exception e) {
-          handleException(e);
-        }
-      });
-    } else {
-      pending.handler(null);
-    }
+    pending.handler = handler;
     return this;
   }
 
@@ -75,7 +110,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
 
   @Override
   public RabbitMQConsumer resume() {
-    pending.resume();
+    pending.fetch(Long.MAX_VALUE);
     return this;
   }
 
@@ -129,24 +164,16 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
    * @param message received message to deliver
    */
   void handleMessage(RabbitMQMessage message) {
-
-    if (pending.size() >= maxQueueSize) {
-      if (keepMostRecent) {
-        pending.read();
-      } else {
-        log.debug("Discard a received message since stream is paused and buffer flag is false");
-        return;
-      }
-    }
-    pending.write(message);
+    pending.enqueue(message);
   }
 
   /**
    * Trigger exception handler with given exception
    */
   private void handleException(Throwable exception) {
-    if (exceptionHandler != null) {
-      exceptionHandler.handle(exception);
+    Handler<Throwable> h = exceptionHandler;
+    if (h != null) {
+      h.handle(exception);
     }
   }
 
@@ -154,8 +181,9 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
    * Trigger end of stream handler
    */
   void handleEnd() {
-    if (endHandler != null) {
-      endHandler.handle(null);
+    Handler<Void> h = endHandler;
+    if (h != null) {
+      h.handle(null);
     }
   }
 }

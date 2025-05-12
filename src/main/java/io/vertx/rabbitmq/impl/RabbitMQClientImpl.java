@@ -39,7 +39,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.ClientSSLOptions;
 import io.vertx.core.net.JdkSSLEngineOptions;
 import io.vertx.core.internal.net.VertxSslContext;
-import io.vertx.core.net.impl.NetServerImpl;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
