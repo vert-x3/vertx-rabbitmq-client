@@ -16,17 +16,16 @@
 package io.vertx.rabbitmq.impl;
 
 import com.rabbitmq.client.BasicProperties;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.concurrent.InboundMessageQueue;
 import io.vertx.core.internal.logging.Logger;
 import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.streams.ReadStream;
-import io.vertx.core.streams.impl.InboundBuffer;
 import io.vertx.rabbitmq.RabbitMQClient;
 import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.rabbitmq.RabbitMQPublisher;
@@ -35,6 +34,7 @@ import io.vertx.rabbitmq.RabbitMQPublisherOptions;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -45,19 +45,70 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   private static final Logger log = LoggerFactory.getLogger(RabbitMQPublisherImpl.class);
 
   private final RabbitMQClient client;
-  private final InboundBuffer<RabbitMQPublisherConfirmation> confirmations;
-  private final Context context;
+  private final ConfirmationQueue confirmationQueue;
+  private final ContextInternal context;
   private final RabbitMQPublisherOptions options;
 
   private final Deque<MessageDetails> pendingAcks = new ArrayDeque<>();
-  private final InboundBuffer<MessageDetails> sendQueue;
+  private final SendQueue sendQueue;
   private long lastChannelInstance = 0;
   private volatile boolean stopped = false;
+
+  private class ConfirmationQueue extends InboundMessageQueue<RabbitMQPublisherConfirmation> {
+
+    private Handler<RabbitMQPublisherConfirmation> handler;
+
+    public ConfirmationQueue(ContextInternal context) {
+      super(context.executor(), context.executor());
+    }
+
+    @Override
+    protected void handleMessage(RabbitMQPublisherConfirmation msg) {
+      Handler<RabbitMQPublisherConfirmation> h = handler;
+      if (h != null) {
+        context.dispatch(msg, h);
+      }
+    }
+    void enqueue(RabbitMQPublisherConfirmation confirmation) {
+      context.execute(confirmation, t -> write(confirmation));
+    }
+  }
+
+  private class SendQueue extends InboundMessageQueue<Object> {
+
+    private int size;
+    private final AtomicInteger volatileSize = new AtomicInteger();
+
+    public SendQueue(ContextInternal context) {
+      super(context.executor(), context.executor());
+    }
+    @Override
+    protected void handleMessage(Object msg) {
+      if (msg instanceof MessageDetails) {
+        volatileSize.setRelease(--size);
+        MessageDetails md = (MessageDetails) msg;
+        handleMessageSend(md);
+      } else if (msg instanceof Promise) {
+        Promise<?> promise = (Promise<?>) msg;
+        promise.complete();
+      }
+    }
+    void enqueue(MessageDetails msg) {
+      volatileSize.setRelease(++size);
+      context.execute(msg, this::write);
+    }
+    int size() {
+      return volatileSize.get();
+    }
+    public void checkpoint(Promise<Void> promise) {
+      context.execute(promise, this::write);
+    }
+  }
 
   /**
    * POD for holding message details pending acknowledgement.
    */
-  static class MessageDetails {
+  private static class MessageDetails {
 
     private final String exchange;
     private final String routingKey;
@@ -84,15 +135,11 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
 
   }
 
-  public RabbitMQPublisherImpl(Vertx vertx
-          , RabbitMQClient client
-          , RabbitMQPublisherOptions options
-  ) {
+  public RabbitMQPublisherImpl(Vertx vertx, RabbitMQClient client , RabbitMQPublisherOptions options) {
     this.client = client;
-    this.context = vertx.getOrCreateContext();
-    this.confirmations = new InboundBuffer<>(context);
-    this.sendQueue = new InboundBuffer<>(context);
-    sendQueue.handler(md -> handleMessageSend(md));
+    this.context = (ContextInternal) vertx.getOrCreateContext();
+    this.confirmationQueue = new ConfirmationQueue(context);
+    this.sendQueue = new SendQueue(context);
     this.options = options;
     this.client.addConnectionEstablishedCallback(p -> {
       addConfirmListener(client, options, p);
@@ -115,15 +162,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
 
   private void stop(Promise<Void> resultHandler) {
     stopped = true;
-    sendQueue.pause();
-    if (sendQueue.isEmpty()) {
-      resultHandler.handle(Future.succeededFuture());
-    } else {
-      sendQueue.emptyHandler(v -> {
-        resultHandler.handle(Future.succeededFuture());
-      });
-    }
-    sendQueue.resume();
+    sendQueue.checkpoint(resultHandler);
   }
 
   @Override
@@ -136,9 +175,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   @Override
   public void restart() {
     stopped = false;
-    sendQueue.pause();
-    sendQueue.emptyHandler(null);
-    sendQueue.resume();
+    sendQueue.fetch(Long.MAX_VALUE);
   }
 
   private Promise<Void> startForPromise() {
@@ -198,7 +235,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
                   log.warn("Failed to handle publish result", ex);
                 }
               }
-              sendQueue.resume();
+              sendQueue.fetch(Long.MAX_VALUE);
             } else {
               log.info("Failed to publish message: " + publishResult.cause().toString());
               synchronized(pendingAcks) {
@@ -226,7 +263,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
           MessageDetails md = iter.next();
           if (md.deliveryTag <= rawConfirmation.getDeliveryTag()) {
             String messageId = md.properties == null ?  null : md.properties.getMessageId();
-            confirmations.write(new RabbitMQPublisherConfirmation(messageId, rawConfirmation.getDeliveryTag(), rawConfirmation.isSucceeded()));
+            confirmationQueue.enqueue(new RabbitMQPublisherConfirmation(messageId, rawConfirmation.getDeliveryTag(), rawConfirmation.isSucceeded()));
             if (md.confirmHandler != null) {
               try {
                 md.confirmHandler.handle(rawConfirmation.isSucceeded() ? Future.succeededFuture(md.deliveryTag) :
@@ -245,7 +282,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
           MessageDetails md = iter.next();
           if (md.deliveryTag == rawConfirmation.getDeliveryTag()) {
             String messageId = md.properties == null ?  null : md.properties.getMessageId();
-            confirmations.write(new RabbitMQPublisherConfirmation(messageId, rawConfirmation.getDeliveryTag(), rawConfirmation.isSucceeded()));
+            confirmationQueue.enqueue(new RabbitMQPublisherConfirmation(messageId, rawConfirmation.getDeliveryTag(), rawConfirmation.isSucceeded()));
             if (md.confirmHandler != null) {
               try {
                 md.confirmHandler.handle(rawConfirmation.isSucceeded() ? Future.succeededFuture(md.deliveryTag) :
@@ -266,9 +303,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   public Future<Void> publish(String exchange, String routingKey, BasicProperties properties, Buffer body) {
     Promise<Void> promise = Promise.promise();
     if (!stopped) {
-      context.runOnContext(e -> {
-        sendQueue.write(new MessageDetails(exchange, routingKey, properties, body, promise, null));
-      });
+      sendQueue.enqueue(new MessageDetails(exchange, routingKey, properties, body, promise, null));
     }
     return promise.future();
   }
@@ -277,40 +312,37 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   public Future<Long> publishConfirm(String exchange, String routingKey, BasicProperties properties, Buffer body) {
     Promise<Long> promise = Promise.promise();
     if (!stopped) {
-      context.runOnContext(e -> {
-        sendQueue.write(new MessageDetails(exchange, routingKey, properties, body, null, promise));
-      });
+      sendQueue.enqueue(new MessageDetails(exchange, routingKey, properties, body, null, promise));
     }
     return promise.future();
   }
 
   @Override
   public RabbitMQPublisherImpl exceptionHandler(Handler<Throwable> hndlr) {
-    confirmations.exceptionHandler(hndlr);
     return this;
   }
 
   @Override
   public RabbitMQPublisherImpl handler(Handler<RabbitMQPublisherConfirmation> hndlr) {
-    confirmations.handler(hndlr);
+    confirmationQueue.handler = hndlr;
     return this;
   }
 
   @Override
   public RabbitMQPublisherImpl pause() {
-    confirmations.pause();
+    confirmationQueue.pause();
     return this;
   }
 
   @Override
   public RabbitMQPublisherImpl resume() {
-    confirmations.resume();
+    confirmationQueue.fetch(Long.MAX_VALUE);
     return this;
   }
 
   @Override
   public RabbitMQPublisherImpl fetch(long l) {
-    confirmations.fetch(l);
+    confirmationQueue.fetch(l);
     return this;
   }
 
@@ -318,7 +350,4 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
   public RabbitMQPublisherImpl endHandler(Handler<Void> hndlr) {
     return this;
   }
-
-
-
 }

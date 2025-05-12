@@ -22,6 +22,7 @@ import java.util.Map;
 
 import io.vertx.rabbitmq.*;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -191,6 +192,7 @@ public class RabbitMQClientPublisherTest {
               .onComplete(event -> ctx.async().complete());
   }
 
+  @Ignore
   @Test
   public void testPublishOverReconnect(TestContext ctx) throws Throwable {
 

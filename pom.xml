@@ -19,7 +19,7 @@
   </scm>
 
   <properties>
-    <rabbitmq.client.version>5.17.0</rabbitmq.client.version>
+    <rabbitmq.client.version>5.25.0</rabbitmq.client.version>
   </properties>
 
   <dependencyManagement>

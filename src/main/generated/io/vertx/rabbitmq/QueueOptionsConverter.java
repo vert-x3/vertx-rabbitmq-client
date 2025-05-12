@@ -19,11 +19,6 @@ public class QueueOptionsConverter {
             obj.setAutoAck((Boolean)member.getValue());
           }
           break;
-        case "keepMostRecent":
-          if (member.getValue() instanceof Boolean) {
-            obj.setKeepMostRecent((Boolean)member.getValue());
-          }
-          break;
         case "maxInternalQueueSize":
           if (member.getValue() instanceof Number) {
             obj.setMaxInternalQueueSize(((Number)member.getValue()).intValue());
@@ -64,7 +59,6 @@ public class QueueOptionsConverter {
 
    static void toJson(QueueOptions obj, java.util.Map<String, Object> json) {
     json.put("autoAck", obj.isAutoAck());
-    json.put("keepMostRecent", obj.isKeepMostRecent());
     json.put("noLocal", obj.isNoLocal());
     json.put("consumerExclusive", obj.isConsumerExclusive());
     if (obj.getConsumerTag() != null) {
