@@ -1,14 +1,9 @@
 package io.vertx.rabbitmq;
 
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.BasicProperties;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.ConfirmListener;
-import com.rabbitmq.client.Consumer;
+import com.rabbitmq.client.*;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
@@ -17,6 +12,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.impl.RabbitMQClientImpl;
+
 import java.util.Map;
 
 /**
@@ -107,7 +103,7 @@ public interface RabbitMQClient {
 
  /**
    * @see com.rabbitmq.client.Channel#basicConsume(String, Consumer)
-   * @see RabbitMQClient#basicConsumer(String, Handler)
+  * @see RabbitMQClient#basicConsumer(String)
    */
   default Future<RabbitMQConsumer> basicConsumer(String queue) {
     return basicConsumer(queue, new QueueOptions());
@@ -118,9 +114,7 @@ public interface RabbitMQClient {
    *
    * @param queue          the name of a queue
    * @param options        options for queue
-   * @param resultHandler  a handler through which you can find out the operation status;
-   *                       if the operation succeeds you can begin to receive messages
-   *                       through an instance of {@link RabbitMQConsumer}
+   * @return a future completed with the operation status; if the operation succeeds you can begin to receive messages through an instance of {@link RabbitMQConsumer}
    * @see com.rabbitmq.client.Channel#basicConsume(String, boolean, String, Consumer)
    */
   Future<RabbitMQConsumer> basicConsumer(String queue, QueueOptions options);
@@ -161,9 +155,7 @@ public interface RabbitMQClient {
    * Note that this will automatically call confirmSelect, it is not necessary to call that too.
    *
    * @param maxQueueSize   maximum size of the queue of confirmations
-   * @param resultHandler  a handler through which you can find out the operation status;
-   *                       if the operation succeeds you can begin to receive confirmations
-   *                       through an instance of {@link RabbitMQConfirmListener}
+   * @return a future completed with a stream of confirmations  if the operation succeeds
    * @see com.rabbitmq.client.Channel#addConfirmListener(ConfirmListener)
    */
   Future<ReadStream<RabbitMQConfirmation>> addConfirmListener(int maxQueueSize);
@@ -173,7 +165,7 @@ public interface RabbitMQClient {
    * will have to be confirmed.
    *
    * @see Channel#confirmSelect()
-   * @link http://www.rabbitmq.com/confirms.html
+   * @link <a href="http://www.rabbitmq.com/confirms.html">Confirms</a>
    */
   Future<Void> confirmSelect();
 
@@ -183,7 +175,7 @@ public interface RabbitMQClient {
    * If desired, multiple calls to basicPublish() can be batched before confirming.
    *
    * @see Channel#waitForConfirms()
-   * @link http://www.rabbitmq.com/confirms.html
+   * @link <a href="http://www.rabbitmq.com/confirms.html">Confirms</a>
    *
    * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
@@ -194,8 +186,8 @@ public interface RabbitMQClient {
    *
    * @param timeout
    *
-   * @see io.vertx.rabbitmq.impl.RabbitMQClientImpl#waitForConfirms(Handler)
-   * @link http://www.rabbitmq.com/confirms.html
+   * @see RabbitMQClient#waitForConfirms()
+   * @link <a href="http://www.rabbitmq.com/confirms.html">Confirms</a>
    *
    * @throws java.io.IOException Throws an IOException if the message was not written to the queue.
    */
@@ -205,10 +197,9 @@ public interface RabbitMQClient {
    * Request a specific prefetchCount "quality of service" settings
    * for this channel.
    *
-   * @see #basicQos(int, int, boolean, Handler)
+   * @see #basicQos(int, int, boolean)
    * @param prefetchCount maximum number of messages that the server
    * will deliver, 0 if unlimited
-   * @param resultHandler handler called when operation is done with a result of the operation
    */
   default Future<Void> basicQos(int prefetchCount) {
     return basicQos(prefetchCount, false);
@@ -218,12 +209,11 @@ public interface RabbitMQClient {
    * Request a specific prefetchCount "quality of service" settings
    * for this channel.
    *
-   * @see #basicQos(int, int, boolean, Handler)
+   * @see #basicQos(int, int, boolean)
    * @param prefetchCount maximum number of messages that the server
    * will deliver, 0 if unlimited
    * @param global true if the settings should be applied to the
    * entire channel rather than each consumer
-   * @param resultHandler handler called when operation is done with a result of the operation
    */
   default Future<Void> basicQos(int prefetchCount, boolean global) {
     return basicQos(0, prefetchCount, global);
@@ -242,7 +232,6 @@ public interface RabbitMQClient {
    * will deliver, 0 if unlimited
    * @param global true if the settings should be applied to the
    * entire channel rather than each consumer
-   * @param resultHandler handler called when operation is done with a result of the operation
    */
   Future<Void> basicQos(int prefetchSize, int prefetchCount, boolean global);
 
