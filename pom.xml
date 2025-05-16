@@ -10,7 +10,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>vertx-rabbitmq-client</artifactId>
-  <version>4.5.15-SNAPSHOT</version>
+  <version>4.5.15</version>
 
   <scm>
     <connection>scm:git:git@github.com:vert-x3/vertx-rabbitmq.git</connection>
