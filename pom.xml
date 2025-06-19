@@ -11,7 +11,7 @@
 
   <artifactId>vertx-rabbitmq-client</artifactId>
   <name>Vert.x RabbitMQ Client</name>
-  <version>4.5.16</version>
+  <version>4.5.17-SNAPSHOT</version>
 
   <scm>
     <connection>scm:git:git@github.com:vert-x3/vertx-rabbitmq.git</connection>
