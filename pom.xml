@@ -10,6 +10,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>vertx-rabbitmq-client</artifactId>
+  <name>Vert.x RabbitMQ Client</name>
   <version>4.5.16-SNAPSHOT</version>
 
   <scm>
