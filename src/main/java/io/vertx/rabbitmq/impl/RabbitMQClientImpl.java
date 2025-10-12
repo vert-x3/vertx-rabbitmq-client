@@ -38,7 +38,6 @@ import io.vertx.core.internal.tls.SslContextProvider;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.ClientSSLOptions;
 import io.vertx.core.net.JdkSSLEngineOptions;
-import io.vertx.core.internal.net.VertxSslContext;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.rabbitmq.QueueOptions;
 import io.vertx.rabbitmq.RabbitMQClient;
@@ -119,7 +118,7 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       try {
         SslContextManager sslHelper = new SslContextManager(SslContextManager.resolveEngineOptions(config.getSslEngineOptions(), config.isUseAlpn()));
         ClientSSLOptions options = config.getSslOptions().copy();
-        provider = sslHelper.resolveSslContextProvider(options, config.getHostnameVerificationAlgorithm(), null, null, ((VertxInternal) vertx).createEventLoopContext())
+        provider = sslHelper.resolveSslContextProvider(options, config.getHostnameVerificationAlgorithm(), null, ((VertxInternal) vertx).createEventLoopContext())
           .toCompletionStage()
           .toCompletableFuture()
           .get(1, TimeUnit.MINUTES);
@@ -128,8 +127,8 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       } catch (ExecutionException e) {
         throw new VertxException(e.getCause());
       }
-      VertxSslContext ctx = provider.createContext(false, null, null, null, false);
-      cf.useSslProtocol(((JdkSslContext)ctx.unwrap()).context());
+      JdkSslContext ctx = (JdkSslContext) provider.createContext(false, null, null, null, false);
+      cf.useSslProtocol(ctx.context());
     }
 
 
