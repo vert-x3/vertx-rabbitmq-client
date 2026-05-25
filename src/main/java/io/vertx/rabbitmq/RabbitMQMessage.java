@@ -5,7 +5,6 @@ import com.rabbitmq.client.Envelope;
 import io.vertx.codegen.annotations.CacheReturn;
 import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.VertxGen;
-import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 
 /**

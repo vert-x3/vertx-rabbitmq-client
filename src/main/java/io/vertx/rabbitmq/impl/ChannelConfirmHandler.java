@@ -18,7 +18,7 @@ public class ChannelConfirmHandler implements ConfirmListener {
     this.handlerContext = vertx.getOrCreateContext();
     this.listener = new RabbitMQConfirmListenerImpl(client, handlerContext, maxQueueSize);
   }
-  
+
   @Override
   public void handleAck(long deliveryTag, boolean multiple) throws IOException {
     this.handlerContext.runOnContext(v -> listener.handleAck(deliveryTag, multiple, true));

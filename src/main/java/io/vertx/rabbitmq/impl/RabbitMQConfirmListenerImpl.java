@@ -1,7 +1,6 @@
 package io.vertx.rabbitmq.impl;
 
 import io.vertx.core.internal.ContextInternal;
-import io.vertx.core.internal.EventExecutor;
 import io.vertx.core.internal.concurrent.InboundMessageQueue;
 import io.vertx.rabbitmq.RabbitMQConfirmation;
 import io.vertx.core.Context;

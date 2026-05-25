@@ -36,7 +36,6 @@ import io.vertx.core.internal.logging.LoggerFactory;
 import io.vertx.core.internal.tls.ClientSslContextManager;
 import io.vertx.core.internal.tls.ClientSslContextProvider;
 import io.vertx.core.internal.tls.SslContextManager;
-import io.vertx.core.internal.tls.SslContextProvider;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.ClientSSLOptions;
 import io.vertx.core.net.JdkSSLEngineOptions;
