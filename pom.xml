@@ -11,7 +11,7 @@
 
   <name>vertx-rabbitmq-client</name>
   <artifactId>vertx-rabbitmq-client</artifactId>
-  <version>5.1.0</version>
+  <version>5.1.1-SNAPSHOT</version>
 
   <scm>
     <connection>scm:git:git@github.com:vert-x3/vertx-rabbitmq-client.git</connection>
