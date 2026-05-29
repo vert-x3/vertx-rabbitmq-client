@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
+
 import com.rabbitmq.client.DefaultSaslConfig;
 import com.rabbitmq.client.ExceptionHandler;
 import com.rabbitmq.client.MetricsCollector;
