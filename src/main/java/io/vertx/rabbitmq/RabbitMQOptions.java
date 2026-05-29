@@ -6,8 +6,8 @@ import java.util.List;
 
 import com.rabbitmq.client.Address;
 import com.rabbitmq.client.ConnectionFactory;
-
 import com.rabbitmq.client.DefaultSaslConfig;
+import com.rabbitmq.client.ExceptionHandler;
 import com.rabbitmq.client.MetricsCollector;
 import com.rabbitmq.client.impl.CredentialsProvider;
 import com.rabbitmq.client.impl.CredentialsRefreshService;
@@ -123,6 +123,7 @@ public class RabbitMQOptions extends NetClientOptions {
   private CredentialsRefreshService credentialsRefreshService;
   private DefaultSaslConfig saslConfig;
   private MetricsCollector metricsCollector;
+  private ExceptionHandler exceptionHandler;
 
   public RabbitMQOptions() {
     super();
@@ -181,6 +182,7 @@ public class RabbitMQOptions extends NetClientOptions {
     this.credentialsProvider = null;
     this.saslConfig = null;
     this.metricsCollector = null;
+    this.exceptionHandler = null;
   }
 
   @Override
@@ -536,6 +538,22 @@ public class RabbitMQOptions extends NetClientOptions {
    */
   public RabbitMQOptions setMetricsCollector(MetricsCollector metricsCollector) {
     this.metricsCollector = metricsCollector;
+    return this;
+  }
+
+  public ExceptionHandler getExceptionHandler() {
+    return exceptionHandler;
+  }
+
+  /**
+   * Provides an exception handler for RabbitMQ connection, channel, recovery and consumer lifecycle exceptions.
+   *
+   * @implNote The value is not saved/restored when using JSON.
+   * @return a reference to this, so the API can be used fluently.
+   * @see <a href="https://www.rabbitmq.com/client-libraries/java-api-guide#unhandled-exceptions">RabbitMQ Unhandled Exceptions guide</a>
+   */
+  public RabbitMQOptions setExceptionHandler(ExceptionHandler exceptionHandler) {
+    this.exceptionHandler = exceptionHandler;
     return this;
   }
 
