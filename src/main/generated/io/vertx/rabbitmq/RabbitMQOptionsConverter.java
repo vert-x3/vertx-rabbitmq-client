@@ -346,11 +346,6 @@ public class RabbitMQOptionsConverter {
             obj.setUseAlpn((Boolean)member.getValue());
           }
           break;
-        case "useHybridKeyExchangeProtocol":
-          if (member.getValue() instanceof Boolean) {
-            obj.setUseHybridKeyExchangeProtocol((Boolean)member.getValue());
-          }
-          break;
         case "useNio":
           if (member.getValue() instanceof Boolean) {
             obj.setUseNio((Boolean)member.getValue());
@@ -503,7 +498,6 @@ public class RabbitMQOptionsConverter {
       json.put("uri", obj.getUri());
     }
     json.put("useAlpn", obj.isUseAlpn());
-    json.put("useHybridKeyExchangeProtocol", obj.isUseHybridKeyExchangeProtocol());
     if (obj.getUser() != null) {
       json.put("user", obj.getUser());
     }
