@@ -20,7 +20,7 @@
   </scm>
 
   <properties>
-    <rabbitmq.client.version>5.25.0</rabbitmq.client.version>
+    <rabbitmq.client.version>5.35.0</rabbitmq.client.version>
     <vertx.surefire.useModulePath>false</vertx.surefire.useModulePath>
   </properties>
 
