@@ -154,6 +154,10 @@ public class RabbitMQClientImpl implements RabbitMQClient, ShutdownListener {
       cf.setMetricsCollector(config.getMetricsCollector());
     }
 
+    if (config.getExceptionHandler() != null) {
+      cf.setExceptionHandler(config.getExceptionHandler());
+    }
+
     //TODO: Support other configurations
 
     return addresses == null
