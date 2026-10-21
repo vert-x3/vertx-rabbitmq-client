@@ -48,7 +48,7 @@ public class RabbitMQConfirmListenerImpl implements ReadStream<RabbitMQConfirmat
     void handleAck(long deliveryTag, boolean multiple, boolean succeeded) {
       context.execute(new RabbitMQConfirmation(client.getChannelInstance(), deliveryTag, multiple, succeeded), m -> {
         if (size++ < maxQueueSize) {
-          write(m);
+          add(m);
         }
       });
     }

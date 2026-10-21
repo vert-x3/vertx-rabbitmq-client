@@ -62,7 +62,7 @@ public class RabbitMQConsumerImpl implements RabbitMQConsumer {
     void enqueue(RabbitMQMessage message) {
       context.execute(message, m -> {
         if (size++ < maxQueueSize) {
-          write(m);
+          add(m);
         }
       });
     }

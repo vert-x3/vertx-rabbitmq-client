@@ -70,7 +70,7 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
       }
     }
     void enqueue(RabbitMQPublisherConfirmation confirmation) {
-      context.execute(confirmation, t -> write(confirmation));
+      context.execute(confirmation, t -> add(confirmation));
     }
   }
 
@@ -95,13 +95,13 @@ public class RabbitMQPublisherImpl implements RabbitMQPublisher, ReadStream<Rabb
     }
     void enqueue(MessageDetails msg) {
       volatileSize.setRelease(++size);
-      context.execute(msg, this::write);
+      context.execute(msg, this::add);
     }
     int size() {
       return volatileSize.get();
     }
     public void checkpoint(Promise<Void> promise) {
-      context.execute(promise, this::write);
+      context.execute(promise, this::add);
     }
   }
 
